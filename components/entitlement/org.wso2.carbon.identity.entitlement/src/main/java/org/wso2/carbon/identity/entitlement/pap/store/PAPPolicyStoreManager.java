@@ -39,6 +39,10 @@ public class PAPPolicyStoreManager {
         store.addOrUpdatePolicy(policy, PDPConstants.ENTITLEMENT_POLICY_PAP);
     }
 
+    public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy) throws EntitlementException {
+        store.addOrUpdatePolicyToNewRDBMS(policy);
+    }
+
     public void removePolicy(String policyId) throws EntitlementException {
         store.removePolicy(policyId);
     }

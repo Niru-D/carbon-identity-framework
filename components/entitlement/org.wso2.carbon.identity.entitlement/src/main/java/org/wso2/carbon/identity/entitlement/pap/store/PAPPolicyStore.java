@@ -23,28 +23,55 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
+import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
+import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
+import org.wso2.carbon.identity.application.mgt.dao.impl.ApplicationDAOImpl;
+import org.wso2.carbon.identity.application.mgt.dao.impl.ApplicationMgtDBQueries;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
+import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
+import org.wso2.carbon.ndatasource.common.DataSourceException;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
+import org.wso2.carbon.registry.core.jdbc.utils.RegistryDataSource;
+import org.wso2.carbon.ndatasource.core.DataSourceService;
+import org.wso2.carbon.context.PrivilegedCarbonContext;
+
+import javax.naming.NamingException;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.SQLException;
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import org.wso2.carbon.ndatasource.core.CarbonDataSource;
+
+import org.wso2.carbon.user.core.util.DatabaseUtil;
+import org.wso2.carbon.user.api.RealmConfiguration;
+import org.wso2.carbon.utils.DBUtils;
 
 import javax.xml.stream.XMLStreamException;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.Error.APPLICATION_ALREADY_EXISTS;
+
 public class PAPPolicyStore {
 
     // The logger we'll use for all messages
     private static final Log log = LogFactory.getLog(PAPPolicyStore.class);
     private Registry registry;
+    private DataSource dataSource;
 
     public PAPPolicyStore() {
 
@@ -143,10 +170,17 @@ public class PAPPolicyStore {
 
     }
 
+    public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy) throws EntitlementException {
+        addOrUpdatePolicyToNewRDBMS(policy, policy.getPolicyId());
+
+    }
+
     /**
      * @param policy
      * @throws EntitlementException
      */
+
+
     public void addOrUpdatePolicy(PolicyDTO policy, String policyId, String policyPath)
             throws EntitlementException {
 
@@ -156,7 +190,7 @@ public class PAPPolicyStore {
         OMElement omElement = null;
 
         if (log.isDebugEnabled()) {
-            log.debug("Creating or updating entitlement policy");
+            log.debug("Creating or updating entitlement policy-------------- test-original-method");
         }
 
         if (policy == null || policyId == null) {
@@ -181,8 +215,8 @@ public class PAPPolicyStore {
                 policyCollection = registry.newCollection();
             }
 
-
             if (policy.getPolicyOrder() > 0) {
+
                 String noOfPolicies = policyCollection.getProperty(PDPConstants.MAX_POLICY_ORDER);
                 if (noOfPolicies != null && Integer.parseInt(noOfPolicies) < policy.getPolicyOrder()) {
                     policyCollection.setProperty(PDPConstants.MAX_POLICY_ORDER,
@@ -322,6 +356,207 @@ public class PAPPolicyStore {
             throw new EntitlementException("Error while adding or updating entitlement policy in policy store");
         }
     }
+
+    public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy, String policyId)
+            throws EntitlementException {
+
+        boolean newPolicy = false;
+        OMElement omElement = null;
+
+        if (log.isDebugEnabled()) {
+            log.debug("Creating or updating entitlement policy");
+        }
+
+        if (policy == null || policyId == null) {
+            log.error("Error while creating or updating entitlement policy: " +
+                    "Policy DTO or Policy Id can not be null");
+            throw new EntitlementException("Invalid Entitlement Policy. Policy or policyId can not be Null");
+        }
+
+        try {
+
+            Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+
+            //Find policy order
+            int finalPolicyOrder;
+            PreparedStatement getPolicyCountPrepStmt =
+                    connection.prepareStatement("SELECT COUNT(*) AS COUNT FROM POLICY");
+            ResultSet rs = getPolicyCountPrepStmt.executeQuery();
+
+            int noOfPolicies = 0;
+            if (rs.next()) {
+                noOfPolicies = rs.getInt("COUNT");
+            }
+            if (policy.getPolicyOrder() > 0) {
+                finalPolicyOrder = policy.getPolicyOrder();
+            } else {
+                int policyOrder = 1;
+                if (noOfPolicies != 0) {
+                    policyOrder = policyOrder + noOfPolicies;
+                }
+                finalPolicyOrder = policyOrder;
+            }
+
+            //Find policy meta data
+            Properties properties = null;
+            if (StringUtils.isNotBlank(policy.getPolicy())) {
+                newPolicy = true;
+                PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder(policy.getPolicy());
+                properties = policyAttributeBuilder.getPolicyMetaDataFromPolicy();
+            }
+
+            //Find policy type
+            String policyType = null;
+            if (policy.getPolicyType() != null && !policy.getPolicyType().trim().isEmpty()) {
+                policyType = policy.getPolicyType();
+            } else {
+                try {
+                    if (newPolicy) {
+                        omElement = AXIOMUtil.stringToOM(policy.getPolicy());
+                        policyType = omElement.getLocalName();
+                    }
+                } catch (XMLStreamException e) {
+                    policyType = PDPConstants.POLICY_ELEMENT;
+                    log.warn("Policy Type can not be found. Default type is set");
+                }
+            }
+
+            //Find policy references and policy set references
+            String policyReferences = "";
+            String policySetReferences = "";
+
+            if (omElement != null) {
+                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.
+                        POLICY_REFERENCE);
+                if (iterator1 != null) {
+                    while (iterator1.hasNext()) {
+                        OMElement policyReference = (OMElement) iterator1.next();
+                        if (!"".equals(policyReferences)) {
+                            policyReferences = policyReferences + PDPConstants.ATTRIBUTE_SEPARATOR
+                                    + policyReference.getText();
+                        } else {
+                            policyReferences = policyReference.getText();
+                        }
+                    }
+                }
+                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.
+                        POLICY_SET_REFERENCE);
+                if (iterator2 != null) {
+                    while (iterator1.hasNext()) {
+                        OMElement policySetReference = (OMElement) iterator2.next();
+                        if (!"".equals(policySetReferences)) {
+                            policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
+                                    + policySetReference.getText();
+                        } else {
+                            policySetReferences = policySetReference.getText();
+                        }
+                    }
+                }
+            }
+
+            //Find policy editor type
+            String policyEditorType = null;
+            if (policy.getPolicyEditor() != null && !policy.getPolicyEditor().trim().isEmpty()) {
+                policyEditorType = policy.getPolicyEditor().trim();
+            }
+
+            //Write a new policy
+            PreparedStatement createPolicyPrepStmt = null;
+            int active = policy.isActive() ? 1: 0;
+            int promote = policy.isPromote() ? 1: 0;
+
+            try {
+                createPolicyPrepStmt = connection.prepareStatement(
+                        "INSERT INTO POLICY (POLICY_ID, VERSION, HAS_PUBLISHED, POLICY, ACTIVE, PROMOTE, " +
+                                "POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, LAST_MODIFIED_USER, " +
+                                "POLICY_REFERENCES, POLICY_SET_REFERENCES) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+
+                createPolicyPrepStmt.setString(1, policyId);
+                createPolicyPrepStmt.setInt(2, Integer.parseInt(policy.getVersion()));
+                createPolicyPrepStmt.setString(3, policy.getPolicy());
+                createPolicyPrepStmt.setInt(4, active);
+                createPolicyPrepStmt.setInt(5, promote);
+                createPolicyPrepStmt.setString(6, policyType);
+                createPolicyPrepStmt.setString(7, policyEditorType);
+                createPolicyPrepStmt.setInt(8, finalPolicyOrder);
+                createPolicyPrepStmt.setString(9, Long.toString(System.currentTimeMillis()));
+                createPolicyPrepStmt.setString(10, CarbonContext.getThreadLocalCarbonContext().getUsername());
+                createPolicyPrepStmt.setString(11, policyReferences);
+                createPolicyPrepStmt.setString(12, policySetReferences);
+
+//                IdentityDatabaseUtil.commitTransaction(connection);
+                createPolicyPrepStmt.executeUpdate();
+
+            } catch (SQLException e) {
+//                IdentityDatabaseUtil.rollbackTransaction(connection);
+                throw new EntitlementException("Error while creating policy", e);
+            } finally {
+                assert createPolicyPrepStmt != null;
+                createPolicyPrepStmt.close();
+            }
+
+            //Write attributes of the policy
+            PreparedStatement createAttributesPrepStmt = null;
+            try {
+                if(properties != null) {
+                    createAttributesPrepStmt = connection.prepareStatement(
+                            "INSERT INTO ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION) VALUES (?, ?, ?, ?)");
+
+                    for (Object o : properties.keySet()) {
+                        String key = o.toString();
+
+                        createAttributesPrepStmt.setString(1, key);
+                        createAttributesPrepStmt.setString
+                                (2, Collections.singletonList(properties.get(key)).toString());
+                        createAttributesPrepStmt.setString(3, policyId);
+                        createAttributesPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
+
+                        createAttributesPrepStmt.addBatch();
+                    }
+                    createAttributesPrepStmt.executeBatch();
+                }
+            } catch (SQLException e) {
+                throw new EntitlementException("Error while writing policy attributes", e);
+            }finally {
+                assert createAttributesPrepStmt != null;
+                createAttributesPrepStmt.close();
+            }
+
+            //Write policy editor data
+            PreparedStatement createPolicyEditorDataPrepStmt = null;
+            String[] policyMetaData = policy.getPolicyEditorData();
+            try {
+                if(policyMetaData != null && policyMetaData.length > 0) {
+                    createPolicyEditorDataPrepStmt = connection.prepareStatement(
+                            "INSERT INTO POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION) VALUES (?, ?, ?, ?)");
+
+                    int i = 0;
+                    for (String policyData : policyMetaData) {
+                        if (policyData != null && !policyData.isEmpty()) {
+
+                            createPolicyEditorDataPrepStmt.setString(1,
+                                    (PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i));
+                            createPolicyEditorDataPrepStmt.setString(2, policyData);
+                            createPolicyEditorDataPrepStmt.setString(3, policyId);
+                            createPolicyEditorDataPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
+                        }
+                        createPolicyEditorDataPrepStmt.addBatch();
+                        i++;
+                    }
+                    createPolicyEditorDataPrepStmt.executeBatch();
+                }
+            } catch (SQLException e) {
+                throw new EntitlementException("Error while writing policy editor data", e);
+            }finally {
+                assert createPolicyEditorDataPrepStmt != null;
+                createPolicyEditorDataPrepStmt.close();
+            }
+
+        } catch (SQLException e) {
+            throw new EntitlementException("Error while adding or updating entitlement policy in policy store");
+        }
+    }
+
 
 
     /**

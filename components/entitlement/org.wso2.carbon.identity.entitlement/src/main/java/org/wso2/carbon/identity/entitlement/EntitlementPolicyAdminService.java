@@ -76,6 +76,7 @@ public class EntitlementPolicyAdminService {
 
         addOrUpdatePolicy(policyDTO, true);
 
+
     }
 
 
@@ -772,6 +773,7 @@ public class EntitlementPolicyAdminService {
                 }
             }
             policyAdmin.addOrUpdatePolicy(policyDTO);
+            policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
         } catch (EntitlementException e) {
             handleStatus(operation, policyDTO, false, e.getMessage());
             throw e;
