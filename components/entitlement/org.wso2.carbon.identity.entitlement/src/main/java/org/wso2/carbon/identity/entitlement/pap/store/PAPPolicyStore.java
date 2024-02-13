@@ -356,7 +356,7 @@ public class PAPPolicyStore {
         boolean newPolicy = false;
         OMElement omElement = null;
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
-        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
 
         if (log.isDebugEnabled()) {
             log.debug("Creating or updating entitlement policy");
@@ -372,8 +372,8 @@ public class PAPPolicyStore {
 
             //Find policy order
             int finalPolicyOrder;
-            PreparedStatement getPolicyCountPrepStmt =
-                    connection.prepareStatement("SELECT COUNT(*) AS COUNT FROM POLICY WHERE TENANT_ID=?");
+            PreparedStatement getPolicyCountPrepStmt = connection.prepareStatement
+                    ("SELECT COUNT(*) AS COUNT FROM POLICY WHERE TENANT_ID=?");
             getPolicyCountPrepStmt.setInt(1,tenantId);
             ResultSet rs = getPolicyCountPrepStmt.executeQuery();
 
@@ -390,6 +390,8 @@ public class PAPPolicyStore {
                 }
                 finalPolicyOrder = policyOrder;
             }
+            getPolicyCountPrepStmt.close();
+            rs.close();
 
             //Find policy meta data
             Properties properties = null;
@@ -455,104 +457,81 @@ public class PAPPolicyStore {
             }
 
             //Write a new policy
-            PreparedStatement createPolicyPrepStmt = null;
             int active = policy.isActive() ? 1: 0;
             int promote = policy.isPromote() ? 1: 0;
-
-            try {
-                createPolicyPrepStmt = connection.prepareStatement(
+            PreparedStatement createPolicyPrepStmt = connection.prepareStatement(
                         "INSERT INTO POLICY (POLICY_ID, VERSION, TENANT_ID, IS_IN_PDP, IS_IN_PAP, POLICY, " +
                                 "IS_ACTIVE, POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, " +
                                 "LAST_MODIFIED_USER, POLICY_REFERENCES, POLICY_SET_REFERENCES) VALUES " +
                                 "(?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
-                createPolicyPrepStmt.setString(1, policyId);
-                createPolicyPrepStmt.setInt(2, Integer.parseInt(policy.getVersion()));
-                createPolicyPrepStmt.setInt(3, tenantId);
-                createPolicyPrepStmt.setInt(4, promote);
-                createPolicyPrepStmt.setString(5, policy.getPolicy());
-                createPolicyPrepStmt.setInt(6, active);
-                createPolicyPrepStmt.setString(7, policyType);
-                createPolicyPrepStmt.setString(8, policyEditorType);
-                createPolicyPrepStmt.setInt(9, finalPolicyOrder);
-                createPolicyPrepStmt.setString(10, Long.toString(System.currentTimeMillis()));
-                createPolicyPrepStmt.setString
+            createPolicyPrepStmt.setString(1, policyId);
+            createPolicyPrepStmt.setInt(2, Integer.parseInt(policy.getVersion()));
+            createPolicyPrepStmt.setInt(3, tenantId);
+            createPolicyPrepStmt.setInt(4, promote);
+            createPolicyPrepStmt.setString(5, policy.getPolicy());
+            createPolicyPrepStmt.setInt(6, active);
+            createPolicyPrepStmt.setString(7, policyType);
+            createPolicyPrepStmt.setString(8, policyEditorType);
+            createPolicyPrepStmt.setInt(9, finalPolicyOrder);
+            createPolicyPrepStmt.setString(10, Long.toString(System.currentTimeMillis()));
+            createPolicyPrepStmt.setString
                         (11, CarbonContext.getThreadLocalCarbonContext().getUsername());
-                createPolicyPrepStmt.setString(12, policyReferences);
-                createPolicyPrepStmt.setString(13, policySetReferences);
+            createPolicyPrepStmt.setString(12, policyReferences);
+            createPolicyPrepStmt.setString(13, policySetReferences);
 
-//                IdentityDatabaseUtil.commitTransaction(connection);
-                createPolicyPrepStmt.executeUpdate();
-
-            } catch (SQLException e) {
-//                IdentityDatabaseUtil.rollbackTransaction(connection);
-                throw new EntitlementException("Error while creating policy", e);
-            } finally {
-                assert createPolicyPrepStmt != null;
-                createPolicyPrepStmt.close();
-            }
+            createPolicyPrepStmt.executeUpdate();
+            createPolicyPrepStmt.close();
 
             //Write attributes of the policy
-            PreparedStatement createAttributesPrepStmt = null;
-            try {
-                if(properties != null) {
-                    createAttributesPrepStmt = connection.prepareStatement(
-                            "INSERT INTO ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION, TENANT_ID) VALUES " +
-                                    "(?, ?, ?, ?, ?)");
+            if(properties != null) {
+                PreparedStatement createAttributesPrepStmt = connection.prepareStatement(
+                        "INSERT INTO ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION, TENANT_ID) VALUES " +
+                                "(?, ?, ?, ?, ?)");
 
-                    for (Object o : properties.keySet()) {
-                        String key = o.toString();
+                for (Object o : properties.keySet()) {
+                    String key = o.toString();
 
-                        createAttributesPrepStmt.setString(1, key);
-                        createAttributesPrepStmt.setString
-                                (2, Collections.singletonList(properties.get(key)).toString());
-                        createAttributesPrepStmt.setString(3, policyId);
-                        createAttributesPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
-                        createAttributesPrepStmt.setInt(5, tenantId);
-                        createAttributesPrepStmt.addBatch();
-                    }
-                    createAttributesPrepStmt.executeBatch();
+                    createAttributesPrepStmt.setString(1, key);
+                    createAttributesPrepStmt.setString
+                            (2, Collections.singletonList(properties.get(key)).toString());
+                    createAttributesPrepStmt.setString(3, policyId);
+                    createAttributesPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
+                    createAttributesPrepStmt.setInt(5, tenantId);
+                    createAttributesPrepStmt.addBatch();
                 }
-            } catch (SQLException e) {
-                throw new EntitlementException("Error while writing policy attributes", e);
-            }finally {
-                assert createAttributesPrepStmt != null;
+                createAttributesPrepStmt.executeBatch();
                 createAttributesPrepStmt.close();
             }
 
             //Write policy editor data
-            PreparedStatement createPolicyEditorDataPrepStmt = null;
             String[] policyMetaData = policy.getPolicyEditorData();
-            try {
-                if(policyMetaData != null && policyMetaData.length > 0) {
-                    createPolicyEditorDataPrepStmt = connection.prepareStatement(
-                            "INSERT INTO POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION, TENANT_ID) VALUES " +
-                                    "(?, ?, ?, ?, ?)");
+            if(policyMetaData != null && policyMetaData.length > 0) {
+                PreparedStatement createPolicyEditorDataPrepStmt = connection.prepareStatement(
+                        "INSERT INTO POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION, TENANT_ID) VALUES " +
+                                "(?, ?, ?, ?, ?)");
+                int i = 0;
+                for (String policyData : policyMetaData) {
+                    if (policyData != null && !policyData.isEmpty()) {
 
-                    int i = 0;
-                    for (String policyData : policyMetaData) {
-                        if (policyData != null && !policyData.isEmpty()) {
-
-                            createPolicyEditorDataPrepStmt.setString(1,
-                                    (PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i));
-                            createPolicyEditorDataPrepStmt.setString(2, policyData);
-                            createPolicyEditorDataPrepStmt.setString(3, policyId);
-                            createPolicyEditorDataPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
-                            createPolicyEditorDataPrepStmt.setInt(5, tenantId);
-                        }
-                        createPolicyEditorDataPrepStmt.addBatch();
-                        i++;
+                        createPolicyEditorDataPrepStmt.setString(1,
+                                (PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i));
+                        createPolicyEditorDataPrepStmt.setString(2, policyData);
+                        createPolicyEditorDataPrepStmt.setString(3, policyId);
+                        createPolicyEditorDataPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
+                        createPolicyEditorDataPrepStmt.setInt(5, tenantId);
                     }
-                    createPolicyEditorDataPrepStmt.executeBatch();
+                    createPolicyEditorDataPrepStmt.addBatch();
+                    i++;
                 }
-            } catch (SQLException e) {
-                throw new EntitlementException("Error while writing policy editor data", e);
-            }finally {
-                assert createPolicyEditorDataPrepStmt != null;
+                createPolicyEditorDataPrepStmt.executeBatch();
                 createPolicyEditorDataPrepStmt.close();
             }
 
+            IdentityDatabaseUtil.commitTransaction(connection);
+
         } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
             throw new EntitlementException("Error while adding or updating entitlement policy in policy store");
         }
     }
@@ -587,7 +566,7 @@ public class PAPPolicyStore {
 
     public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
 
-        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
 
         if (log.isDebugEnabled()) {
@@ -612,6 +591,7 @@ public class PAPPolicyStore {
                 removePolicyByIdAndVersionPrepStmt.setInt(2, tenantId);
                 removePolicyByIdAndVersionPrepStmt.setInt(3, 0);
                 removePolicyByIdAndVersionPrepStmt.executeUpdate();
+                removePolicyByIdAndVersionPrepStmt.close();
 
                 //Remove the published version of the policy from the PAP (It is still present in PDP)
                 PreparedStatement removePolicyFromPAPPrepStmt = connection.prepareStatement(
@@ -621,6 +601,7 @@ public class PAPPolicyStore {
                 removePolicyFromPAPPrepStmt.setInt(3, 1);
                 removePolicyFromPAPPrepStmt.setInt(4, tenantId);
                 removePolicyFromPAPPrepStmt.executeUpdate();
+                removePolicyFromPAPPrepStmt.close();
 
             } else {
                 //Remove the policy from the database
@@ -629,13 +610,18 @@ public class PAPPolicyStore {
                 removePolicyPrepStmt.setString(1, policyId);
                 removePolicyPrepStmt.setInt(2, tenantId);
                 removePolicyPrepStmt.executeUpdate();
+                removePolicyPrepStmt.close();
             }
 
+            findPDPPresencePrepStmt.close();
+            rs1.close();
+            IdentityDatabaseUtil.commitTransaction(connection);
+
         } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while removing entitlement policy " + policyId + " from PAP policy store", e);
             throw new EntitlementException("Error while removing policy " + policyId + " from PAP policy store");
         }
     }
-
 
 }
