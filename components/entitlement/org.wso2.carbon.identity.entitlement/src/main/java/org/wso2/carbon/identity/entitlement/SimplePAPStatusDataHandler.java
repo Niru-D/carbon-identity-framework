@@ -20,6 +20,7 @@ package org.wso2.carbon.identity.entitlement;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
@@ -30,6 +31,10 @@ import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -81,6 +86,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 }
             }
             persistStatus(path, statusHolder, false);
+//            persistStatusToNewRDBMS(path, key, statusHolder, false);
         } else {
             String path = ENTITLEMENT_PUBLISHER_STATUS + key;
             // subscriber would be deleted.
@@ -211,6 +217,63 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
         }
 
     }
+
+//    private synchronized void persistStatusToNewRDBMS(String path, String key, List<StatusHolder> statusHolders, boolean isNew)
+//            throws EntitlementException {
+//
+//        //Have to decide what to do for publishers (then change parameters)
+//
+//        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+//
+//        try {
+//            boolean useLastStatusOnly = Boolean.parseBoolean(
+//                    IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
+//
+//            //make a common function to this
+//            //find the existence of a policy
+//            PreparedStatement findPolicyPrepStmt = connection.prepareStatement(
+//                    "SELECT * FROM STATUS WHERE POLICY_ID=?");
+//
+//            findPolicyPrepStmt.setString(1, key);
+//            ResultSet rs1 = findPolicyPrepStmt.executeQuery();
+//
+//            if (rs1.next() && !isNew && !useLastStatusOnly) {
+//                resource = registry.get(path);
+//                String[] versions = registry.getVersions(path);
+//                // remove all versions.  As we have no way to disable versioning for specific resource
+//                if (versions != null) {
+//                    for (String version : versions) {
+//                        long versionInt = 0;
+//                        String[] versionStrings = version.split(RegistryConstants.VERSION_SEPARATOR);
+//                        if (versionStrings != null && versionStrings.length == 2) {
+//                            try {
+//                                versionInt = Long.parseLong(versionStrings[1]);
+//                            } catch (Exception e) {
+//                                // ignore
+//                            }
+//                        }
+//                        if (versionInt != 0) {
+//                            registry.removeVersionHistory(version, versionInt);
+//                        }
+//                    }
+//                }
+//            } else {
+//                resource = registry.newResource();
+//            }
+//
+//            if (resource != null && statusHolders != null && statusHolders.size() > 0) {
+//                resource.setVersionableChange(false);
+//                populateStatusProperties(statusHolders.toArray(new StatusHolder[statusHolders.size()]), resource);
+//                registry.put(path, resource);
+//            }
+//        } catch (RegistryException e) {
+//            log.error(e);
+//            throw new EntitlementException("Error while persisting policy status", e);
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
+//
+//    }
 
     private synchronized List<StatusHolder> readStatus(String path, String about) throws EntitlementException {
 

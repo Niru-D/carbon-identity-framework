@@ -40,9 +40,6 @@ import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
-import org.wso2.carbon.registry.core.jdbc.utils.RegistryDataSource;
-import org.wso2.carbon.ndatasource.core.DataSourceService;
-import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import javax.naming.NamingException;
 import javax.sql.DataSource;
@@ -51,10 +48,6 @@ import java.sql.SQLException;
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import org.wso2.carbon.ndatasource.core.CarbonDataSource;
-
-import org.wso2.carbon.user.core.util.DatabaseUtil;
-import org.wso2.carbon.user.api.RealmConfiguration;
-import org.wso2.carbon.utils.DBUtils;
 
 import javax.xml.stream.XMLStreamException;
 import java.sql.*;
@@ -362,6 +355,8 @@ public class PAPPolicyStore {
 
         boolean newPolicy = false;
         OMElement omElement = null;
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
 
         if (log.isDebugEnabled()) {
             log.debug("Creating or updating entitlement policy");
@@ -375,12 +370,11 @@ public class PAPPolicyStore {
 
         try {
 
-            Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-
             //Find policy order
             int finalPolicyOrder;
             PreparedStatement getPolicyCountPrepStmt =
-                    connection.prepareStatement("SELECT COUNT(*) AS COUNT FROM POLICY");
+                    connection.prepareStatement("SELECT COUNT(*) AS COUNT FROM POLICY WHERE TENANT_ID=?");
+            getPolicyCountPrepStmt.setInt(1,tenantId);
             ResultSet rs = getPolicyCountPrepStmt.executeQuery();
 
             int noOfPolicies = 0;
@@ -467,22 +461,25 @@ public class PAPPolicyStore {
 
             try {
                 createPolicyPrepStmt = connection.prepareStatement(
-                        "INSERT INTO POLICY (POLICY_ID, VERSION, HAS_PUBLISHED, POLICY, ACTIVE, PROMOTE, " +
-                                "POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, LAST_MODIFIED_USER, " +
-                                "POLICY_REFERENCES, POLICY_SET_REFERENCES) VALUES (?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        "INSERT INTO POLICY (POLICY_ID, VERSION, TENANT_ID, IS_IN_PDP, IS_IN_PAP, POLICY, " +
+                                "IS_ACTIVE, POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, " +
+                                "LAST_MODIFIED_USER, POLICY_REFERENCES, POLICY_SET_REFERENCES) VALUES " +
+                                "(?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
                 createPolicyPrepStmt.setString(1, policyId);
                 createPolicyPrepStmt.setInt(2, Integer.parseInt(policy.getVersion()));
-                createPolicyPrepStmt.setString(3, policy.getPolicy());
-                createPolicyPrepStmt.setInt(4, active);
-                createPolicyPrepStmt.setInt(5, promote);
-                createPolicyPrepStmt.setString(6, policyType);
-                createPolicyPrepStmt.setString(7, policyEditorType);
-                createPolicyPrepStmt.setInt(8, finalPolicyOrder);
-                createPolicyPrepStmt.setString(9, Long.toString(System.currentTimeMillis()));
-                createPolicyPrepStmt.setString(10, CarbonContext.getThreadLocalCarbonContext().getUsername());
-                createPolicyPrepStmt.setString(11, policyReferences);
-                createPolicyPrepStmt.setString(12, policySetReferences);
+                createPolicyPrepStmt.setInt(3, tenantId);
+                createPolicyPrepStmt.setInt(4, promote);
+                createPolicyPrepStmt.setString(5, policy.getPolicy());
+                createPolicyPrepStmt.setInt(6, active);
+                createPolicyPrepStmt.setString(7, policyType);
+                createPolicyPrepStmt.setString(8, policyEditorType);
+                createPolicyPrepStmt.setInt(9, finalPolicyOrder);
+                createPolicyPrepStmt.setString(10, Long.toString(System.currentTimeMillis()));
+                createPolicyPrepStmt.setString
+                        (11, CarbonContext.getThreadLocalCarbonContext().getUsername());
+                createPolicyPrepStmt.setString(12, policyReferences);
+                createPolicyPrepStmt.setString(13, policySetReferences);
 
 //                IdentityDatabaseUtil.commitTransaction(connection);
                 createPolicyPrepStmt.executeUpdate();
@@ -500,7 +497,8 @@ public class PAPPolicyStore {
             try {
                 if(properties != null) {
                     createAttributesPrepStmt = connection.prepareStatement(
-                            "INSERT INTO ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION) VALUES (?, ?, ?, ?)");
+                            "INSERT INTO ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION, TENANT_ID) VALUES " +
+                                    "(?, ?, ?, ?, ?)");
 
                     for (Object o : properties.keySet()) {
                         String key = o.toString();
@@ -510,7 +508,7 @@ public class PAPPolicyStore {
                                 (2, Collections.singletonList(properties.get(key)).toString());
                         createAttributesPrepStmt.setString(3, policyId);
                         createAttributesPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
-
+                        createAttributesPrepStmt.setInt(5, tenantId);
                         createAttributesPrepStmt.addBatch();
                     }
                     createAttributesPrepStmt.executeBatch();
@@ -528,7 +526,8 @@ public class PAPPolicyStore {
             try {
                 if(policyMetaData != null && policyMetaData.length > 0) {
                     createPolicyEditorDataPrepStmt = connection.prepareStatement(
-                            "INSERT INTO POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION) VALUES (?, ?, ?, ?)");
+                            "INSERT INTO POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION, TENANT_ID) VALUES " +
+                                    "(?, ?, ?, ?, ?)");
 
                     int i = 0;
                     for (String policyData : policyMetaData) {
@@ -539,6 +538,7 @@ public class PAPPolicyStore {
                             createPolicyEditorDataPrepStmt.setString(2, policyData);
                             createPolicyEditorDataPrepStmt.setString(3, policyId);
                             createPolicyEditorDataPrepStmt.setInt(4, Integer.parseInt(policy.getVersion()));
+                            createPolicyEditorDataPrepStmt.setInt(5, tenantId);
                         }
                         createPolicyEditorDataPrepStmt.addBatch();
                         i++;
@@ -584,5 +584,58 @@ public class PAPPolicyStore {
             throw new EntitlementException("Error while removing policy " + policyId + " from PAP policy store");
         }
     }
+
+    public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+
+        if (log.isDebugEnabled()) {
+            log.debug("Removing entitlement policy");
+        }
+        try {
+
+            //Find whether the policy is published or not
+            PreparedStatement findPDPPresencePrepStmt = connection.prepareStatement(
+                    "SELECT * FROM POLICY WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
+            findPDPPresencePrepStmt.setString(1, policyId);
+            findPDPPresencePrepStmt.setInt(2, 1);
+            findPDPPresencePrepStmt.setInt(3, tenantId);
+            ResultSet rs1 = findPDPPresencePrepStmt.executeQuery();
+
+            if (rs1.next()) {
+
+                //Remove the unpublished versions of the policy from the database
+                PreparedStatement removePolicyByIdAndVersionPrepStmt = connection.prepareStatement(
+                        "DELETE FROM POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?");
+                removePolicyByIdAndVersionPrepStmt.setString(1, policyId);
+                removePolicyByIdAndVersionPrepStmt.setInt(2, tenantId);
+                removePolicyByIdAndVersionPrepStmt.setInt(3, 0);
+                removePolicyByIdAndVersionPrepStmt.executeUpdate();
+
+                //Remove the published version of the policy from the PAP (It is still present in PDP)
+                PreparedStatement removePolicyFromPAPPrepStmt = connection.prepareStatement(
+                        "UPDATE POLICY SET IS_IN_PAP=? WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
+                removePolicyFromPAPPrepStmt.setInt(1, 0);
+                removePolicyFromPAPPrepStmt.setString(2, policyId);
+                removePolicyFromPAPPrepStmt.setInt(3, 1);
+                removePolicyFromPAPPrepStmt.setInt(4, tenantId);
+                removePolicyFromPAPPrepStmt.executeUpdate();
+
+            } else {
+                //Remove the policy from the database
+                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
+                        "DELETE FROM POLICY WHERE POLICY_ID=? AND TENANT_ID=?");
+                removePolicyPrepStmt.setString(1, policyId);
+                removePolicyPrepStmt.setInt(2, tenantId);
+                removePolicyPrepStmt.executeUpdate();
+            }
+
+        } catch (SQLException e) {
+            log.error("Error while removing entitlement policy " + policyId + " from PAP policy store", e);
+            throw new EntitlementException("Error while removing policy " + policyId + " from PAP policy store");
+        }
+    }
+
 
 }

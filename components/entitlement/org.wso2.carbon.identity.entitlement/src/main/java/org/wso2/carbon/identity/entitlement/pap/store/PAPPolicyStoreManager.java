@@ -24,6 +24,8 @@ import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.registry.core.Resource;
 
+import java.sql.SQLException;
+
 public class PAPPolicyStoreManager {
 
     private static final Log log = LogFactory.getLog(PAPPolicyStoreManager.class);
@@ -45,6 +47,10 @@ public class PAPPolicyStoreManager {
 
     public void removePolicy(String policyId) throws EntitlementException {
         store.removePolicy(policyId);
+    }
+
+    public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
+        store.removePolicyFromNewRDBMS(policyId);
     }
 
     public String[] getPolicyIds() throws EntitlementException {

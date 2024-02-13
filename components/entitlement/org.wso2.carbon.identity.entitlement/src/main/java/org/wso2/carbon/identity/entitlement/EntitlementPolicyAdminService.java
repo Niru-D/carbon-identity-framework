@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -362,7 +363,8 @@ public class EntitlementPolicyAdminService {
                 oldPolicy.setPolicyId(policyId);
             }
             policyAdmin.removePolicy(policyId);
-        } catch (EntitlementException e) {
+            policyAdmin.removePolicyFromNewRDBMS(policyId);
+        } catch (EntitlementException e ) {
             oldPolicy = new PolicyDTO();
             oldPolicy.setPolicyId(policyId);
             handleStatus(EntitlementConstants.StatusTypes.DELETE_POLICY, oldPolicy, false, e.getMessage());
@@ -371,6 +373,7 @@ public class EntitlementPolicyAdminService {
         handleStatus(EntitlementConstants.StatusTypes.DELETE_POLICY, oldPolicy, true, null);
 
         //remove versions
+        //related to registry operations
         EntitlementAdminEngine.getInstance().getVersionManager().deletePolicy(policyId);
 
         // policy remove from PDP.  this is done by separate thread
