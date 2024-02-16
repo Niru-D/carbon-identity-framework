@@ -173,7 +173,6 @@ public class PAPPolicyStore {
      * @throws EntitlementException
      */
 
-
     public void addOrUpdatePolicy(PolicyDTO policy, String policyId, String policyPath)
             throws EntitlementException {
 
@@ -293,7 +292,7 @@ public class PAPPolicyStore {
                                                                                 POLICY_SET_REFERENCE);
                 if (iterator2 != null) {
                     String policySetReferences = "";
-                    while (iterator1.hasNext()) {
+                    while (iterator2.hasNext()) {
                         OMElement policySetReference = (OMElement) iterator2.next();
                         if (!"".equals(policySetReferences)) {
                             policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
@@ -350,6 +349,14 @@ public class PAPPolicyStore {
         }
     }
 
+    /**
+     * This adds the given policy to the policy store
+     *
+     * @param policy   policy DTO
+     * @param policyId policyId
+     * @throws EntitlementException throws, if fails
+     */
+
     public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy, String policyId)
             throws EntitlementException {
 
@@ -405,6 +412,11 @@ public class PAPPolicyStore {
             String policyType = null;
             if (policy.getPolicyType() != null && !policy.getPolicyType().trim().isEmpty()) {
                 policyType = policy.getPolicyType();
+                try{
+                    omElement = AXIOMUtil.stringToOM(policy.getPolicy());
+                }catch (XMLStreamException e) {
+                    log.warn("Failed converting the policy into the OMElement");
+                }
             } else {
                 try {
                     if (newPolicy) {
@@ -422,8 +434,7 @@ public class PAPPolicyStore {
             String policySetReferences = "";
 
             if (omElement != null) {
-                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.
-                        POLICY_REFERENCE);
+                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_ID_REFERENCE);
                 if (iterator1 != null) {
                     while (iterator1.hasNext()) {
                         OMElement policyReference = (OMElement) iterator1.next();
@@ -435,10 +446,9 @@ public class PAPPolicyStore {
                         }
                     }
                 }
-                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.
-                        POLICY_SET_REFERENCE);
+                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_SET_ID_REFERENCE);
                 if (iterator2 != null) {
-                    while (iterator1.hasNext()) {
+                    while (iterator2.hasNext()) {
                         OMElement policySetReference = (OMElement) iterator2.next();
                         if (!"".equals(policySetReferences)) {
                             policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
@@ -563,6 +573,14 @@ public class PAPPolicyStore {
             throw new EntitlementException("Error while removing policy " + policyId + " from PAP policy store");
         }
     }
+
+
+    /**
+     * This removes the given policy from the policy store
+     *
+     * @param policyId policyId
+     * @throws EntitlementException throws, if fails
+     */
 
     public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
 

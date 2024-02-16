@@ -53,6 +53,10 @@ public class PDPConstants {
 
     public static final String POLICY_SET_REFERENCE = "policySetIdReferences";
 
+    public static final String POLICY_ID_REFERENCE = "PolicyIdReference";
+
+    public static final String POLICY_SET_ID_REFERENCE = "PolicySetIdReference";
+
     public static final String APPLY_ELEMENT = "Apply";
 
     public static final String MATCH_ELEMENT = "Match";
