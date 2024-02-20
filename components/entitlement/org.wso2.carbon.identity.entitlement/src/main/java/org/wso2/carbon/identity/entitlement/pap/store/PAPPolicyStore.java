@@ -182,7 +182,7 @@ public class PAPPolicyStore {
         OMElement omElement = null;
 
         if (log.isDebugEnabled()) {
-            log.debug("Creating or updating entitlement policy-------------- test-original-method");
+            log.debug("Creating or updating entitlement policy");
         }
 
         if (policy == null || policyId == null) {
@@ -380,7 +380,7 @@ public class PAPPolicyStore {
             //Find policy order
             int finalPolicyOrder;
             PreparedStatement getPolicyCountPrepStmt = connection.prepareStatement
-                    ("SELECT COUNT(*) AS COUNT FROM POLICY WHERE TENANT_ID=?");
+                    ("SELECT COUNT(*) AS COUNT FROM IDN_XACML_POLICY WHERE TENANT_ID=?");
             getPolicyCountPrepStmt.setInt(1,tenantId);
             ResultSet rs = getPolicyCountPrepStmt.executeQuery();
 
@@ -433,32 +433,32 @@ public class PAPPolicyStore {
             String policyReferences = "";
             String policySetReferences = "";
 
-            if (omElement != null) {
-                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_ID_REFERENCE);
-                if (iterator1 != null) {
-                    while (iterator1.hasNext()) {
-                        OMElement policyReference = (OMElement) iterator1.next();
-                        if (!"".equals(policyReferences)) {
-                            policyReferences = policyReferences + PDPConstants.ATTRIBUTE_SEPARATOR
-                                    + policyReference.getText();
-                        } else {
-                            policyReferences = policyReference.getText();
-                        }
-                    }
-                }
-                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_SET_ID_REFERENCE);
-                if (iterator2 != null) {
-                    while (iterator2.hasNext()) {
-                        OMElement policySetReference = (OMElement) iterator2.next();
-                        if (!"".equals(policySetReferences)) {
-                            policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
-                                    + policySetReference.getText();
-                        } else {
-                            policySetReferences = policySetReference.getText();
-                        }
-                    }
-                }
-            }
+//            if (omElement != null) {
+//                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_ID_REFERENCE);
+//                if (iterator1 != null) {
+//                    while (iterator1.hasNext()) {
+//                        OMElement policyReference = (OMElement) iterator1.next();
+//                        if (!"".equals(policyReferences)) {
+//                            policyReferences = policyReferences + PDPConstants.ATTRIBUTE_SEPARATOR
+//                                    + policyReference.getText();
+//                        } else {
+//                            policyReferences = policyReference.getText();
+//                        }
+//                    }
+//                }
+//                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_SET_ID_REFERENCE);
+//                if (iterator2 != null) {
+//                    while (iterator2.hasNext()) {
+//                        OMElement policySetReference = (OMElement) iterator2.next();
+//                        if (!"".equals(policySetReferences)) {
+//                            policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
+//                                    + policySetReference.getText();
+//                        } else {
+//                            policySetReferences = policySetReference.getText();
+//                        }
+//                    }
+//                }
+//            }
 
             //Find policy editor type
             String policyEditorType = null;
@@ -470,10 +470,9 @@ public class PAPPolicyStore {
             int active = policy.isActive() ? 1: 0;
             int promote = policy.isPromote() ? 1: 0;
             PreparedStatement createPolicyPrepStmt = connection.prepareStatement(
-                        "INSERT INTO POLICY (POLICY_ID, VERSION, TENANT_ID, IS_IN_PDP, IS_IN_PAP, POLICY, " +
-                                "IS_ACTIVE, POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, " +
-                                "LAST_MODIFIED_USER, POLICY_REFERENCES, POLICY_SET_REFERENCES) VALUES " +
-                                "(?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+                        "INSERT INTO IDN_XACML_POLICY (POLICY_ID, VERSION, TENANT_ID, IS_IN_PDP, IS_IN_PAP, " +
+                                "POLICY, IS_ACTIVE, POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, " +
+                                "LAST_MODIFIED_USER) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)");
 
             createPolicyPrepStmt.setString(1, policyId);
             createPolicyPrepStmt.setInt(2, Integer.parseInt(policy.getVersion()));
@@ -485,19 +484,54 @@ public class PAPPolicyStore {
             createPolicyPrepStmt.setString(8, policyEditorType);
             createPolicyPrepStmt.setInt(9, finalPolicyOrder);
             createPolicyPrepStmt.setString(10, Long.toString(System.currentTimeMillis()));
-            createPolicyPrepStmt.setString
-                        (11, CarbonContext.getThreadLocalCarbonContext().getUsername());
-            createPolicyPrepStmt.setString(12, policyReferences);
-            createPolicyPrepStmt.setString(13, policySetReferences);
+            createPolicyPrepStmt.setString(11, CarbonContext.getThreadLocalCarbonContext().getUsername());
 
             createPolicyPrepStmt.executeUpdate();
             createPolicyPrepStmt.close();
 
+            //Write policy references and policy set references of the policy
+            if (omElement != null) {
+                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_ID_REFERENCE);
+                if (iterator1 != null) {
+                    PreparedStatement createPolicyReferencesPrepStmt = connection.prepareStatement(
+                            "INSERT INTO IDN_XACML_POLICY_REFERENCE (REFERENCE, POLICY_ID, VERSION, TENANT_ID) " +
+                                    "VALUES (?, ?, ?, ?)");
+                    while (iterator1.hasNext()) {
+                        OMElement policyReference = (OMElement) iterator1.next();
+
+                        createPolicyReferencesPrepStmt.setString(1, policyReference.getText());
+                        createPolicyReferencesPrepStmt.setString(2, policyId);
+                        createPolicyReferencesPrepStmt.setInt(3, Integer.parseInt(policy.getVersion()));
+                        createPolicyReferencesPrepStmt.setInt(4, tenantId);
+                        createPolicyReferencesPrepStmt.addBatch();
+                    }
+                    createPolicyReferencesPrepStmt.executeBatch();
+                    createPolicyReferencesPrepStmt.close();
+                }
+                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_SET_ID_REFERENCE);
+                if (iterator2 != null) {
+                    PreparedStatement createPolicySetReferencesPrepStmt = connection.prepareStatement(
+                            "INSERT INTO IDN_XACML_POLICY_SET_REFERENCE (SET_REFERENCE, POLICY_ID, VERSION, " +
+                                    "TENANT_ID) VALUES (?, ?, ?, ?)");
+                    while (iterator2.hasNext()) {
+                        OMElement policySetReference = (OMElement) iterator2.next();
+
+                        createPolicySetReferencesPrepStmt.setString(1, policySetReference.getText());
+                        createPolicySetReferencesPrepStmt.setString(2, policyId);
+                        createPolicySetReferencesPrepStmt.setInt(3, Integer.parseInt(policy.getVersion()));
+                        createPolicySetReferencesPrepStmt.setInt(4, tenantId);
+                        createPolicySetReferencesPrepStmt.addBatch();
+                    }
+                    createPolicySetReferencesPrepStmt.executeBatch();
+                    createPolicySetReferencesPrepStmt.close();
+                }
+            }
+
             //Write attributes of the policy
             if(properties != null) {
                 PreparedStatement createAttributesPrepStmt = connection.prepareStatement(
-                        "INSERT INTO ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION, TENANT_ID) VALUES " +
-                                "(?, ?, ?, ?, ?)");
+                        "INSERT INTO IDN_XACML_POLICY_ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION, TENANT_ID) " +
+                                "VALUES (?, ?, ?, ?, ?)");
 
                 for (Object o : properties.keySet()) {
                     String key = o.toString();
@@ -518,8 +552,8 @@ public class PAPPolicyStore {
             String[] policyMetaData = policy.getPolicyEditorData();
             if(policyMetaData != null && policyMetaData.length > 0) {
                 PreparedStatement createPolicyEditorDataPrepStmt = connection.prepareStatement(
-                        "INSERT INTO POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION, TENANT_ID) VALUES " +
-                                "(?, ?, ?, ?, ?)");
+                        "INSERT INTO IDN_XACML_POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION, TENANT_ID) " +
+                                "VALUES (?, ?, ?, ?, ?)");
                 int i = 0;
                 for (String policyData : policyMetaData) {
                     if (policyData != null && !policyData.isEmpty()) {
@@ -594,7 +628,7 @@ public class PAPPolicyStore {
 
             //Find whether the policy is published or not
             PreparedStatement findPDPPresencePrepStmt = connection.prepareStatement(
-                    "SELECT * FROM POLICY WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
+                    "SELECT * FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
             findPDPPresencePrepStmt.setString(1, policyId);
             findPDPPresencePrepStmt.setInt(2, 1);
             findPDPPresencePrepStmt.setInt(3, tenantId);
@@ -604,7 +638,7 @@ public class PAPPolicyStore {
 
                 //Remove the unpublished versions of the policy from the database
                 PreparedStatement removePolicyByIdAndVersionPrepStmt = connection.prepareStatement(
-                        "DELETE FROM POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?");
+                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?");
                 removePolicyByIdAndVersionPrepStmt.setString(1, policyId);
                 removePolicyByIdAndVersionPrepStmt.setInt(2, tenantId);
                 removePolicyByIdAndVersionPrepStmt.setInt(3, 0);
@@ -613,7 +647,7 @@ public class PAPPolicyStore {
 
                 //Remove the published version of the policy from the PAP (It is still present in PDP)
                 PreparedStatement removePolicyFromPAPPrepStmt = connection.prepareStatement(
-                        "UPDATE POLICY SET IS_IN_PAP=? WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
+                        "UPDATE IDN_XACML_POLICY SET IS_IN_PAP=? WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
                 removePolicyFromPAPPrepStmt.setInt(1, 0);
                 removePolicyFromPAPPrepStmt.setString(2, policyId);
                 removePolicyFromPAPPrepStmt.setInt(3, 1);
@@ -624,7 +658,7 @@ public class PAPPolicyStore {
             } else {
                 //Remove the policy from the database
                 PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
-                        "DELETE FROM POLICY WHERE POLICY_ID=? AND TENANT_ID=?");
+                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=?");
                 removePolicyPrepStmt.setString(1, policyId);
                 removePolicyPrepStmt.setInt(2, tenantId);
                 removePolicyPrepStmt.executeUpdate();
