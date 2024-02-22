@@ -114,6 +114,7 @@ public class PolicyPublisher {
             }
             if (pdpDataHolder == null) {
                 persistSubscriber(holder, false);
+                persistSubscriberToNewRDBMS(holder, false);
             }
         } catch (EntitlementException e) {
             // ignore
@@ -376,6 +377,38 @@ public class PolicyPublisher {
                 registry.delete(subscriberPath);
             }
         } catch (RegistryException e) {
+            log.error("Error while deleting subscriber details", e);
+            throw new EntitlementException("Error while deleting subscriber details", e);
+        }
+    }
+
+    public void deleteSubscriberFromNewRDBMS(String subscriberId) throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+
+        if (subscriberId == null) {
+            log.error("Subscriber Id can not be null");
+            throw new EntitlementException("Subscriber Id can not be null");
+        }
+
+        if (EntitlementConstants.PDP_SUBSCRIBER_ID.equals(subscriberId.trim())) {
+            log.error("Can not delete PDP publisher");
+            throw new EntitlementException("Can not delete PDP publisher");
+        }
+
+        try {
+            PreparedStatement deleteSubscriberPrepStmt = connection.prepareStatement(
+                    "DELETE FROM IDN_XACML_SUBSCRIBER WHERE SUBSCRIBER_ID=? AND TENANT_ID=?");
+            deleteSubscriberPrepStmt.setString(1, subscriberId);
+            deleteSubscriberPrepStmt.setInt(2, tenantId);
+            deleteSubscriberPrepStmt.executeUpdate();
+            deleteSubscriberPrepStmt.close();
+
+            IdentityDatabaseUtil.commitTransaction(connection);
+
+        } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while deleting subscriber details", e);
             throw new EntitlementException("Error while deleting subscriber details", e);
         }

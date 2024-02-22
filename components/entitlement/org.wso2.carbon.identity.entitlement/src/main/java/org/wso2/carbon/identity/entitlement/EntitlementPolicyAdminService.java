@@ -488,6 +488,7 @@ public class EntitlementPolicyAdminService {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
         publisher.deleteSubscriber(subscriberId);
+        publisher.deleteSubscriberFromNewRDBMS(subscriberId);
 
     }
 
