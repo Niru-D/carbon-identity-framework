@@ -460,6 +460,7 @@ public class EntitlementPolicyAdminService {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
         publisher.persistSubscriber(holder, false);
+        publisher.persistSubscriberToNewRDBMS(holder, false);
 
     }
 
@@ -473,6 +474,7 @@ public class EntitlementPolicyAdminService {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
         publisher.persistSubscriber(holder, true);
+        publisher.persistSubscriberToNewRDBMS(holder, true);
 
     }
 

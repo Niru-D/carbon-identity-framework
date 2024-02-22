@@ -429,37 +429,6 @@ public class PAPPolicyStore {
                 }
             }
 
-            //Find policy references and policy set references
-            String policyReferences = "";
-            String policySetReferences = "";
-
-//            if (omElement != null) {
-//                Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_ID_REFERENCE);
-//                if (iterator1 != null) {
-//                    while (iterator1.hasNext()) {
-//                        OMElement policyReference = (OMElement) iterator1.next();
-//                        if (!"".equals(policyReferences)) {
-//                            policyReferences = policyReferences + PDPConstants.ATTRIBUTE_SEPARATOR
-//                                    + policyReference.getText();
-//                        } else {
-//                            policyReferences = policyReference.getText();
-//                        }
-//                    }
-//                }
-//                Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_SET_ID_REFERENCE);
-//                if (iterator2 != null) {
-//                    while (iterator2.hasNext()) {
-//                        OMElement policySetReference = (OMElement) iterator2.next();
-//                        if (!"".equals(policySetReferences)) {
-//                            policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
-//                                    + policySetReference.getText();
-//                        } else {
-//                            policySetReferences = policySetReference.getText();
-//                        }
-//                    }
-//                }
-//            }
-
             //Find policy editor type
             String policyEditorType = null;
             if (policy.getPolicyEditor() != null && !policy.getPolicyEditor().trim().isEmpty()) {

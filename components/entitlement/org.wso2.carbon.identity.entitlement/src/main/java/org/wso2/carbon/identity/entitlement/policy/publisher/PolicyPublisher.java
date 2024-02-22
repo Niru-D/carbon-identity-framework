@@ -23,6 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.core.util.CryptoException;
 import org.wso2.carbon.core.util.CryptoUtil;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PAPStatusDataHandler;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
@@ -36,6 +37,10 @@ import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -200,6 +205,154 @@ public class PolicyPublisher {
         }
     }
 
+    public void persistSubscriberToNewRDBMS(PublisherDataHolder holder, boolean update) throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        String subscriberId = null;
+
+        if (holder == null || holder.getPropertyDTOs() == null) {
+            log.error("Publisher data can not be null");
+            throw new EntitlementException("Publisher data can not be null");
+        }
+
+        for (PublisherPropertyDTO dto : holder.getPropertyDTOs()) {
+            if (SUBSCRIBER_ID.equals(dto.getId())) {
+                subscriberId = dto.getValue();
+            }
+        }
+
+        if (subscriberId == null) {
+            log.error("Subscriber Id can not be null");
+            throw new EntitlementException("Subscriber Id can not be null");
+        }
+
+        try {
+
+            PublisherDataHolder oldHolder = null;
+
+            //Find whether the subscriber already exists
+            PreparedStatement findSubscriberExistencePrepStmt = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_SUBSCRIBER WHERE SUBSCRIBER_ID=? AND TENANT_ID=?");
+            findSubscriberExistencePrepStmt.setString(1, subscriberId);
+            findSubscriberExistencePrepStmt.setInt(2, tenantId);
+            ResultSet rs1 = findSubscriberExistencePrepStmt.executeQuery();
+
+            if (rs1.next()) {
+                if (update) {
+                    //Get the existing subscriber
+                    PreparedStatement getSubscriberPrepStmt = connection.prepareStatement(
+                            "SELECT s.SUBSCRIBER_ID, s.TENANT_ID, s.ENTITLEMENT_MODULE_NAME, p.PROPERTY_ID, " +
+                                    "p.DISPLAY_NAME, p.VALUE, p.IS_REQUIRED, p.DISPLAY_ORDER, p.IS_SECRET, p.MODULE " +
+                                    "FROM IDN_XACML_SUBSCRIBER s INNER JOIN IDN_XACML_SUBSCRIBER_PROPERTY p " +
+                                    "ON s.SUBSCRIBER_ID = p.SUBSCRIBER_ID AND s.TENANT_ID = p.TENANT_ID " +
+                                    "WHERE s.SUBSCRIBER_ID = ? AND s.TENANT_ID = ?");
+                    getSubscriberPrepStmt .setString(1, subscriberId);
+                    getSubscriberPrepStmt .setInt(2, tenantId);
+                    ResultSet rs2 = getSubscriberPrepStmt.executeQuery();
+
+                    oldHolder = new PublisherDataHolder(rs2, false);
+
+                    rs2.close();
+                    getSubscriberPrepStmt.close();
+
+                } else {
+                    throw new EntitlementException("Subscriber ID already exists");
+                }
+            }
+
+            findSubscriberExistencePrepStmt.close();
+            rs1.close();
+            populatePropertiesInNewRDBMS(holder,oldHolder);
+            PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();
+
+            //Create a new subscriber
+            if(!update){
+                PreparedStatement createSubscriberPrepStmt = connection.prepareStatement(
+                        "INSERT INTO IDN_XACML_SUBSCRIBER (SUBSCRIBER_ID, TENANT_ID, ENTITLEMENT_MODULE_NAME) " +
+                                "VALUES (?,?,?)");
+                createSubscriberPrepStmt.setString(1, subscriberId);
+                createSubscriberPrepStmt.setInt(2, tenantId);
+                createSubscriberPrepStmt.setString(3,holder.getModuleName());
+                createSubscriberPrepStmt.executeUpdate();
+                createSubscriberPrepStmt.close();
+
+                PreparedStatement createSubscriberPropertiesPrepStmt = connection.prepareStatement(
+                        "INSERT INTO IDN_XACML_SUBSCRIBER_PROPERTY (PROPERTY_ID, DISPLAY_NAME, VALUE, IS_REQUIRED," +
+                                "DISPLAY_ORDER, IS_SECRET, MODULE, SUBSCRIBER_ID, TENANT_ID) VALUES (?,?,?,?,?,?,?,?,?)");
+
+                for (PublisherPropertyDTO dto : propertyDTOs) {
+                    if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
+
+                        int isRequired = (dto.isRequired()) ? 1 : 0;
+                        int isSecret = (dto.isSecret()) ? 1 : 0;
+
+                        createSubscriberPropertiesPrepStmt.setString(1, dto.getId());
+                        createSubscriberPropertiesPrepStmt.setString(2, dto.getDisplayName());
+                        createSubscriberPropertiesPrepStmt.setString(3, dto.getValue());
+                        createSubscriberPropertiesPrepStmt.setInt(4, isRequired);
+                        createSubscriberPropertiesPrepStmt.setInt(5, dto.getDisplayOrder());
+                        createSubscriberPropertiesPrepStmt.setInt(6, isSecret);
+                        createSubscriberPropertiesPrepStmt.setString(7, dto.getModule());
+                        createSubscriberPropertiesPrepStmt.setString(8, subscriberId);
+                        createSubscriberPropertiesPrepStmt.setInt(9, tenantId);
+
+                        createSubscriberPropertiesPrepStmt.addBatch();
+                    }
+                }
+
+                createSubscriberPropertiesPrepStmt.executeBatch();
+                createSubscriberPropertiesPrepStmt.close();
+
+            }else{
+
+                //Update the module of an existing subscriber
+                assert oldHolder != null;
+                if(!oldHolder.getModuleName().equalsIgnoreCase(holder.getModuleName()) ){
+                    PreparedStatement updateSubscriberPrepStmt = connection.prepareStatement(
+                            "UPDATE IDN_XACML_SUBSCRIBER SET ENTITLEMENT_MODULE_NAME=? WHERE SUBSCRIBER_ID=? " +
+                                    "AND TENANT_ID=?");
+                    updateSubscriberPrepStmt.setString(1, holder.getModuleName());
+                    updateSubscriberPrepStmt.setString(2, subscriberId);
+                    updateSubscriberPrepStmt.setInt(3,tenantId);
+                    updateSubscriberPrepStmt.executeUpdate();
+                    updateSubscriberPrepStmt.close();
+                }
+
+                //Update the property values of an existing subscriber
+                PreparedStatement updateSubscriberPropertiesPrepStmt = connection.prepareStatement(
+                        "UPDATE IDN_XACML_SUBSCRIBER_PROPERTY SET VALUE=? WHERE SUBSCRIBER_ID=? AND TENANT_ID=? " +
+                                "AND PROPERTY_ID=?");
+
+                for (PublisherPropertyDTO dto : propertyDTOs) {
+                    if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
+
+                        PublisherPropertyDTO propertyDTO = null;
+                        if (oldHolder != null) {
+                            propertyDTO = oldHolder.getPropertyDTO(dto.getId());
+                        }
+                        if (propertyDTO != null && !propertyDTO.getValue().equalsIgnoreCase(dto.getValue())) {
+                            updateSubscriberPropertiesPrepStmt.setString(1,dto.getValue());
+                            updateSubscriberPropertiesPrepStmt.setString(2, subscriberId);
+                            updateSubscriberPropertiesPrepStmt.setInt(3, tenantId);
+                            updateSubscriberPropertiesPrepStmt.setString(4, dto.getId());
+                            updateSubscriberPropertiesPrepStmt.addBatch();
+                        }
+                    }
+                }
+                updateSubscriberPropertiesPrepStmt.executeBatch();
+                updateSubscriberPropertiesPrepStmt.close();
+            }
+
+            IdentityDatabaseUtil.commitTransaction(connection);
+
+        } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
+            log.error("Error while persisting subscriber details", e);
+            throw new EntitlementException("Error while persisting subscriber details", e);
+        }
+    }
+
 
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
@@ -314,6 +467,34 @@ public class PolicyPublisher {
             }
         }
         resource.setProperty(PublisherDataHolder.MODULE_NAME, holder.getModuleName());
+    }
+
+    private void populatePropertiesInNewRDBMS(PublisherDataHolder holder,
+                                    PublisherDataHolder oldHolder) {
+
+        PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();
+
+        for (PublisherPropertyDTO dto : propertyDTOs) {
+            if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
+
+                if (dto.isSecret()) {
+                    PublisherPropertyDTO propertyDTO = null;
+                    if (oldHolder != null) {
+                        propertyDTO = oldHolder.getPropertyDTO(dto.getId());
+                    }
+                    if (propertyDTO == null || !propertyDTO.getValue().equalsIgnoreCase(dto.getValue())) {
+                        try {
+                            String encryptedValue = CryptoUtil.getDefaultCryptoUtil().
+                                    encryptAndBase64Encode(dto.getValue().getBytes());
+                            dto.setValue(encryptedValue);
+                        } catch (CryptoException e) {
+                            log.error("Error while encrypting secret value of subscriber. " +
+                                    "Secret would not be persist.", e);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public Set<PolicyPublisherModule> getPublisherModules() {
