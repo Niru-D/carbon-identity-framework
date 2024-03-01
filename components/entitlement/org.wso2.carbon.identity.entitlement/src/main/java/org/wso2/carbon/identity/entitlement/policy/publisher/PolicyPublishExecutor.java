@@ -85,6 +85,7 @@ public class PolicyPublishExecutor {
         context.setUsername(userName);
         try {
             publish();
+//            publishInNewRDBMS();
         } finally {
             PrivilegedCarbonContext.endTenantFlow();
         }
@@ -110,6 +111,7 @@ public class PolicyPublishExecutor {
         }
 
         PublisherDataHolder holder = null;
+        PublisherDataHolder holder2 = null;
         Set<PAPStatusDataHandler> papStatusDataHandler = publisher.getPapStatusDataHandlers();
         for (String subscriberId : subscriberIds) {
 
@@ -122,6 +124,7 @@ public class PolicyPublishExecutor {
             } else {
                 try {
                     holder = publisher.retrieveSubscriber(subscriberId, true);
+                    holder2 = publisher.retrieveSubscriberFromNewRDBMS(subscriberId, true);
                 } catch (EntitlementException e) {
                     log.error("Subscriber details can not be retrieved. So skip publishing policies " +
                             "for subscriber : " + subscriberId);
@@ -154,6 +157,155 @@ public class PolicyPublishExecutor {
             }
 
             // try with post verification module.
+            try {
+                PublisherVerificationModule verificationModule = publisher.getVerificationModule();
+                if (verificationModule != null && !verificationModule.doVerify(verificationCode)) {
+                    newVerificationCode = verificationModule.getVerificationCode(holder);
+                    notPublishedSubscribers.add(subscriberId);
+                    break;
+                }
+
+            } catch (EntitlementException e) {
+                // ignore
+                log.error("Error while calling the post verification publisher module", e);
+            }
+
+            for (String policyId : policyIds) {
+
+                PolicyDTO policyDTO = null;
+
+                if (EntitlementConstants.PolicyPublish.ACTION_CREATE.equalsIgnoreCase(action) ||
+                        EntitlementConstants.PolicyPublish.ACTION_UPDATE.equalsIgnoreCase(action)) {
+                    PolicyVersionManager manager = EntitlementAdminEngine.getInstance().getVersionManager();
+                    try {
+                        policyDTO = manager.getPolicy(policyId, version);
+                    } catch (EntitlementException e) {
+                        //  ignore
+                    }
+                } else {
+                    policyDTO = new PolicyDTO();
+                    policyDTO.setPolicyId(policyId);
+                    policyDTO.setVersion(version);
+                    policyDTO.setPolicyOrder(order);
+                }
+
+                if (policyDTO == null) {
+                    subscriberHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                            subscriberId, version, policyId, action, false,
+                            "Can not found policy under policy id : " + policyId));
+                    policyHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                            policyId, version, subscriberId, action, false,
+                            "Can not found policy under policy id : " + policyId));
+                    continue;
+                }
+
+                try {
+                    policyPublisherModule.publish(policyDTO, action, enabled, order);
+                    subscriberHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                            subscriberId, version, policyId, action));
+                    policyHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                            policyId, version, subscriberId, action));
+                } catch (Exception e) {
+                    subscriberHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                            subscriberId, version, policyId, action, false, e.getMessage()));
+                    policyHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                            policyId, version, subscriberId, action, false, e.getMessage()));
+                }
+
+                for (PAPStatusDataHandler module : papStatusDataHandler) {
+                    try {
+                        module.handle(EntitlementConstants.Status.ABOUT_POLICY, policyId, policyHolders);
+                        policyHolders = new ArrayList<StatusHolder>();
+                    } catch (EntitlementException e) {
+                        // ignore
+                        log.error("Error while calling post publishers", e);
+                    }
+                }
+            }
+
+            for (PAPStatusDataHandler module : papStatusDataHandler) {
+                try {
+                    module.handle(EntitlementConstants.Status.ABOUT_SUBSCRIBER, subscriberId, subscriberHolders);
+                    subscriberHolders = new ArrayList<StatusHolder>();
+                } catch (EntitlementException e) {
+                    // ignore
+                    log.error("Error while calling post publishers", e);
+                }
+            }
+        }
+
+        if (newVerificationCode != null) {
+            persistVerificationCode(newVerificationCode,
+                    notPublishedSubscribers.toArray(new String[notPublishedSubscribers.size()]));
+        }
+    }
+
+    public void publishInNewRDBMS() {
+
+
+        if ((policyIds == null || policyIds.length > 0) && verificationCode != null) {
+            //Uses registry
+            loadVerificationCode(verificationCode);
+        }
+
+        String newVerificationCode = null;
+        ArrayList<String> notPublishedSubscribers = new ArrayList<String>();
+
+        PolicyPublisherModule policyPublisherModule = null;
+        Set<PolicyPublisherModule> publisherModules = publisher.getPublisherModules();
+
+        if (publisherModules == null) {
+            return;
+        }
+
+        PublisherDataHolder holder = null;
+        Set<PAPStatusDataHandler> papStatusDataHandler = publisher.getPapStatusDataHandlers();
+
+        for (String subscriberId : subscriberIds) {
+
+            // there is only one known subscriber, if policies are getting published to PDP
+            List<StatusHolder> subscriberHolders = new ArrayList<StatusHolder>();
+            List<StatusHolder> policyHolders = new ArrayList<StatusHolder>();
+            if (toPDP) {
+                policyPublisherModule = new CarbonPDPPublisher();
+                holder = new PublisherDataHolder(policyPublisherModule.getModuleName());
+            } else {
+                try {
+//                    holder = publisher.retrieveSubscriber(subscriberId, true);
+                    holder = publisher.retrieveSubscriberFromNewRDBMS(subscriberId, true);
+                } catch (EntitlementException e) {
+                    log.error("Subscriber details can not be retrieved. So skip publishing policies " +
+                            "for subscriber : " + subscriberId);
+                }
+
+                if (holder != null) {
+                    for (PolicyPublisherModule publisherModule : publisherModules) {
+                        if (publisherModule.getModuleName().equals(holder.getModuleName())) {
+                            policyPublisherModule = publisherModule;
+                            if (policyPublisherModule instanceof AbstractPolicyPublisherModule) {
+                                try {
+                                    ((AbstractPolicyPublisherModule) policyPublisherModule).init(holder);
+                                } catch (Exception e) {
+                                    subscriberHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                                            subscriberId, version, "More than one Policy", action, false, e.getMessage()));
+                                    continue;
+                                }
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (policyPublisherModule == null) {
+                subscriberHolders.add(new StatusHolder(EntitlementConstants.StatusTypes.PUBLISH_POLICY,
+                        subscriberId, version, "More than one Policy", action, false,
+                        "No policy publish module is defined for subscriber : " + subscriberId));
+                continue;
+            }
+
+            // try with post verification module.
+            // Related to the verification code
             try {
                 PublisherVerificationModule verificationModule = publisher.getVerificationModule();
                 if (verificationModule != null && !verificationModule.doVerify(verificationCode)) {

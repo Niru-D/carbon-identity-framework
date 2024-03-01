@@ -496,7 +496,7 @@ public class EntitlementPolicyAdminService {
      * Publishes given set of policies to all subscribers
      *
      * @param policyIds     policy ids to publish,  if null or empty, all policies are published
-     * @param subscriberIds subscriber ids to publish,  if null or empty, all policies are published
+     * @param subscriberIds subscriber ids to publish,  if null or empty, policies are published to all subscribers
      * @param action        publishing action
      * @param version       version
      * @param enabled       whether policy must be enabled or not
@@ -680,6 +680,7 @@ public class EntitlementPolicyAdminService {
                 getInstance().getPapPolicyStoreManager();
         if (storeManager.isExistPolicy(policyId)) {
             storeManager.addOrUpdatePolicy(policyDTO);
+            storeManager.addOrUpdatePolicyToNewRDBMS(policyDTO);
         }
 
         if (enable) {

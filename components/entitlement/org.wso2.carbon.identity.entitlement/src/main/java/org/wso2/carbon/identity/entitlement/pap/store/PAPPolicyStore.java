@@ -378,27 +378,27 @@ public class PAPPolicyStore {
         try {
 
             //Find policy order
-            int finalPolicyOrder;
-            PreparedStatement getPolicyCountPrepStmt = connection.prepareStatement
-                    ("SELECT COUNT(*) AS COUNT FROM IDN_XACML_POLICY WHERE TENANT_ID=?");
-            getPolicyCountPrepStmt.setInt(1,tenantId);
-            ResultSet rs = getPolicyCountPrepStmt.executeQuery();
-
-            int noOfPolicies = 0;
-            if (rs.next()) {
-                noOfPolicies = rs.getInt("COUNT");
-            }
-            if (policy.getPolicyOrder() > 0) {
-                finalPolicyOrder = policy.getPolicyOrder();
-            } else {
-                int policyOrder = 1;
-                if (noOfPolicies != 0) {
-                    policyOrder = policyOrder + noOfPolicies;
-                }
-                finalPolicyOrder = policyOrder;
-            }
-            getPolicyCountPrepStmt.close();
-            rs.close();
+//            int finalPolicyOrder;
+//            PreparedStatement getPolicyCountPrepStmt = connection.prepareStatement
+//                    ("SELECT COUNT(*) AS COUNT FROM IDN_XACML_POLICY WHERE TENANT_ID=?");
+//            getPolicyCountPrepStmt.setInt(1,tenantId);
+//            ResultSet rs = getPolicyCountPrepStmt.executeQuery();
+//
+//            int noOfPolicies = 0;
+//            if (rs.next()) {
+//                noOfPolicies = rs.getInt("COUNT");
+//            }
+//            if (policy.getPolicyOrder() > 0) {
+//                finalPolicyOrder = policy.getPolicyOrder();
+//            } else {
+//                int policyOrder = 1;
+//                if (noOfPolicies != 0) {
+//                    policyOrder = policyOrder + noOfPolicies;
+//                }
+//                finalPolicyOrder = policyOrder;
+//            }
+//            getPolicyCountPrepStmt.close();
+//            rs.close();
 
             //Find policy meta data
             Properties properties = null;
@@ -451,7 +451,7 @@ public class PAPPolicyStore {
             createPolicyPrepStmt.setInt(6, active);
             createPolicyPrepStmt.setString(7, policyType);
             createPolicyPrepStmt.setString(8, policyEditorType);
-            createPolicyPrepStmt.setInt(9, finalPolicyOrder);
+            createPolicyPrepStmt.setInt(9, 0);
             createPolicyPrepStmt.setString(10, Long.toString(System.currentTimeMillis()));
             createPolicyPrepStmt.setString(11, CarbonContext.getThreadLocalCarbonContext().getUsername());
 

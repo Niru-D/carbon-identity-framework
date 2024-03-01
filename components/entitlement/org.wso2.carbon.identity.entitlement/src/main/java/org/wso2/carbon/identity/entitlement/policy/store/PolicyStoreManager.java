@@ -40,6 +40,9 @@ import java.util.Properties;
 public class PolicyStoreManager {
 
     private PolicyStoreManageModule policyStoreStore = null;
+
+    private PolicyStoreManageModule policyStore = null;
+
     private PolicyDataStore policyDataStore = null;
 
     private static Log log = LogFactory.getLog(PolicyStoreManager.class);
@@ -53,6 +56,7 @@ public class PolicyStoreManager {
         } else {
             policyStoreStore = new RegistryPolicyStoreManageModule();
         }
+        policyStore = new PolicyStore();
         this.policyDataStore = policyDataStore;
     }
 
@@ -64,7 +68,16 @@ public class PolicyStoreManager {
         dto.setActive(policyDTO.isActive());
         dto.setPolicyOrder(policyDTO.getPolicyOrder());
         dto.setAttributeDTOs(policyDTO.getAttributeDTOs());
-        if (policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
+        dto.setVersion(policyDTO.getVersion());
+
+//        if (policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
+//            dto.setSetActive(false);
+//            dto.setSetOrder(false);
+//        } else {
+//            dto.setSetOrder(true);
+//            dto.setSetActive(true);
+//        }
+        if (policyStore.isPolicyExist(policyDTO.getPolicyId())) {
             dto.setSetActive(false);
             dto.setSetOrder(false);
         } else {
@@ -72,6 +85,9 @@ public class PolicyStoreManager {
             dto.setSetActive(true);
         }
         policyStoreStore.addPolicy(dto);
+        policyStore.addPolicy(dto);
+
+
         policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
         RegistryPolicyStoreManageModule
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_UPDATE);
@@ -79,36 +95,57 @@ public class PolicyStoreManager {
 
     public void updatePolicy(PolicyDTO policyDTO) throws EntitlementException {
 
-        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
-            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
-                                           policyDTO.getPolicyId());
+//        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
+//            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
+//                                           policyDTO.getPolicyId());
+//        }
+
+        if (!policyStore.isPolicyExist(policyDTO.getPolicyId())) {
+            throw new EntitlementException("Policy does not exist in the Policy Store : PolicyId " +
+                    policyDTO.getPolicyId());
         }
+
         PolicyStoreDTO dto = new PolicyStoreDTO();
         dto.setPolicyId(policyDTO.getPolicyId());
         dto.setPolicy(policyDTO.getPolicy());
         dto.setActive(policyDTO.isActive());
         dto.setPolicyOrder(policyDTO.getPolicyOrder());
         dto.setAttributeDTOs(policyDTO.getAttributeDTOs());
+        dto.setVersion(policyDTO.getVersion());
         dto.setSetActive(false);
         dto.setSetOrder(false);
         policyStoreStore.updatePolicy(dto);
+        policyStore.updatePolicy(dto);
+
         RegistryPolicyStoreManageModule
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_UPDATE);
     }
 
     public void enableDisablePolicy(PolicyDTO policyDTO) throws EntitlementException {
-
-        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
-            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
-                                           policyDTO.getPolicyId());
+//
+////        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
+////            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
+////                                           policyDTO.getPolicyId());
+////        }
+//
+        if (!policyStore.isPolicyExist(policyDTO.getPolicyId())) {
+            throw new EntitlementException("Policy does not exist in the Policy Store : PolicyId " +
+                    policyDTO.getPolicyId());
         }
 
         PolicyStoreDTO dto = new PolicyStoreDTO();
         dto.setPolicyId(policyDTO.getPolicyId());
         dto.setPolicy(policyDTO.getPolicy());
         dto.setActive(policyDTO.isActive());
+        dto.setVersion(policyDTO.getVersion());
         dto.setSetActive(true);
-        if (policyStoreStore.isPolicyDeActivationSupport()) {
+
+//        if (policyStoreStore.isPolicyDeActivationSupport()) {
+//            policyStoreStore.updatePolicy(dto);
+//        }
+//        policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
+        if (policyStore.isPolicyDeActivationSupport()) {
+            policyStore.updatePolicy(dto);
             policyStoreStore.updatePolicy(dto);
         }
         policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
@@ -123,18 +160,27 @@ public class PolicyStoreManager {
 
     public void orderPolicy(PolicyDTO policyDTO) throws EntitlementException {
 
-        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
-            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
-                                           policyDTO.getPolicyId());
+//        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
+//            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
+//                                           policyDTO.getPolicyId());
+//        }
+        if (!policyStore.isPolicyExist(policyDTO.getPolicyId())) {
+            throw new EntitlementException("Policy does not exist in the Policy Store : PolicyId " +
+                    policyDTO.getPolicyId());
         }
 
         PolicyStoreDTO dto = new PolicyStoreDTO();
         dto.setPolicyId(policyDTO.getPolicyId());
         dto.setPolicy(policyDTO.getPolicy());
         dto.setPolicyOrder(policyDTO.getPolicyOrder());
+        dto.setVersion(policyDTO.getVersion());
         dto.setSetOrder(true);
-        if (policyStoreStore.isPolicyOrderingSupport()) {
-            policyStoreStore.updatePolicy(dto);
+//        if (policyStoreStore.isPolicyOrderingSupport()) {
+//            policyStoreStore.updatePolicy(dto);
+//        }
+//        policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
+        if (policyStore.isPolicyOrderingSupport()) {
+            policyStore.updatePolicy(dto);
         }
         policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
         RegistryPolicyStoreManageModule
@@ -143,11 +189,17 @@ public class PolicyStoreManager {
 
 
     public void removePolicy(PolicyDTO policyDTO) throws EntitlementException {
-        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
-            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
+//        if (!policyStoreStore.isPolicyExist(policyDTO.getPolicyId())) {
+//            throw new EntitlementException("Policy is not exist in the Policy Store : PolicyId " +
+//                                           policyDTO.getPolicyId());
+//        }
+        if (!policyStore.isPolicyExist(policyDTO.getPolicyId())) {
+            throw new EntitlementException("Policy does not exist in the Policy Store : PolicyId " +
                                            policyDTO.getPolicyId());
         }
+        policyStore.deletePolicy(policyDTO.getPolicyId());
         policyStoreStore.deletePolicy(policyDTO.getPolicyId());
+
         policyDataStore.removePolicyData(policyDTO.getPolicyId());
         RegistryPolicyStoreManageModule
                 .invalidateCache(policyDTO.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_DELETE);

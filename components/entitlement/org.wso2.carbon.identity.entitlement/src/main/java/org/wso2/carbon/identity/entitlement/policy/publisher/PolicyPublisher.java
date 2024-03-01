@@ -432,6 +432,43 @@ public class PolicyPublisher {
         throw new EntitlementException("No Subscriber is defined for given Id");
     }
 
+    public PublisherDataHolder retrieveSubscriberFromNewRDBMS(String id, boolean returnSecrets) throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        PreparedStatement getSubscriberPrepStmt = null;
+        ResultSet rs1 = null;
+
+        try {
+            getSubscriberPrepStmt = connection.prepareStatement(
+                    "SELECT s.SUBSCRIBER_ID, s.TENANT_ID, s.ENTITLEMENT_MODULE_NAME, p.PROPERTY_ID, " +
+                            "p.DISPLAY_NAME, p.VALUE, p.IS_REQUIRED, p.DISPLAY_ORDER, p.IS_SECRET, p.MODULE " +
+                            "FROM IDN_XACML_SUBSCRIBER s INNER JOIN IDN_XACML_SUBSCRIBER_PROPERTY p " +
+                            "ON s.SUBSCRIBER_ID = p.SUBSCRIBER_ID AND s.TENANT_ID = p.TENANT_ID " +
+                            "WHERE s.SUBSCRIBER_ID = ? AND s.TENANT_ID = ?");
+            getSubscriberPrepStmt .setString(1, id);
+            getSubscriberPrepStmt .setInt(2, tenantId);
+            rs1 = getSubscriberPrepStmt.executeQuery();
+
+            return  new PublisherDataHolder(rs1,returnSecrets);
+
+        } catch (SQLException e) {
+            log.error("Error while retrieving subscriber details of id : " + id, e);
+            throw new EntitlementException("Error while retrieving subscriber details of id : " + id, e);
+        }finally {
+            if (rs1 != null) {
+                try {
+                    rs1.close();
+                } catch (SQLException e) { /* ignored */ }
+            }
+            if (getSubscriberPrepStmt != null) {
+                try {
+                    getSubscriberPrepStmt.close();
+                } catch (SQLException e) { /* ignored */ }
+            }
+        }
+    }
+
     public String[] retrieveSubscriberIds(String searchString) throws EntitlementException {
 
         try {
