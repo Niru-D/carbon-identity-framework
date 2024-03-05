@@ -105,7 +105,7 @@ public class PublisherDataHolder {
 
         List<PublisherPropertyDTO> propertyDTOs = new ArrayList<PublisherPropertyDTO>();
 
-        if (resultSet != null && resultSet.next()) {
+        if (resultSet != null) {
 
             while (resultSet.next()) {
 

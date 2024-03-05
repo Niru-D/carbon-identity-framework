@@ -108,7 +108,8 @@ public class PolicyPublisher {
         try {
             PublisherDataHolder pdpDataHolder = null;
             try {
-                pdpDataHolder = retrieveSubscriber(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
+//                pdpDataHolder = retrieveSubscriber(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
+                pdpDataHolder = retrieveSubscriberFromNewRDBMS(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
             } catch (Exception e) {
                 // ignore
             }
@@ -442,15 +443,21 @@ public class PolicyPublisher {
         try {
             getSubscriberPrepStmt = connection.prepareStatement(
                     "SELECT s.SUBSCRIBER_ID, s.TENANT_ID, s.ENTITLEMENT_MODULE_NAME, p.PROPERTY_ID, " +
-                            "p.DISPLAY_NAME, p.VALUE, p.IS_REQUIRED, p.DISPLAY_ORDER, p.IS_SECRET, p.MODULE " +
-                            "FROM IDN_XACML_SUBSCRIBER s INNER JOIN IDN_XACML_SUBSCRIBER_PROPERTY p " +
+                            "p.DISPLAY_NAME, p.VALUE, p.IS_REQUIRED, p.DISPLAY_ORDER, p.IS_SECRET, p.MODULE FROM " +
+                            "IDN_XACML_SUBSCRIBER s INNER JOIN IDN_XACML_SUBSCRIBER_PROPERTY p " +
                             "ON s.SUBSCRIBER_ID = p.SUBSCRIBER_ID AND s.TENANT_ID = p.TENANT_ID " +
                             "WHERE s.SUBSCRIBER_ID = ? AND s.TENANT_ID = ?");
             getSubscriberPrepStmt .setString(1, id);
             getSubscriberPrepStmt .setInt(2, tenantId);
             rs1 = getSubscriberPrepStmt.executeQuery();
+            ResultSet rs2 = rs1;
+            if ( rs1.next()) {
+                return new PublisherDataHolder(rs2, returnSecrets);
+            }else{
+                return null;
+            }
 
-            return  new PublisherDataHolder(rs1,returnSecrets);
+//            return new PublisherDataHolder(rs1,returnSecrets);
 
         } catch (SQLException e) {
             log.error("Error while retrieving subscriber details of id : " + id, e);

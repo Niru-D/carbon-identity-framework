@@ -554,7 +554,7 @@ public class EntitlementPolicyAdminService {
      * @param policyIds
      * @throws EntitlementException
      */
-    public void publishToPDP(String[] policyIds, String action, String version, boolean enabled,
+    public void     publishToPDP(String[] policyIds, String action, String version, boolean enabled,
                              int order) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
@@ -750,7 +750,7 @@ public class EntitlementPolicyAdminService {
                 if (policyObj != null) {
                     policyId = policyObj.getId().toASCIIString();
                     policyDTO.setPolicyId(policyId);
-                    // All the policies wont be active at the time been added.
+                    // All the policies won't be active at the time been added.
                     policyDTO.setActive(policyDTO.isActive());
 
                     if (policyId.contains("/")) {

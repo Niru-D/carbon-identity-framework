@@ -86,7 +86,6 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 }
             }
             persistStatus(path, statusHolder, false);
-//            persistStatusToNewRDBMS(path, key, statusHolder, false);
         } else {
             String path = ENTITLEMENT_PUBLISHER_STATUS + key;
             // subscriber would be deleted.
@@ -97,6 +96,14 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 }
             }
             persistStatus(path, statusHolder, false);
+        }
+
+        //If the action is DELETE_POLICY, delete the policy or the subscriber status
+        for (StatusHolder holder : statusHolder) {
+            if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
+                deletedPersistedDataFromNewRDBMS(about, key);
+                return;
+            }
         }
     }
 
@@ -165,6 +172,36 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 registry.delete(path);
             }
         } catch (RegistryException e) {
+            log.error(e);
+            throw new EntitlementException("Error while persisting policy status", e);
+        }
+    }
+
+    private synchronized void deletedPersistedDataFromNewRDBMS(String about, String key) throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        try {
+            if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                PreparedStatement deletePolicyStatusPrepStmt = connection.prepareStatement(
+                        "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                deletePolicyStatusPrepStmt.setString(1, key);
+                deletePolicyStatusPrepStmt.setInt(2, tenantId);
+                deletePolicyStatusPrepStmt.executeUpdate();
+                deletePolicyStatusPrepStmt.close();
+            }else{
+                PreparedStatement deleteSubscriberStatusPrepStmt = connection.prepareStatement(
+                        "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
+                deleteSubscriberStatusPrepStmt.setString(1, key);
+                deleteSubscriberStatusPrepStmt.setInt(2, tenantId);
+                deleteSubscriberStatusPrepStmt.executeUpdate();
+                deleteSubscriberStatusPrepStmt.close();
+            }
+
+            IdentityDatabaseUtil.commitTransaction(connection);
+
+        } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
         }
