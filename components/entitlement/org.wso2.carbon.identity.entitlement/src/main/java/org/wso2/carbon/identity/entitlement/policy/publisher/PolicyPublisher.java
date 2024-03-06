@@ -450,9 +450,8 @@ public class PolicyPublisher {
             getSubscriberPrepStmt .setString(1, id);
             getSubscriberPrepStmt .setInt(2, tenantId);
             rs1 = getSubscriberPrepStmt.executeQuery();
-            ResultSet rs2 = rs1;
             if ( rs1.next()) {
-                return new PublisherDataHolder(rs2, returnSecrets);
+                return new PublisherDataHolder(rs1, returnSecrets);
             }else{
                 return null;
             }

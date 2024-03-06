@@ -107,7 +107,7 @@ public class PublisherDataHolder {
 
         if (resultSet != null) {
 
-            while (resultSet.next()) {
+            do {
 
                 String entitlementModuleName = resultSet.getString("ENTITLEMENT_MODULE_NAME");
                 String propertyId = resultSet.getString("PROPERTY_ID");
@@ -144,7 +144,7 @@ public class PublisherDataHolder {
 
                 this.moduleName = entitlementModuleName;
                 propertyDTOs.add(dto);
-            }
+            } while (resultSet.next());
         }
         this.propertyDTOs = propertyDTOs.toArray(new PublisherPropertyDTO[propertyDTOs.size()]);
     }

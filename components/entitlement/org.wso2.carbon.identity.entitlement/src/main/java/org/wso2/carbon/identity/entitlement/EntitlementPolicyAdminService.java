@@ -680,7 +680,6 @@ public class EntitlementPolicyAdminService {
                 getInstance().getPapPolicyStoreManager();
         if (storeManager.isExistPolicy(policyId)) {
             storeManager.addOrUpdatePolicy(policyDTO);
-            storeManager.addOrUpdatePolicyToNewRDBMS(policyDTO);
         }
 
         if (enable) {

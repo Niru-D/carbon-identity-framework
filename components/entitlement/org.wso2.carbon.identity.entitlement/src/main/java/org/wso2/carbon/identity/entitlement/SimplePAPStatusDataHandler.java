@@ -98,13 +98,14 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
             persistStatus(path, statusHolder, false);
         }
 
-        //If the action is DELETE_POLICY, delete the policy or the subscriber status
-        for (StatusHolder holder : statusHolder) {
-            if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
-                deletedPersistedDataFromNewRDBMS(about, key);
-                return;
-            }
-        }
+//        //If the action is DELETE_POLICY, delete the policy or the subscriber status
+//        for (StatusHolder holder : statusHolder) {
+//            if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
+//                deletedPersistedDataFromNewRDBMS(about, key);
+//                return;
+//            }
+//        }
+//        persistStatusToNewRDBMS(about, key, statusHolder, false);
     }
 
 
@@ -255,26 +256,38 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
 
     }
 
-//    private synchronized void persistStatusToNewRDBMS(String path, String key, List<StatusHolder> statusHolders, boolean isNew)
-//            throws EntitlementException {
+    private synchronized void persistStatusToNewRDBMS(String about, String key, List<StatusHolder> statusHolders, boolean isNew)
+            throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+
+        try {
+
+            boolean useLastStatusOnly = Boolean.parseBoolean(
+                    IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
+
+            PreparedStatement findKeyExistencePrepStmt = null;
+            ResultSet rs = null;
+
+            if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                findKeyExistencePrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                findKeyExistencePrepStmt.setString(1, key);
+                findKeyExistencePrepStmt.setInt(2, tenantId);
+                rs = findKeyExistencePrepStmt.executeQuery();
+            }else{
+                findKeyExistencePrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
+                findKeyExistencePrepStmt.setString(1, key);
+                findKeyExistencePrepStmt.setInt(2, tenantId);
+                rs = findKeyExistencePrepStmt.executeQuery();
+            }
+
+//            if (rs.next() && !isNew && !useLastStatusOnly) {
 //
-//        //Have to decide what to do for publishers (then change parameters)
+//                //Normally add
 //
-//        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-//
-//        try {
-//            boolean useLastStatusOnly = Boolean.parseBoolean(
-//                    IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
-//
-//            //make a common function to this
-//            //find the existence of a policy
-//            PreparedStatement findPolicyPrepStmt = connection.prepareStatement(
-//                    "SELECT * FROM STATUS WHERE POLICY_ID=?");
-//
-//            findPolicyPrepStmt.setString(1, key);
-//            ResultSet rs1 = findPolicyPrepStmt.executeQuery();
-//
-//            if (rs1.next() && !isNew && !useLastStatusOnly) {
 //                resource = registry.get(path);
 //                String[] versions = registry.getVersions(path);
 //                // remove all versions.  As we have no way to disable versioning for specific resource
@@ -295,22 +308,26 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
 //                    }
 //                }
 //            } else {
+//
+//                //Replace with new set
+//
 //                resource = registry.newResource();
 //            }
+
+//            findKeyExistencePrepStmt.close();
+//            rs.close();
 //
 //            if (resource != null && statusHolders != null && statusHolders.size() > 0) {
 //                resource.setVersionableChange(false);
 //                populateStatusProperties(statusHolders.toArray(new StatusHolder[statusHolders.size()]), resource);
 //                registry.put(path, resource);
 //            }
-//        } catch (RegistryException e) {
-//            log.error(e);
-//            throw new EntitlementException("Error while persisting policy status", e);
-//        } catch (SQLException e) {
-//            throw new RuntimeException(e);
-//        }
-//
-//    }
+        } catch (SQLException e) {
+            log.error(e);
+            throw new EntitlementException("Error while persisting policy status", e);
+        }
+
+    }
 
     private synchronized List<StatusHolder> readStatus(String path, String about) throws EntitlementException {
 
