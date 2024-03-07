@@ -23,31 +23,20 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.application.common.IdentityApplicationManagementClientException;
-import org.wso2.carbon.identity.application.common.IdentityApplicationManagementException;
-import org.wso2.carbon.identity.application.common.util.IdentityApplicationManagementUtil;
-import org.wso2.carbon.identity.application.mgt.dao.impl.ApplicationDAOImpl;
-import org.wso2.carbon.identity.application.mgt.dao.impl.ApplicationMgtDBQueries;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
-import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
-import org.wso2.carbon.ndatasource.common.DataSourceException;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
-import javax.naming.NamingException;
 import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import org.wso2.carbon.ndatasource.core.CarbonDataSource;
 
 import javax.xml.stream.XMLStreamException;
 import java.sql.*;
@@ -57,7 +46,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
-import static org.wso2.carbon.identity.application.common.util.IdentityApplicationConstants.Error.APPLICATION_ALREADY_EXISTS;
 
 public class PAPPolicyStore {
 
@@ -292,7 +280,7 @@ public class PAPPolicyStore {
                                                                                 POLICY_SET_REFERENCE);
                 if (iterator2 != null) {
                     String policySetReferences = "";
-                    while (iterator2.hasNext()) {
+                    while (iterator1.hasNext()) {
                         OMElement policySetReference = (OMElement) iterator2.next();
                         if (!"".equals(policySetReferences)) {
                             policySetReferences = policySetReferences + PDPConstants.ATTRIBUTE_SEPARATOR
@@ -376,29 +364,6 @@ public class PAPPolicyStore {
         }
 
         try {
-
-            //Find policy order
-//            int finalPolicyOrder;
-//            PreparedStatement getPolicyCountPrepStmt = connection.prepareStatement
-//                    ("SELECT COUNT(*) AS COUNT FROM IDN_XACML_POLICY WHERE TENANT_ID=?");
-//            getPolicyCountPrepStmt.setInt(1,tenantId);
-//            ResultSet rs = getPolicyCountPrepStmt.executeQuery();
-//
-//            int noOfPolicies = 0;
-//            if (rs.next()) {
-//                noOfPolicies = rs.getInt("COUNT");
-//            }
-//            if (policy.getPolicyOrder() > 0) {
-//                finalPolicyOrder = policy.getPolicyOrder();
-//            } else {
-//                int policyOrder = 1;
-//                if (noOfPolicies != 0) {
-//                    policyOrder = policyOrder + noOfPolicies;
-//                }
-//                finalPolicyOrder = policyOrder;
-//            }
-//            getPolicyCountPrepStmt.close();
-//            rs.close();
 
             //Find policy meta data
             Properties properties = null;
