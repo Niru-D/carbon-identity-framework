@@ -98,14 +98,14 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
             persistStatus(path, statusHolder, false);
         }
 
-//        //If the action is DELETE_POLICY, delete the policy or the subscriber status
-//        for (StatusHolder holder : statusHolder) {
-//            if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
-//                deletedPersistedDataFromNewRDBMS(about, key);
-//                return;
-//            }
-//        }
-//        persistStatusToNewRDBMS(about, key, statusHolder, false);
+        //If the action is DELETE_POLICY, delete the policy or the subscriber status
+        for (StatusHolder holder : statusHolder) {
+            if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
+                deletedPersistedDataFromNewRDBMS(about, key);
+                return;
+            }
+        }
+        persistStatusToNewRDBMS(about, key, statusHolder, false);
     }
 
 
@@ -183,21 +183,18 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         try {
+            PreparedStatement deleteStatusPrepStmt = null;
             if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                PreparedStatement deletePolicyStatusPrepStmt = connection.prepareStatement(
+                deleteStatusPrepStmt = connection.prepareStatement(
                         "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
-                deletePolicyStatusPrepStmt.setString(1, key);
-                deletePolicyStatusPrepStmt.setInt(2, tenantId);
-                deletePolicyStatusPrepStmt.executeUpdate();
-                deletePolicyStatusPrepStmt.close();
             }else{
-                PreparedStatement deleteSubscriberStatusPrepStmt = connection.prepareStatement(
+                deleteStatusPrepStmt = connection.prepareStatement(
                         "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
-                deleteSubscriberStatusPrepStmt.setString(1, key);
-                deleteSubscriberStatusPrepStmt.setInt(2, tenantId);
-                deleteSubscriberStatusPrepStmt.executeUpdate();
-                deleteSubscriberStatusPrepStmt.close();
             }
+            deleteStatusPrepStmt.setString(1, key);
+            deleteStatusPrepStmt.setInt(2, tenantId);
+            deleteStatusPrepStmt.executeUpdate();
+            deleteStatusPrepStmt.close();
 
             IdentityDatabaseUtil.commitTransaction(connection);
 
@@ -263,66 +260,61 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
 
         try {
-
             boolean useLastStatusOnly = Boolean.parseBoolean(
                     IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
 
-            PreparedStatement findKeyExistencePrepStmt = null;
-            ResultSet rs = null;
+            if(statusHolders != null && !statusHolders.isEmpty()){
 
-            if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                findKeyExistencePrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
-                findKeyExistencePrepStmt.setString(1, key);
-                findKeyExistencePrepStmt.setInt(2, tenantId);
-                rs = findKeyExistencePrepStmt.executeQuery();
-            }else{
-                findKeyExistencePrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
-                findKeyExistencePrepStmt.setString(1, key);
-                findKeyExistencePrepStmt.setInt(2, tenantId);
-                rs = findKeyExistencePrepStmt.executeQuery();
+                if (isNew || useLastStatusOnly) {
+                    //Remove the previous statuses
+                    PreparedStatement deleteStatusPrepStmt = null;
+                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                        deleteStatusPrepStmt = connection.prepareStatement(
+                                "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                    }else{
+                        deleteStatusPrepStmt = connection.prepareStatement(
+                                "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
+                    }
+                    deleteStatusPrepStmt.setString(1, key);
+                    deleteStatusPrepStmt.setInt(2, tenantId);
+                    deleteStatusPrepStmt.executeUpdate();
+                    deleteStatusPrepStmt.close();
+                }
+
+                PreparedStatement addStatusPrepStmt = null;
+                for(StatusHolder statusHolder : statusHolders){
+                    //Add status to the database
+                    if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
+                        addStatusPrepStmt = connection.prepareStatement(
+                                "INSERT INTO IDN_XACML_STATUS (TYPE, SUCCESS, USER, TARGET, TARGET_ACTION," +
+                                        "TIME_INSTANCE, MESSAGE, POLICY_ID, POLICY_TENANT_ID) VALUES " +
+                                        "(?,?,?,?,?,?,?,?,?)");
+                    }else{
+                        addStatusPrepStmt = connection.prepareStatement(
+                                "INSERT INTO IDN_XACML_STATUS (TYPE, SUCCESS, USER, TARGET, TARGET_ACTION," +
+                                        "TIME_INSTANCE, MESSAGE, SUBSCRIBER_ID, SUBSCRIBER_TENANT_ID) VALUES " +
+                                        "(?,?,?,?,?,?,?,?,?)");
+                    }
+                    addStatusPrepStmt.setString(1, statusHolder.getType());
+                    addStatusPrepStmt.setInt(2, statusHolder.isSuccess() ? 1 : 0);
+                    addStatusPrepStmt.setString(3, statusHolder.getUser());
+                    addStatusPrepStmt.setString(4, statusHolder.getTarget());
+                    addStatusPrepStmt.setString(5, statusHolder.getTargetAction());
+                    addStatusPrepStmt.setString(6, Long.toString(System.currentTimeMillis()));
+                    addStatusPrepStmt.setString(7, statusHolder.getMessage());
+                    addStatusPrepStmt.setString(8, key);
+                    addStatusPrepStmt.setInt(9, tenantId);
+                    addStatusPrepStmt.addBatch();
+                }
+                assert addStatusPrepStmt != null;
+                addStatusPrepStmt.executeBatch();
+                addStatusPrepStmt.close();
             }
 
-//            if (rs.next() && !isNew && !useLastStatusOnly) {
-//
-//                //Normally add
-//
-//                resource = registry.get(path);
-//                String[] versions = registry.getVersions(path);
-//                // remove all versions.  As we have no way to disable versioning for specific resource
-//                if (versions != null) {
-//                    for (String version : versions) {
-//                        long versionInt = 0;
-//                        String[] versionStrings = version.split(RegistryConstants.VERSION_SEPARATOR);
-//                        if (versionStrings != null && versionStrings.length == 2) {
-//                            try {
-//                                versionInt = Long.parseLong(versionStrings[1]);
-//                            } catch (Exception e) {
-//                                // ignore
-//                            }
-//                        }
-//                        if (versionInt != 0) {
-//                            registry.removeVersionHistory(version, versionInt);
-//                        }
-//                    }
-//                }
-//            } else {
-//
-//                //Replace with new set
-//
-//                resource = registry.newResource();
-//            }
+            IdentityDatabaseUtil.commitTransaction(connection);
 
-//            findKeyExistencePrepStmt.close();
-//            rs.close();
-//
-//            if (resource != null && statusHolders != null && statusHolders.size() > 0) {
-//                resource.setVersionableChange(false);
-//                populateStatusProperties(statusHolders.toArray(new StatusHolder[statusHolders.size()]), resource);
-//                registry.put(path, resource);
-//            }
         } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
         }
