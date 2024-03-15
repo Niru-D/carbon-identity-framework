@@ -194,7 +194,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
             deleteStatusPrepStmt.setString(1, key);
             deleteStatusPrepStmt.setInt(2, tenantId);
             deleteStatusPrepStmt.executeUpdate();
-            deleteStatusPrepStmt.close();
+            IdentityDatabaseUtil.closeStatement(deleteStatusPrepStmt);
 
             IdentityDatabaseUtil.commitTransaction(connection);
 
@@ -202,6 +202,8 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
+        }finally {
+            IdentityDatabaseUtil.closeConnection(connection);
         }
     }
 
@@ -278,7 +280,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                     deleteStatusPrepStmt.setString(1, key);
                     deleteStatusPrepStmt.setInt(2, tenantId);
                     deleteStatusPrepStmt.executeUpdate();
-                    deleteStatusPrepStmt.close();
+                    IdentityDatabaseUtil.closeStatement(deleteStatusPrepStmt);
                 }
 
                 PreparedStatement addStatusPrepStmt = null;
@@ -308,7 +310,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 }
                 assert addStatusPrepStmt != null;
                 addStatusPrepStmt.executeBatch();
-                addStatusPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(addStatusPrepStmt);
             }
 
             IdentityDatabaseUtil.commitTransaction(connection);
@@ -317,6 +319,8 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
+        }finally {
+            IdentityDatabaseUtil.closeConnection(connection);
         }
 
     }

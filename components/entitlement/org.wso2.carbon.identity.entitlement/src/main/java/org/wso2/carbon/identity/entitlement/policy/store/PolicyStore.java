@@ -60,10 +60,10 @@ public class PolicyStore extends AbstractPolicyFinderModule
 
     @Override
     public void init(Properties properties) {
-//        policyStorePath = properties.getProperty(PROPERTY_POLICY_STORE_PATH);
-//        if (policyStorePath == null) {
-//            policyStorePath = DEFAULT_POLICY_STORE_PATH;
-//        }
+        policyStorePath = properties.getProperty(PROPERTY_POLICY_STORE_PATH);
+        if (policyStorePath == null) {
+            policyStorePath = DEFAULT_POLICY_STORE_PATH;
+        }
     }
 
     @Override
@@ -97,7 +97,9 @@ public class PolicyStore extends AbstractPolicyFinderModule
                         } else {
                             throw new SQLException("No published version found for policy: " + policy.getPolicyId());
                         }
+                        IdentityDatabaseUtil.closeResultSet(rs);
                     }
+                    IdentityDatabaseUtil.closeStatement(getPublishedVersionPrepStmt);
                 }
             } else {
                 version = Integer.parseInt(policy.getVersion());
@@ -114,7 +116,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
                 updateActiveStatusPrepStmt.setInt(3, tenantId);
                 updateActiveStatusPrepStmt.setInt(4, version);
                 updateActiveStatusPrepStmt.executeUpdate();
-                updateActiveStatusPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(updateActiveStatusPrepStmt);
             }
 
             //Update order
@@ -129,7 +131,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
                     updateOrderPrepStmt.setInt(3, tenantId);
                     updateOrderPrepStmt.setInt(4, version);
                     updateOrderPrepStmt.executeUpdate();
-                    updateOrderPrepStmt.close();
+                    IdentityDatabaseUtil.closeStatement(updateOrderPrepStmt);
                 }
             }
 
@@ -147,8 +149,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
                     previousActive = rs.getInt("IS_ACTIVE");
                     previousOrder = rs.getInt("POLICY_ORDER");
                 }
-                rs.close();
-                getActiveStatusAndOrderPrepStmt.close();
+                IdentityDatabaseUtil.closeResultSet(rs);
+                IdentityDatabaseUtil.closeStatement(getActiveStatusAndOrderPrepStmt);
 
                 //Remove previously published versions of the policy
                 PreparedStatement updatePublishStatusPrepStmt = connection.prepareStatement(
@@ -161,7 +163,19 @@ public class PolicyStore extends AbstractPolicyFinderModule
                 updatePublishStatusPrepStmt.setInt(5, tenantId);
                 updatePublishStatusPrepStmt.setInt(6, 1);
                 updatePublishStatusPrepStmt.executeUpdate();
-                updatePublishStatusPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(updatePublishStatusPrepStmt);
+
+                //When removing previously published versions,
+                // If the policy has been already removed from PAP, remove the policy from the database
+                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
+                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? " +
+                                "AND IS_IN_PAP=? AND IS_IN_PDP=?");
+                removePolicyPrepStmt.setString(1, policy.getPolicyId());
+                removePolicyPrepStmt.setInt(2, tenantId);
+                removePolicyPrepStmt.setInt(3, 0);
+                removePolicyPrepStmt.setInt(4, 0);
+                removePolicyPrepStmt.executeUpdate();
+                IdentityDatabaseUtil.closeStatement(removePolicyPrepStmt);
             }
 
             //Publish the given version of the policy
@@ -173,7 +187,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             publishPolicyPrepStmt.setInt(3, tenantId);
             publishPolicyPrepStmt.setInt(4, version);
             publishPolicyPrepStmt.executeUpdate();
-            publishPolicyPrepStmt.close();
+            IdentityDatabaseUtil.closeStatement(publishPolicyPrepStmt);
 
             //If this is an update, keep the previous active status and order
             if(!policy.isSetActive() && !policy.isSetOrder()){
@@ -186,7 +200,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
                 updatePolicyStatusAndOrderPrepStmt.setInt(4, tenantId);
                 updatePolicyStatusAndOrderPrepStmt.setInt(5, version);
                 updatePolicyStatusAndOrderPrepStmt.executeUpdate();
-                updatePolicyStatusAndOrderPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(updatePolicyStatusAndOrderPrepStmt);
             }
 
             IdentityDatabaseUtil.commitTransaction(connection);
@@ -195,6 +209,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while publishing policy", e);
             throw new EntitlementException("Error while publishing policy", e);
+        }finally {
+            IdentityDatabaseUtil.closeConnection(connection);
         }
     }
 
@@ -225,16 +241,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
         } catch (SQLException e) {
             return false;
         }finally {
-            if (rs != null) {
-                try {
-                    rs.close();
-                } catch (SQLException e) { /* ignored */ }
-            }
-            if (getPolicyPublishStatus != null) {
-                try {
-                    getPolicyPublishStatus.close();
-                } catch (SQLException e) { /* ignored */ }
-            }
+            IdentityDatabaseUtil.closeAllConnections(connection, rs, getPolicyPublishStatus);
         }
     }
 
@@ -266,7 +273,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             demotePolicyPrepStmt.setInt(5, tenantId);
             demotePolicyPrepStmt.setInt(6, 1);
             demotePolicyPrepStmt.executeUpdate();
-            demotePolicyPrepStmt.close();
+            IdentityDatabaseUtil.closeStatement(demotePolicyPrepStmt);
 
             //If the policy has been already removed from PAP, remove the policy from the database
             PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
@@ -277,7 +284,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             removePolicyPrepStmt.setInt(3, 0);
             removePolicyPrepStmt.setInt(4, 0);
             removePolicyPrepStmt.executeUpdate();
-            removePolicyPrepStmt.close();
+            IdentityDatabaseUtil.closeStatement(removePolicyPrepStmt);
 
             IdentityDatabaseUtil.commitTransaction(connection);
             return true;
@@ -286,6 +293,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             return false;
+        }finally {
+            IdentityDatabaseUtil.closeConnection(connection);
         }
     }
 
@@ -348,7 +357,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
     @Override
     public String[] getOrderedPolicyIdentifiers() {
 
-        log.debug("Retrieving of Order Policy Ids are started. " + new Date());
+        log.debug("Retrieving of Ordered Policy Ids is started. " + new Date());
 
         List<String> policies = new ArrayList<String>();
 
@@ -363,7 +372,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             log.error("Policies can not be retrieved from registry policy finder module", e);
         }
 
-        log.debug("Retrieving of Order Policy Ids are finish. " + new Date());
+        log.debug("Retrieving of Ordered Policy Ids is finished. " + new Date());
 
         return policies.toArray(new String[policies.size()]);
 

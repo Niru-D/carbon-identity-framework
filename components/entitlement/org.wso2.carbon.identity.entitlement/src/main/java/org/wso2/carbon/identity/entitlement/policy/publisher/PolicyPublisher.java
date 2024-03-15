@@ -255,16 +255,17 @@ public class PolicyPublisher {
 
                     oldHolder = new PublisherDataHolder(rs2, false);
 
-                    rs2.close();
-                    getSubscriberPrepStmt.close();
+                    IdentityDatabaseUtil.closeResultSet(rs2);
+                    IdentityDatabaseUtil.closeStatement(getSubscriberPrepStmt);
 
                 } else {
                     throw new EntitlementException("Subscriber ID already exists");
                 }
             }
 
-            findSubscriberExistencePrepStmt.close();
-            rs1.close();
+            IdentityDatabaseUtil.closeResultSet(rs1);
+            IdentityDatabaseUtil.closeStatement(findSubscriberExistencePrepStmt);
+
             populatePropertiesInNewRDBMS(holder,oldHolder);
             PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();
 
@@ -277,7 +278,7 @@ public class PolicyPublisher {
                 createSubscriberPrepStmt.setInt(2, tenantId);
                 createSubscriberPrepStmt.setString(3,holder.getModuleName());
                 createSubscriberPrepStmt.executeUpdate();
-                createSubscriberPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(createSubscriberPrepStmt);
 
                 PreparedStatement createSubscriberPropertiesPrepStmt = connection.prepareStatement(
                         "INSERT INTO IDN_XACML_SUBSCRIBER_PROPERTY (PROPERTY_ID, DISPLAY_NAME, VALUE, IS_REQUIRED," +
@@ -304,7 +305,7 @@ public class PolicyPublisher {
                 }
 
                 createSubscriberPropertiesPrepStmt.executeBatch();
-                createSubscriberPropertiesPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(createSubscriberPropertiesPrepStmt);
 
             }else{
 
@@ -318,7 +319,7 @@ public class PolicyPublisher {
                     updateSubscriberPrepStmt.setString(2, subscriberId);
                     updateSubscriberPrepStmt.setInt(3,tenantId);
                     updateSubscriberPrepStmt.executeUpdate();
-                    updateSubscriberPrepStmt.close();
+                    IdentityDatabaseUtil.closeStatement(updateSubscriberPrepStmt);
                 }
 
                 //Update the property values of an existing subscriber
@@ -343,7 +344,7 @@ public class PolicyPublisher {
                     }
                 }
                 updateSubscriberPropertiesPrepStmt.executeBatch();
-                updateSubscriberPropertiesPrepStmt.close();
+                IdentityDatabaseUtil.closeStatement(updateSubscriberPropertiesPrepStmt);
             }
 
             IdentityDatabaseUtil.commitTransaction(connection);
@@ -352,6 +353,8 @@ public class PolicyPublisher {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while persisting subscriber details", e);
             throw new EntitlementException("Error while persisting subscriber details", e);
+        }finally {
+            IdentityDatabaseUtil.closeConnection(connection);
         }
     }
 
@@ -404,7 +407,7 @@ public class PolicyPublisher {
             deleteSubscriberPrepStmt.setString(1, subscriberId);
             deleteSubscriberPrepStmt.setInt(2, tenantId);
             deleteSubscriberPrepStmt.executeUpdate();
-            deleteSubscriberPrepStmt.close();
+            IdentityDatabaseUtil.closeStatement(deleteSubscriberPrepStmt);
 
             IdentityDatabaseUtil.commitTransaction(connection);
 
@@ -412,6 +415,8 @@ public class PolicyPublisher {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while deleting subscriber details", e);
             throw new EntitlementException("Error while deleting subscriber details", e);
+        }finally {
+            IdentityDatabaseUtil.closeConnection(connection);
         }
     }
 
@@ -456,22 +461,11 @@ public class PolicyPublisher {
                 return null;
             }
 
-//            return new PublisherDataHolder(rs1,returnSecrets);
-
         } catch (SQLException e) {
             log.error("Error while retrieving subscriber details of id : " + id, e);
             throw new EntitlementException("Error while retrieving subscriber details of id : " + id, e);
         }finally {
-            if (rs1 != null) {
-                try {
-                    rs1.close();
-                } catch (SQLException e) { /* ignored */ }
-            }
-            if (getSubscriberPrepStmt != null) {
-                try {
-                    getSubscriberPrepStmt.close();
-                } catch (SQLException e) { /* ignored */ }
-            }
+            IdentityDatabaseUtil.closeAllConnections(connection, rs1, getSubscriberPrepStmt);
         }
     }
 

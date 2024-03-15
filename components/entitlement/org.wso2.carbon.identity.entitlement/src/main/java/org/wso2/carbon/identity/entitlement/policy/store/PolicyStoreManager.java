@@ -227,6 +227,7 @@ public class PolicyStoreManager {
 
         List<PolicyDTO> policyDTOs = new ArrayList<PolicyDTO>();
         String[] policies = policyStoreStore.getOrderedPolicyIdentifiers();
+//        String[] policies = policyStore.getOrderedPolicyIdentifiers();
         if (policies != null) {
             for (String policy : policies) {
                 PolicyDTO policyDTO = new PolicyDTO();

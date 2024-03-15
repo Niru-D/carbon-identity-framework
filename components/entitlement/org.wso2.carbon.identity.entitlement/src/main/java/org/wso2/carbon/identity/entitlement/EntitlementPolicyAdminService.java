@@ -191,6 +191,7 @@ public class EntitlementPolicyAdminService {
         PolicyDTO[] policyDTOs = null;
 
         if (isPDPPolicy) {
+            //TODO
             policyDTOs = EntitlementAdminEngine.
                     getInstance().getPolicyStoreManager().getLightPolicies();
         } else {
@@ -259,6 +260,7 @@ public class EntitlementPolicyAdminService {
         PolicyDTO policyDTO = null;
 
         if (isPDPPolicy) {
+            //TODO
             policyDTO = EntitlementAdminEngine.getInstance().
                     getPolicyStoreManager().getPolicy(policyId);
         } else {

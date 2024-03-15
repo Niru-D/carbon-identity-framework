@@ -53,6 +53,10 @@ public class PAPPolicyStoreManager {
         store.removePolicyFromNewRDBMS(policyId);
     }
 
+    public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
+        store.removePolicyByVersion(policyId, version);
+    }
+
     public String[] getPolicyIds() throws EntitlementException {
         return store.getAllPolicyIds();
     }
