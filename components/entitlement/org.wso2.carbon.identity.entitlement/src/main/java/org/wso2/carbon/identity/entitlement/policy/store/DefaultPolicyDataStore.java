@@ -63,13 +63,21 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     @Override
     public PolicyCombiningAlgorithm getGlobalPolicyAlgorithm() {
 
-
         String algorithm = null;
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getPolicyCombiningAlgoPrepStmt = null;
+        ResultSet rs = null;
+
         try {
-            Registry registry = getGovernanceRegistry();
-            if (registry.resourceExists(policyDataCollection)) {
-                Collection collection = (Collection) registry.get(policyDataCollection);
-                algorithm = collection.getProperty("globalPolicyCombiningAlgorithm");
+            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getPolicyCombiningAlgoPrepStmt.setInt(1, tenantId);
+            getPolicyCombiningAlgoPrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            rs = getPolicyCombiningAlgoPrepStmt.executeQuery();
+
+            if(rs.next()){
+                algorithm = rs.getString("CONFIG_VALUE");
             }
 
             if (algorithm == null || algorithm.trim().length() == 0) {
@@ -93,10 +101,12 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
                 return EntitlementUtil.getPolicyCombiningAlgorithm(algorithm);
             }
 
-        } catch (RegistryException | EntitlementException e) {
+        } catch (SQLException | EntitlementException e) {
             if (log.isDebugEnabled()) {
                 log.debug("Exception while getting Global Policy Algorithm from policy data store.", e);
             }
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, rs, getPolicyCombiningAlgoPrepStmt);
         }
 
         log.warn("Global policy combining algorithm is not defined. Therefore using default one");
@@ -106,24 +116,46 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     @Override
     public void setGlobalPolicyAlgorithm(String policyCombiningAlgorithm) throws EntitlementException {
 
-        Registry registry = getGovernanceRegistry();
-        try {
-            Collection policyCollection;
-            if (registry.resourceExists(policyDataCollection)) {
-                policyCollection = (Collection) registry.get(policyDataCollection);
-            } else {
-                policyCollection = registry.newCollection();
-            }
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(true);
+        PreparedStatement getAlgoPresencePrepStmt = null;
+        ResultSet rs = null;
+        PreparedStatement setPolicyCombiningAlgoPrepStmt = null;
 
-            policyCollection.setProperty("globalPolicyCombiningAlgorithm", policyCombiningAlgorithm);
-            registry.put(policyDataCollection, policyCollection);
+        try {
+            //Check the existence of the algorithm
+            getAlgoPresencePrepStmt = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getAlgoPresencePrepStmt.setInt(1, tenantId);
+            getAlgoPresencePrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            rs = getAlgoPresencePrepStmt.executeQuery();
+
+            if(rs.next()){
+                //Update the algorithm
+                setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
+                        "UPDATE IDN_XACML_CONFIG SET CONFIG_VALUE=? WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            }else{
+                //Insert the algorithm
+                setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
+                        "INSERT INTO IDN_XACML_CONFIG (CONFIG_VALUE, TENANT_ID, CONFIG_KEY) VALUES (?, ?, ?)");
+            }
+            setPolicyCombiningAlgoPrepStmt.setString(1, policyCombiningAlgorithm);
+            setPolicyCombiningAlgoPrepStmt.setInt(2, tenantId);
+            setPolicyCombiningAlgoPrepStmt.setString(3, "globalPolicyCombiningAlgorithm");
+            setPolicyCombiningAlgoPrepStmt.executeUpdate();
 
             // performing cache invalidation
             EntitlementEngine.getInstance().invalidatePolicyCache();
 
-        } catch (RegistryException e) {
+            IdentityDatabaseUtil.closeStatement(setPolicyCombiningAlgoPrepStmt);
+            IdentityDatabaseUtil.commitTransaction(connection);
+
+        } catch (SQLException e) {
+            IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while updating Global combing algorithm in policy store ", e);
             throw new EntitlementException("Error while updating combing algorithm in policy store");
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, rs, getAlgoPresencePrepStmt);
         }
     }
 
@@ -131,19 +163,29 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     public String getGlobalPolicyAlgorithmName() {
 
         String algorithm = null;
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getPolicyCombiningAlgoPrepStmt = null;
+        ResultSet rs = null;
+
         try {
 
-            Registry registry = getGovernanceRegistry();
-            if (registry.resourceExists(policyDataCollection)) {
-                Collection collection = (Collection) registry.get(policyDataCollection);
-                algorithm = collection.getProperty("globalPolicyCombiningAlgorithm");
+            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getPolicyCombiningAlgoPrepStmt.setInt(1, tenantId);
+            getPolicyCombiningAlgoPrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            rs = getPolicyCombiningAlgoPrepStmt.executeQuery();
+
+            if(rs.next()){
+                algorithm = rs.getString("CONFIG_VALUE");
             }
-        } catch (RegistryException e) {
+
+        } catch (SQLException e) {
             if (log.isDebugEnabled()) {
-                log.debug(e);
+                log.debug("Error while getting Global Policy Combining Algorithm Name.", e);
             }
-        } catch (EntitlementException e) {
-            log.error("Error while getting Global Policy Combining Algorithm Name.", e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, rs, getPolicyCombiningAlgoPrepStmt);
         }
 
         // set default

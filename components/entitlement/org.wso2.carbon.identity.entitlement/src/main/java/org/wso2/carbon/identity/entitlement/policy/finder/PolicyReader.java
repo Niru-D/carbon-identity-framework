@@ -149,24 +149,36 @@ public class PolicyReader {
     }
 
     /**
-     * This reads the policy combining algorithm from registry resource property
+     * This reads the policy combining algorithm
      *
      * @return policy combining algorithm as String
      * @throws EntitlementException throws
      */
     public String readPolicyCombiningAlgorithm() throws EntitlementException {
+
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getPolicyCombiningAlgoPrepStmt = null;
+        ResultSet algorithm = null;
+
         try {
-            Collection policyCollection = null;
-            if (registry.resourceExists(policyStorePath)) {
-                policyCollection = (Collection) registry.get(policyStorePath);
+            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getPolicyCombiningAlgoPrepStmt.setInt(1, tenantId);
+            getPolicyCombiningAlgoPrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            algorithm = getPolicyCombiningAlgoPrepStmt.executeQuery();
+
+            if(algorithm.next()){
+                return algorithm.getString("CONFIG_VALUE");
+            }else{
+                return null;
             }
-            if (policyCollection != null) {
-                return policyCollection.getProperty("globalPolicyCombiningAlgorithm");
-            }
-            return null;
-        } catch (RegistryException e) {
+
+        } catch (SQLException e) {
             log.error("Error while reading policy combining algorithm", e);
             throw new EntitlementException("Error while reading policy combining algorithm", e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, algorithm, getPolicyCombiningAlgoPrepStmt);
         }
     }
 
