@@ -31,6 +31,7 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
+import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
 import org.wso2.carbon.identity.entitlement.policy.finder.registry.RegistryPolicyReader;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
@@ -308,7 +309,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
     public String getPolicy(String policyId) {
         PolicyDTO dto;
         try {
-            dto = getPolicyReader().readPolicy(policyId);
+//            dto = getPolicyReader().readPolicy(policyId);
+            dto = new PolicyReader().readPolicy(policyId);
             return dto.getPolicy();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
@@ -321,7 +323,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
     public int getPolicyOrder(String policyId) {
         PolicyDTO dto;
         try {
-            dto = getPolicyReader().readPolicy(policyId);
+//            dto = getPolicyReader().readPolicy(policyId);
+            dto = new PolicyReader().readPolicy(policyId);
             return dto.getPolicyOrder();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
@@ -333,12 +336,12 @@ public class PolicyStore extends AbstractPolicyFinderModule
     @Override
     public String[] getActivePolicies() {
 
-        log.debug("Retrieving of Active policies are started. " + new Date());
+        log.debug("Retrieving of Active policies is started. " + new Date());
 
         List<String> policies = new ArrayList<String>();
 
         try {
-            PolicyDTO[] policyDTOs = getPolicyReader().readAllPolicies(true, true);
+            PolicyDTO[] policyDTOs = new PolicyReader().readAllPolicies(true, true);
             for (PolicyDTO dto : policyDTOs) {
                 if (dto.getPolicy() != null) {
                     policies.add(dto.getPolicy());
@@ -348,7 +351,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             log.error("Policies can not be retrieved from registry policy finder module", e);
         }
 
-        log.debug("Retrieving of Active policies are finished.   " + new Date());
+        log.debug("Retrieving of Active policies is finished.   " + new Date());
 
         return policies.toArray(new String[policies.size()]);
     }
@@ -362,7 +365,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
         List<String> policies = new ArrayList<String>();
 
         try {
-            PolicyDTO[] policyDTOs = getPolicyReader().readAllPolicies(false, true);
+//            PolicyDTO[] policyDTOs = getPolicyReader().readAllPolicies(false, true);
+            PolicyDTO[] policyDTOs = new PolicyReader().readAllPolicies(false, true);
             for (PolicyDTO dto : policyDTOs) {
                 if (dto.getPolicy() != null) {
                     policies.add(dto.getPolicyId());
@@ -382,7 +386,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
     public String[] getPolicyIdentifiers() {
         String[] policyIds = null;
         try {
-            policyIds = getPolicyReader().getAllPolicyIds();
+//            policyIds = getPolicyReader().getAllPolicyIds();
+            policyIds = new PolicyReader().getAllPolicyIds();
         } catch (Exception e) {
             log.error("Policy identifiers can not be retrieved from registry policy finder module", e);
         }
@@ -392,9 +397,10 @@ public class PolicyStore extends AbstractPolicyFinderModule
     @Override
     public String getReferencedPolicy(String policyId) {
 
-        // retrieve for policies that are not active
+        // retrieve policies that are not active
         try {
-            PolicyDTO dto = getPolicyReader().readPolicy(policyId);
+//            PolicyDTO dto = getPolicyReader().readPolicy(policyId);
+            PolicyDTO dto = new PolicyReader().readPolicy(policyId);
             if (dto != null && dto.getPolicy() != null && !dto.isActive()) {
                 return dto.getPolicy();
             }
@@ -412,7 +418,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
         PolicyDTO[] policyDTOs = null;
         Map<String, Set<AttributeDTO>> attributeMap = null;
         try {
-            policyDTOs = getPolicyReader().readAllPolicies(true, true);
+//            policyDTOs = getPolicyReader().readAllPolicies(true, true);
+            policyDTOs = new PolicyReader().readAllPolicies(true, true);
         } catch (Exception e) {
             log.error("Policies can not be retrieved from registry policy finder module", e);
         }
@@ -460,44 +467,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
         return true;
     }
 
-    /**
-     * creates policy reader instance
-     *
-     * @return
-     */
-    private RegistryPolicyReader getPolicyReader() {
-
-        Registry registry = null;
-        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
-        try {
-            registry = EntitlementServiceComponent.getRegistryService().
-                    getGovernanceSystemRegistry(tenantId);
-        } catch (RegistryException e) {
-            log.error("Error while obtaining registry for tenant :  " + tenantId, e);
-        }
-        return new RegistryPolicyReader(registry, policyStorePath);
-    }
-
-    /**
-     * This helper method creates properties object which contains the policy meta data.
-     *
-     * @param attributeDTOs List of AttributeDTO
-     * @param resource      registry resource
-     */
-    private void setAttributesAsProperties(AttributeDTO[] attributeDTOs, Resource resource) {
-
-        int attributeElementNo = 0;
-        if (attributeDTOs != null) {
-            for (AttributeDTO attributeDTO : attributeDTOs) {
-                resource.setProperty(KEY_VALUE_POLICY_META_DATA + attributeElementNo,
-                                     attributeDTO.getCategory() + "," +
-                                     attributeDTO.getAttributeValue() + "," +
-                                     attributeDTO.getAttributeId() + "," +
-                                     attributeDTO.getAttributeDataType());
-                attributeElementNo++;
-            }
-        }
-    }
 
     @Override
     public boolean isPolicyOrderingSupport() {

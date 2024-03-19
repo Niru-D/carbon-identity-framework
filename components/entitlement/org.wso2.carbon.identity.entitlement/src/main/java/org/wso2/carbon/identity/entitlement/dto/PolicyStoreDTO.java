@@ -39,6 +39,8 @@ public class PolicyStoreDTO {
 
     private String version;
 
+    private String policyType;
+
     private AttributeDTO[] attributeDTOs = new AttributeDTO[0];
 
     public String getPolicyId() {
@@ -103,5 +105,13 @@ public class PolicyStoreDTO {
 
     public void setVersion(String version) {
         this.version = version;
+    }
+
+    public String getPolicyType() {
+        return policyType;
+    }
+
+    public void setPolicyType(String policyType) {
+        this.policyType = policyType;
     }
 }

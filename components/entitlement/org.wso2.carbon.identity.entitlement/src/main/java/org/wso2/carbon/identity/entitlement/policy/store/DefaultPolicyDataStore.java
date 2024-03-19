@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
 import org.wso2.balana.combine.xacml3.DenyOverridesPolicyAlg;
 import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.EntitlementUtil;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
@@ -34,6 +35,10 @@ import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -160,63 +165,77 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     public PolicyStoreDTO getPolicyData(String policyId) {
 
         PolicyStoreDTO dataDTO = new PolicyStoreDTO();
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getAllPolicyData= null;
+        ResultSet policyData = null;
+
         try {
-            Registry registry = getGovernanceRegistry();
-            String path = policyDataCollection + policyId;
-            if (registry.resourceExists(path)) {
-                Resource resource = registry.get(path);
-                String order = resource.getProperty("order");
-                String active = resource.getProperty("active");
-                if (order != null && order.trim().length() > 0) {
-                    dataDTO.setPolicyOrder(Integer.parseInt(order));
-                }
-                dataDTO.setActive(Boolean.parseBoolean(active));
+            getAllPolicyData = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=? AND POLICY_ID=?");
+            getAllPolicyData.setInt(1, tenantId);
+            getAllPolicyData.setInt(2, 1);
+            getAllPolicyData.setString(3, policyId);
+            policyData = getAllPolicyData.executeQuery();
+
+            if(policyData.next()){
+                dataDTO.setPolicyOrder(policyData.getInt("POLICY_ORDER"));
+                boolean active = policyData.getInt("IS_ACTIVE") == 1;
+                dataDTO.setActive(active);
+                dataDTO.setPolicyType(policyData.getString("POLICY_TYPE"));
             }
-        } catch (RegistryException e) {
+            return dataDTO;
+
+        } catch (SQLException e) {
             if (log.isDebugEnabled()) {
                 log.debug(e);
             }
-        } catch (EntitlementException e) {
             log.error("Error while getting policy data for policyId: " + policyId, e);
+            return dataDTO;
+        }finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, policyData, getAllPolicyData);
         }
-        return dataDTO;
     }
 
 
     @Override
     public PolicyStoreDTO[] getPolicyData() {
 
-
         List<PolicyStoreDTO> policyStoreDTOs = new ArrayList<PolicyStoreDTO>();
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getAllPolicyData= null;
+        ResultSet policyData = null;
+
         try {
-            Registry registry = getGovernanceRegistry();
-            if (registry.resourceExists(policyDataCollection)) {
-                Collection collection = (Collection) registry.get(policyDataCollection);
-                String[] paths = collection.getChildren();
-                for (String path : paths) {
-                    if (registry.resourceExists(path)) {
-                        PolicyStoreDTO dataDTO = new PolicyStoreDTO();
-                        Resource resource = registry.get(path);
-                        String order = resource.getProperty("order");
-                        String active = resource.getProperty("active");
-                        String id = path.substring(path.lastIndexOf(RegistryConstants.PATH_SEPARATOR) + 1);
-                        dataDTO.setPolicyId(id);
-                        if (order != null && order.trim().length() > 0) {
-                            dataDTO.setPolicyOrder(Integer.parseInt(order));
-                        }
-                        dataDTO.setActive(Boolean.parseBoolean(active));
-                        policyStoreDTOs.add(dataDTO);
-                    }
-                }
+            getAllPolicyData = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=?");
+            getAllPolicyData.setInt(1, tenantId);
+            getAllPolicyData.setInt(2, 1);
+            policyData = getAllPolicyData.executeQuery();
+
+            if(policyData.next()){
+                do{
+                    PolicyStoreDTO dataDTO = new PolicyStoreDTO();
+                    dataDTO.setPolicyId(policyData.getString("POLICY_ID"));
+                    dataDTO.setPolicyOrder(policyData.getInt("POLICY_ORDER"));
+                    boolean active = (policyData.getInt("IS_ACTIVE") == 1);
+                    dataDTO.setActive(active);
+                    dataDTO.setPolicyType(policyData.getString("POLICY_TYPE"));
+                    policyStoreDTOs.add(dataDTO);
+                } while(policyData.next());
             }
-        } catch (RegistryException e) {
+            return policyStoreDTOs.toArray(new PolicyStoreDTO[policyStoreDTOs.size()]);
+
+        } catch (SQLException e) {
             if (log.isDebugEnabled()) {
                 log.debug(e);
             }
-        } catch (EntitlementException e) {
-            log.error("Error while getting all policy data.", e);
+            log.error("Error while getting all policy data", e);
+            return policyStoreDTOs.toArray(new PolicyStoreDTO[policyStoreDTOs.size()]);
+        }finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, policyData, getAllPolicyData);
         }
-        return policyStoreDTOs.toArray(new PolicyStoreDTO[policyStoreDTOs.size()]);
     }
 
     @Override

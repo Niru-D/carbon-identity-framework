@@ -21,7 +21,10 @@ package org.wso2.carbon.identity.entitlement.policy.finder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.balana.AbstractPolicy;
+import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
+import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.PolicyOrderComparator;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
@@ -33,9 +36,11 @@ import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.*;
 
 /**
  * Registry policy reader
@@ -58,12 +63,9 @@ public class PolicyReader {
     /**
      * constructor
      *
-     * @param registry        registry instance
-     * @param policyStorePath policy store path of the registry
      */
-    public PolicyReader(Registry registry, String policyStorePath) {
-        this.registry = registry;
-        this.policyStorePath = policyStorePath;
+    public PolicyReader() {
+
     }
 
     /**
@@ -75,15 +77,14 @@ public class PolicyReader {
      */
     public PolicyDTO readPolicy(String policyId) throws EntitlementException {
 
-        Resource resource = null;
+        PolicyDTO policy = null;
+        policy = getPolicy(policyId);
 
-        resource = getPolicyResource(policyId);
-
-        if (resource == null) {
+        if (policy == null) {
             return new PolicyDTO();
         }
 
-        return readPolicy(resource);
+        return policy;
     }
 
     /**
@@ -96,21 +97,20 @@ public class PolicyReader {
      */
     public PolicyDTO[] readAllPolicies(boolean active, boolean order) throws EntitlementException {
 
-        Resource[] resources = null;
-        resources = getAllPolicyResource();
+        PolicyDTO[] policies = null;
+        policies = getAllPolicies();
 
-        if (resources == null) {
+        if (policies == null) {
             return new PolicyDTO[0];
         }
         List<PolicyDTO> policyDTOList = new ArrayList<PolicyDTO>();
-        for (Resource resource : resources) {
-            PolicyDTO policyDTO = readPolicy(resource);
+        for (PolicyDTO policy : policies) {
             if (active) {
-                if (policyDTO.isActive()) {
-                    policyDTOList.add(policyDTO);
+                if (policy.isActive()) {
+                    policyDTOList.add(policy);
                 }
             } else {
-                policyDTOList.add(policyDTO);
+                policyDTOList.add(policy);
             }
         }
 
@@ -120,6 +120,7 @@ public class PolicyReader {
             Arrays.sort(policyDTOs, new PolicyOrderComparator());
         }
         return policyDTOs;
+
     }
 
 
@@ -132,79 +133,19 @@ public class PolicyReader {
      */
     public String[] getAllPolicyIds() throws EntitlementException {
 
-        String path = null;
-        Collection collection = null;
-        String[] children = null;
-        List<String> resources = new ArrayList<String>();
+        List<String> policyIDs = new ArrayList<String>();
+        PolicyDTO[] policyDTOs = null;
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving all entitlement policies");
         }
 
-        try {
-            path = policyStorePath;
-
-            if (!registry.resourceExists(path)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Trying to access an entitlement policy which does not exist");
-                }
-                return null;
-            }
-            collection = (Collection) registry.get(path);
-            children = collection.getChildren();
-            for (String child : children) {
-                String id = child.substring(child.lastIndexOf(RegistryConstants.PATH_SEPARATOR) + 1);
-                resources.add(id);
-            }
-
-        } catch (RegistryException e) {
-            log.error("Error while retrieving entitlement policy resources", e);
-            throw new EntitlementException("Error while retrieving entitlement policy resources", e);
+        policyDTOs = getAllPolicies();
+        for(PolicyDTO dto : policyDTOs){
+            policyIDs.add(dto.getPolicyId());
         }
 
-        return resources.toArray(new String[resources.size()]);
-    }
-
-    /**
-     * Reads PolicyDTO for given registry resource
-     *
-     * @param resource Registry resource
-     * @return PolicyDTO
-     * @throws EntitlementException throws, if fails
-     */
-    private PolicyDTO readPolicy(Resource resource) throws EntitlementException {
-
-        String policy = null;
-        AbstractPolicy absPolicy = null;
-        PolicyDTO dto = null;
-
-        try {
-            if (resource.getContent() == null) {
-                throw new EntitlementException("Error while loading entitlement policy. Policy content is null");
-            }
-            policy = new String((byte[]) resource.getContent(), Charset.forName("UTF-8"));
-            absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policy);
-            dto = new PolicyDTO();
-            dto.setPolicyId(absPolicy.getId().toASCIIString());
-            dto.setPolicy(policy);
-            String policyOrder = resource.getProperty("order");
-            if (policyOrder != null) {
-                dto.setPolicyOrder(Integer.parseInt(policyOrder));
-            } else {
-                dto.setPolicyOrder(0);
-            }
-            String policyActive = resource.getProperty("active");
-            if (policyActive != null) {
-                dto.setActive(Boolean.parseBoolean(policyActive));
-            }
-            PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder();
-            dto.setAttributeDTOs(policyAttributeBuilder.
-                    getPolicyMetaDataFromRegistryProperties(resource.getProperties()));
-            return dto;
-        } catch (RegistryException e) {
-            log.error("Error while loading entitlement policy", e);
-            throw new EntitlementException("Error while loading entitlement policy", e);
-        }
+        return policyIDs.toArray(new String[policyIDs.size()]);
     }
 
     /**
@@ -236,68 +177,205 @@ public class PolicyReader {
      * @return policy as Registry resource
      * @throws EntitlementException throws, if fails
      */
-    private Resource getPolicyResource(String policyId) throws EntitlementException {
-        String path = null;
+    private PolicyDTO getPolicy(String policyId) throws EntitlementException {
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving entitlement policy");
         }
 
-        try {
-            path = policyStorePath + policyId;
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getAllPDPPolicy = null;
+        ResultSet policy = null;
+        PolicyDTO dto = new PolicyDTO();
 
-            if (!registry.resourceExists(path)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Trying to access an entitlement policy which does not exist");
+        try {
+
+            getAllPDPPolicy = connection.prepareStatement(
+                    "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=? AND POLICY_ID=?");
+            getAllPDPPolicy.setInt(1, tenantId);
+            getAllPDPPolicy.setInt(2, 1);
+            getAllPDPPolicy.setString(3, policyId);
+            policy = getAllPDPPolicy.executeQuery();
+
+            if(policy.next()){
+                String policyString = policy.getString("POLICY");
+                AbstractPolicy absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policyString);
+                dto.setPolicyId(absPolicy.getId().toASCIIString());
+                dto.setPolicy(policyString);
+                int policyOrder = policy.getInt("POLICY_ORDER");
+                dto.setPolicyOrder(policyOrder);
+                int isActiveInt = policy.getInt("IS_ACTIVE");
+                dto.setActive((isActiveInt != 0));
+                dto.setPolicyType(policy.getString("POLICY_TYPE"));
+
+                //Get policy metadata
+                PreparedStatement getPolicyMetaDataPrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_POLICY_ATTRIBUTE WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                getPolicyMetaDataPrepStmt.setString(1, absPolicy.getId().toASCIIString());
+                getPolicyMetaDataPrepStmt.setInt(2, policy.getInt("VERSION"));
+                getPolicyMetaDataPrepStmt.setInt(3, tenantId);
+                ResultSet metadata = getPolicyMetaDataPrepStmt.executeQuery();
+
+                int metaDataAmount = 0;
+                if (metadata != null) {
+                    metadata.last();
+                    metaDataAmount = metadata.getRow();
+                    metadata.beforeFirst();
                 }
+
+                Properties properties = new Properties();
+                for (int i = 0; i < metaDataAmount; i++) {
+                    metadata.beforeFirst();
+                    while (metadata.next()) {
+                        if (Objects.equals(metadata.getString("NAME"),
+                                PDPConstants.POLICY_META_DATA + i)) {
+                            properties.setProperty(PDPConstants.POLICY_META_DATA + i,
+                                    metadata.getString("VALUE"));
+                            break;
+                        }
+                    }
+                }
+
+                PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder();
+                dto.setAttributeDTOs(policyAttributeBuilder.getPolicyMetaData(properties));
+
+                IdentityDatabaseUtil.closeResultSet(metadata);
+                IdentityDatabaseUtil.closeStatement(getPolicyMetaDataPrepStmt);
+
+            }else{
                 return null;
             }
-            return registry.get(path);
-        } catch (RegistryException e) {
+            return dto;
+
+        } catch (SQLException e) {
             log.error("Error while retrieving entitlement policy : " + policyId, e);
             throw new EntitlementException("Error while retrieving entitlement policy : " + policyId, e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, policy, getAllPDPPolicy);
         }
     }
 
     /**
-     * This returns all the policies as Registry resources.
+     * This returns all the policies as PolicyDTOs.
      *
-     * @return policies as Resource[]
+     * @return policies as PolicyDTO[]
      * @throws EntitlementException throws if fails
      */
-    private Resource[] getAllPolicyResource() throws EntitlementException {
+    private PolicyDTO[] getAllPolicies() throws EntitlementException {
 
-        String path = null;
-        Collection collection = null;
-        List<Resource> resources = new ArrayList<Resource>();
-        String[] children = null;
+        List<PolicyDTO> policies = new ArrayList<PolicyDTO>();
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        PreparedStatement getAllPDPPolicies = null;
+        ResultSet policySet = null;
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving all entitlement policies");
         }
 
         try {
-            path = policyStorePath;
 
-            if (!registry.resourceExists(path)) {
-                if (log.isDebugEnabled()) {
-                    log.debug("Trying to access an entitlement policy which does not exist");
+//          getAllPDPPolicies = connection.prepareStatement(
+//                  "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=?");
+          getAllPDPPolicies = connection.prepareStatement(
+                  "SELECT t1.*, " +
+                          "GROUP_CONCAT(DISTINCT ref.reference ORDER BY ref.reference ASC SEPARATOR ',') " +
+                          "AS POLICY_REFERENCES, " +
+                          "GROUP_CONCAT(DISTINCT set_ref.set_reference ORDER BY set_ref.set_reference ASC SEPARATOR ', ') " +
+                          "AS POLICY_SET_REFERENCES " +
+                          "FROM IDN_XACML_POLICY t1 LEFT JOIN idn_xacml_policy_reference ref " +
+                          "ON t1.POLICY_ID = ref.POLICY_ID AND t1.VERSION = ref.VERSION AND " +
+                          "t1.TENANT_ID = ref.TENANT_ID " +
+                          "LEFT JOIN idn_xacml_policy_set_reference set_ref " +
+                          "ON t1.POLICY_ID = set_ref.POLICY_ID AND t1.VERSION = set_ref.VERSION AND " +
+                          "t1.TENANT_ID = set_ref.TENANT_ID WHERE t1.IS_IN_PDP = ? AND t1.TENANT_ID = ? " +
+                          "GROUP BY t1.POLICY_ID, t1.VERSION, t1.TENANT_ID;");
+          getAllPDPPolicies.setInt(1, 1);
+          getAllPDPPolicies.setInt(2, tenantId);
+          policySet = getAllPDPPolicies.executeQuery();
+
+          if(policySet.next()){
+            do{
+                String policy = policySet.getString("POLICY");
+                AbstractPolicy absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policy);
+                PolicyDTO dto = new PolicyDTO();
+                dto.setPolicyId(absPolicy.getId().toASCIIString());
+                dto.setPolicy(policy);
+                int policyOrder = policySet.getInt("POLICY_ORDER");
+                dto.setPolicyOrder(policyOrder);
+                int isActiveInt = policySet.getInt("IS_ACTIVE");
+                dto.setActive((isActiveInt != 0));
+                dto.setPolicyType(policySet.getString("POLICY_TYPE"));
+
+                String policyReferences = policySet.getString("POLICY_REFERENCES");
+                if (policyReferences != null && !policyReferences.trim().isEmpty()) {
+                    dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
                 }
-                return null;
-            }
-            collection = (Collection) registry.get(path);
-            children = collection.getChildren();
 
-            for (String aChildren : children) {
-                resources.add(registry.get(aChildren));
-            }
+                String policySetReferences = policySet.getString("POLICY_SET_REFERENCES");
+                if (policySetReferences != null && !policySetReferences.trim().isEmpty()) {
+                    dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
+                }
 
-        } catch (RegistryException e) {
+                //Get policy metadata
+                PreparedStatement getPolicyMetaDataPrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_POLICY_ATTRIBUTE WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        ResultSet.TYPE_SCROLL_INSENSITIVE,
+                        ResultSet.CONCUR_READ_ONLY
+                );
+                getPolicyMetaDataPrepStmt.setString(1, absPolicy.getId().toASCIIString());
+                getPolicyMetaDataPrepStmt.setInt(2, policySet.getInt("VERSION"));
+                getPolicyMetaDataPrepStmt.setInt(3, tenantId);
+                ResultSet metadata = getPolicyMetaDataPrepStmt.executeQuery();
+
+                int metaDataAmount = 0;
+                if (metadata != null) {
+                    metadata.last();
+                    metaDataAmount = metadata.getRow();
+                    metadata.beforeFirst();
+                }
+
+                Properties properties = new Properties();
+                for (int i = 0; i < metaDataAmount; i++) {
+                    metadata.beforeFirst();
+                    while (metadata.next()) {
+                        if (Objects.equals(metadata.getString("NAME"),
+                                PDPConstants.POLICY_META_DATA + i)) {
+                            properties.setProperty(PDPConstants.POLICY_META_DATA + i,
+                                    metadata.getString("VALUE"));
+                            break;
+                        }
+                    }
+                }
+
+                PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder();
+                dto.setAttributeDTOs(policyAttributeBuilder.getPolicyMetaData(properties));
+
+                IdentityDatabaseUtil.closeResultSet(metadata);
+                IdentityDatabaseUtil.closeStatement(getPolicyMetaDataPrepStmt);
+
+                policies.add(dto);
+
+            } while (policySet.next());
+          }else{
+              if (log.isDebugEnabled()) {
+                  log.debug("Trying to access an entitlement policy which does not exist");
+              }
+              return null;
+          }
+
+          return policies.toArray(new PolicyDTO[policies.size()]);
+
+        } catch (SQLException e) {
             log.error("Error while retrieving entitlement policy", e);
             throw new EntitlementException("Error while retrieving entitlement policies", e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, policySet, getAllPDPPolicies);
         }
-
-        return resources.toArray(new Resource[resources.size()]);
     }
 
 }

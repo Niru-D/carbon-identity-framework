@@ -292,13 +292,11 @@ public class PAPPolicyStore {
                 }
 
                 Properties properties = new Properties();
-                for (int i = 0; i < rowCount; i++) {
-                    assert metadata != null;
+                for (int i = 0; i < metaDataAmount; i++) {
                     metadata.beforeFirst();
                     while (metadata.next()) {
                         if (Objects.equals(metadata.getString("NAME"),
                                 PDPConstants.POLICY_META_DATA + i)) {
-//                            basicPolicyEditorMetaData[i] = metadata.getString("VALUE");
                             properties.setProperty(PDPConstants.POLICY_META_DATA + i,
                                     metadata.getString("VALUE"));
                             break;
@@ -458,13 +456,11 @@ public class PAPPolicyStore {
                 }
 
                 Properties properties = new Properties();
-                for (int i = 0; i < rowCount; i++) {
-                    assert metadata != null;
+                for (int i = 0; i < metaDataAmount; i++) {
                     metadata.beforeFirst();
                     while (metadata.next()) {
                         if (Objects.equals(metadata.getString("NAME"),
                                 PDPConstants.POLICY_META_DATA + i)) {
-//                            basicPolicyEditorMetaData[i] = metadata.getString("VALUE");
                             properties.setProperty(PDPConstants.POLICY_META_DATA + i,
                                     metadata.getString("VALUE"));
                             break;

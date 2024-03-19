@@ -209,7 +209,8 @@ public class PolicyStoreManager {
 
         PolicyDTO policyDTO = new PolicyDTO();
         policyDTO.setPolicyId(policyId);
-        String policy = policyStoreStore.getPolicy(policyId);
+//        String policy = policyStoreStore.getPolicy(policyId);
+        String policy = policyStore.getPolicy(policyId);
         PolicyStoreDTO storeDTO = policyDataStore.getPolicyData(policyId);
         if (policy != null) {
             policyDTO.setPolicy(policy);
@@ -220,21 +221,25 @@ public class PolicyStoreManager {
     }
 
     public String[] getPolicyIds() {
-        return policyStoreStore.getOrderedPolicyIdentifiers();
+//        return policyStoreStore.getOrderedPolicyIdentifiers();
+        return policyStore.getOrderedPolicyIdentifiers();
     }
 
     public PolicyDTO[] getLightPolicies() {
 
         List<PolicyDTO> policyDTOs = new ArrayList<PolicyDTO>();
-        String[] policies = policyStoreStore.getOrderedPolicyIdentifiers();
-//        String[] policies = policyStore.getOrderedPolicyIdentifiers();
+//        String[] policies = policyStoreStore.getOrderedPolicyIdentifiers();
+        String[] policies = policyStore.getOrderedPolicyIdentifiers();
         if (policies != null) {
             for (String policy : policies) {
                 PolicyDTO policyDTO = new PolicyDTO();
                 policyDTO.setPolicyId(policy);
+
                 PolicyStoreDTO storeDTO = policyDataStore.getPolicyData(policy);
+
                 policyDTO.setActive(storeDTO.isActive());
                 policyDTO.setPolicyOrder(storeDTO.getPolicyOrder());
+                policyDTO.setPolicyType(storeDTO.getPolicyType());
                 policyDTOs.add(policyDTO);
             }
         }
