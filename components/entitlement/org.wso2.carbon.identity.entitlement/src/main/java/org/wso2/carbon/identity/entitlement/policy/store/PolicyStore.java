@@ -418,7 +418,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
         PolicyDTO[] policyDTOs = null;
         Map<String, Set<AttributeDTO>> attributeMap = null;
         try {
-//            policyDTOs = getPolicyReader().readAllPolicies(true, true);
             policyDTOs = new PolicyReader().readAllPolicies(true, true);
         } catch (Exception e) {
             log.error("Policies can not be retrieved from registry policy finder module", e);

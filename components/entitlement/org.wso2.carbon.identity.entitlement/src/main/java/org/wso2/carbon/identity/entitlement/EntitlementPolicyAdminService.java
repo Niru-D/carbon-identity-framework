@@ -51,10 +51,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -430,7 +427,8 @@ public class EntitlementPolicyAdminService {
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        return publisher.retrieveSubscriber(subscribeId, false);
+//        return publisher.retrieveSubscriber(subscribeId, false);
+        return publisher.retrieveSubscriberFromNewRDBMS(subscribeId, false);
     }
 
     /**
@@ -442,7 +440,9 @@ public class EntitlementPolicyAdminService {
      */
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        String[] ids = publisher.retrieveSubscriberIds(searchString);
+//        String[] ids = publisher.retrieveSubscriberIds(searchString);
+        String[] ids = publisher.retrieveSubscriberIdsFromNewRDBMS(searchString);
+
         if (ids != null) {
             return ids;
         } else {
@@ -459,7 +459,7 @@ public class EntitlementPolicyAdminService {
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.persistSubscriber(holder, false);
+//        publisher.persistSubscriber(holder, false);
         publisher.persistSubscriberToNewRDBMS(holder, false);
 
     }
@@ -473,7 +473,7 @@ public class EntitlementPolicyAdminService {
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.persistSubscriber(holder, true);
+//        publisher.persistSubscriber(holder, true);
         publisher.persistSubscriberToNewRDBMS(holder, true);
 
     }
@@ -487,7 +487,7 @@ public class EntitlementPolicyAdminService {
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.deleteSubscriber(subscriberId);
+//        publisher.deleteSubscriber(subscriberId);
         publisher.deleteSubscriberFromNewRDBMS(subscriberId);
 
     }
@@ -511,7 +511,8 @@ public class EntitlementPolicyAdminService {
             policyIds = EntitlementAdminEngine.getInstance().getPapPolicyStoreManager().getPolicyIds();
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
-            subscriberIds = publisher.retrieveSubscriberIds("*");
+//            subscriberIds = publisher.retrieveSubscriberIds("*");
+            subscriberIds = publisher.retrieveSubscriberIdsFromNewRDBMS("*");
         }
 
         if (policyIds == null || policyIds.length < 1) {
@@ -652,7 +653,7 @@ public class EntitlementPolicyAdminService {
         if(versions == null){
             throw new EntitlementException("Error obtaining policy versions");
         }
-        Arrays.sort(versions);
+//        Arrays.sort(versions);
         return versions;
 
     }

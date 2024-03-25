@@ -253,7 +253,9 @@ public class PolicyPublisher {
                     getSubscriberPrepStmt .setInt(2, tenantId);
                     ResultSet rs2 = getSubscriberPrepStmt.executeQuery();
 
-                    oldHolder = new PublisherDataHolder(rs2, false);
+                    if(rs2.next()){
+                        oldHolder = new PublisherDataHolder(rs2, false);
+                    }
 
                     IdentityDatabaseUtil.closeResultSet(rs2);
                     IdentityDatabaseUtil.closeStatement(getSubscriberPrepStmt);
@@ -502,6 +504,48 @@ public class PolicyPublisher {
         }
 
         return null;
+    }
+
+    public String[] retrieveSubscriberIdsFromNewRDBMS(String searchString) throws EntitlementException {
+
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        PreparedStatement getSubscriberIdsPrepStmt = null;
+        ResultSet subscriberIds = null;
+
+        try {
+            getSubscriberIdsPrepStmt = connection.prepareStatement(
+                    "SELECT SUBSCRIBER_ID FROM IDN_XACML_SUBSCRIBER WHERE TENANT_ID=?");
+            getSubscriberIdsPrepStmt.setInt(1, tenantId);
+            subscriberIds = getSubscriberIdsPrepStmt.executeQuery();
+
+            List<String> subscriberIDList = new ArrayList<String>();
+            searchString = searchString.replace("*", ".*");
+            Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
+
+            if(subscriberIds.next()){
+                do{
+                    String id = subscriberIds.getString("SUBSCRIBER_ID");
+                    Matcher matcher = pattern.matcher(id);
+                    if (!matcher.matches()) {
+                        continue;
+                    }
+                    subscriberIDList.add(id);
+
+                } while (subscriberIds.next());
+
+                return subscriberIDList.toArray(new String[subscriberIDList.size()]);
+
+            }else {
+                return null;
+            }
+
+        } catch (SQLException e) {
+            log.error("Error while retrieving subscriber of ids", e);
+            throw new EntitlementException("Error while retrieving subscriber ids", e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, subscriberIds, getSubscriberIdsPrepStmt);
+        }
     }
 
     private void populateProperties(PublisherDataHolder holder,

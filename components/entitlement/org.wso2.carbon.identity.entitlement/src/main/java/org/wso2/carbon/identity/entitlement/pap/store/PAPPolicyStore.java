@@ -179,22 +179,13 @@ public class PAPPolicyStore {
 
         try {
             getPolicyPrepStmt = connection.prepareStatement(
-                    "SELECT t1.*, " +
-                            "GROUP_CONCAT(DISTINCT ref.reference ORDER BY ref.reference ASC SEPARATOR ',') " +
-                            "AS POLICY_REFERENCES, " +
-                            "GROUP_CONCAT(DISTINCT set_ref.set_reference ORDER BY set_ref.set_reference " +
-                            "ASC SEPARATOR ', ') AS POLICY_SET_REFERENCES " +
-                            "FROM IDN_XACML_POLICY t1 LEFT JOIN idn_xacml_policy_reference ref ON " +
-                            "t1.POLICY_ID = ref.POLICY_ID AND t1.VERSION = ref.VERSION AND t1.TENANT_ID = ref.TENANT_ID " +
-                            "LEFT JOIN idn_xacml_policy_set_reference set_ref ON " +
-                            "t1.POLICY_ID = set_ref.POLICY_ID AND t1.VERSION = set_ref.VERSION AND " +
-                            "t1.TENANT_ID = set_ref.TENANT_ID " +
-                            "WHERE t1.IS_IN_PAP = ? AND t1.TENANT_ID = ? AND t1.POLICY_ID = ? AND " +
-                            "t1.version = (SELECT MAX(VERSION) FROM IDN_XACML_POLICY t2 " +
-                            "WHERE t2.POLICY_ID = t1.POLICY_ID) GROUP BY t1.POLICY_ID, t1.VERSION, t1.TENANT_ID");
+                    "SELECT * FROM IDN_XACML_POLICY WHERE IS_IN_PAP = ? AND TENANT_ID = ? AND POLICY_ID=? AND " +
+                            "VERSION =(SELECT MAX(VERSION) FROM IDN_XACML_POLICY WHERE POLICY_ID = ? AND TENANT_ID=?)");
             getPolicyPrepStmt.setInt(1,1);
             getPolicyPrepStmt.setInt(2, tenantId);
             getPolicyPrepStmt.setString(3, policyId);
+            getPolicyPrepStmt.setString(4, policyId);
+            getPolicyPrepStmt.setInt(5, tenantId);
             policy = getPolicyPrepStmt.executeQuery();
 
             if(policy.next()){
@@ -225,21 +216,47 @@ public class PAPPolicyStore {
 
                 dto.setPolicyType(policy.getString("POLICY_TYPE"));
 
-                String policyReferences = policy.getString("POLICY_REFERENCES");
-                if (policyReferences != null && !policyReferences.trim().isEmpty()) {
-                    dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-                }
-
-                String policySetReferences = policy.getString("POLICY_SET_REFERENCES");
-                if (policySetReferences != null && !policySetReferences.trim().isEmpty()) {
-                    dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-                }
-
                 dto.setPolicyEditor(policy.getString("POLICY_EDITOR"));
 
                 dto.setPolicy(policy.getString("POLICY"));
 
-                //Get policy editor metadata
+                //Get policy references
+                List<String> policyReferences = new ArrayList<String>();
+                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                getPolicyRefsPrepStmt.setInt(1, tenantId);
+                getPolicyRefsPrepStmt.setString(2, policyId);
+                getPolicyRefsPrepStmt.setInt(3, policy.getInt("VERSION"));
+                ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
+
+                if(policyRefs.next()){
+                    do{
+                        policyReferences.add(policyRefs.getString("REFERENCE"));
+                    } while(policyRefs.next());
+                }
+                dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
+                IdentityDatabaseUtil.closeResultSet(policyRefs);
+                IdentityDatabaseUtil.closeStatement(getPolicyRefsPrepStmt);
+
+                //Get policy set references
+                List<String> policySetReferences = new ArrayList<String>();
+                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                getPolicySetRefsPrepStmt.setInt(1, tenantId);
+                getPolicySetRefsPrepStmt.setString(2, policyId);
+                getPolicySetRefsPrepStmt.setInt(3, policy.getInt("VERSION"));
+                ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
+
+                if(policySetRefs.next()){
+                    do{
+                        policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                    } while(policySetRefs.next());
+                }
+                dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
+                IdentityDatabaseUtil.closeResultSet(policySetRefs);
+                IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
+
+                //Get policy editor data
                 PreparedStatement getPolicyEditorDataPrepStmt = connection.prepareStatement(
                         "SELECT * FROM IDN_XACML_POLICY_EDITOR_DATA WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
@@ -347,18 +364,8 @@ public class PAPPolicyStore {
 
         try {
             getPolicyPrepStmt = connection.prepareStatement(
-                    "SELECT t1.*, " +
-                            "GROUP_CONCAT(DISTINCT ref.reference ORDER BY ref.reference ASC SEPARATOR ',') " +
-                            "AS POLICY_REFERENCES, " +
-                            "GROUP_CONCAT(DISTINCT set_ref.set_reference ORDER BY set_ref.set_reference " +
-                            "ASC SEPARATOR ', ') AS POLICY_SET_REFERENCES " +
-                            "FROM IDN_XACML_POLICY t1 LEFT JOIN idn_xacml_policy_reference ref ON " +
-                            "t1.POLICY_ID = ref.POLICY_ID AND t1.VERSION = ref.VERSION AND t1.TENANT_ID = ref.TENANT_ID " +
-                            "LEFT JOIN idn_xacml_policy_set_reference set_ref ON " +
-                            "t1.POLICY_ID = set_ref.POLICY_ID AND t1.VERSION = set_ref.VERSION AND " +
-                            "t1.TENANT_ID = set_ref.TENANT_ID " +
-                            "WHERE t1.IS_IN_PAP = ? AND t1.TENANT_ID = ? AND t1.POLICY_ID = ? AND " +
-                            "t1.version = ?");
+                    "SELECT * FROM IDN_XACML_POLICY WHERE IS_IN_PAP = ? AND TENANT_ID = ? AND POLICY_ID=? AND " +
+                            "VERSION = ?");
             getPolicyPrepStmt.setInt(1,1);
             getPolicyPrepStmt.setInt(2, tenantId);
             getPolicyPrepStmt.setString(3, policyId);
@@ -389,19 +396,45 @@ public class PAPPolicyStore {
 
                 dto.setPolicyType(policy.getString("POLICY_TYPE"));
 
-                String policyReferences = policy.getString("POLICY_REFERENCES");
-                if (policyReferences != null && !policyReferences.trim().isEmpty()) {
-                    dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-                }
-
-                String policySetReferences = policy.getString("POLICY_SET_REFERENCES");
-                if (policySetReferences != null && !policySetReferences.trim().isEmpty()) {
-                    dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-                }
-
                 dto.setPolicyEditor(policy.getString("POLICY_EDITOR"));
 
                 dto.setPolicy(policy.getString("POLICY"));
+
+                //Get policy references
+                List<String> policyReferences = new ArrayList<String>();
+                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                getPolicyRefsPrepStmt.setInt(1, tenantId);
+                getPolicyRefsPrepStmt.setString(2, policyId);
+                getPolicyRefsPrepStmt.setInt(3, Integer.parseInt(version));
+                ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
+
+                if(policyRefs.next()){
+                    do{
+                        policyReferences.add(policyRefs.getString("REFERENCE"));
+                    } while(policyRefs.next());
+                }
+                dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
+                IdentityDatabaseUtil.closeResultSet(policyRefs);
+                IdentityDatabaseUtil.closeStatement(getPolicyRefsPrepStmt);
+
+                //Get policy set references
+                List<String> policySetReferences = new ArrayList<String>();
+                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
+                        "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                getPolicySetRefsPrepStmt.setInt(1, tenantId);
+                getPolicySetRefsPrepStmt.setString(2, policyId);
+                getPolicySetRefsPrepStmt.setInt(3, Integer.parseInt(version));
+                ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
+
+                if(policySetRefs.next()){
+                    do{
+                        policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                    } while(policySetRefs.next());
+                }
+                dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
+                IdentityDatabaseUtil.closeResultSet(policySetRefs);
+                IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
 
                 //Get policy editor metadata
                 PreparedStatement getPolicyEditorDataPrepStmt = connection.prepareStatement(
@@ -511,21 +544,12 @@ public class PAPPolicyStore {
         try {
             //Get all policies with latest version
             getAllPoliciesPrepStmt = connection.prepareStatement(
-                    "SELECT t1.*, " +
-                            "GROUP_CONCAT(DISTINCT ref.reference ORDER BY ref.reference ASC SEPARATOR ',') " +
-                            "AS POLICY_REFERENCES, " +
-                            "GROUP_CONCAT(DISTINCT set_ref.set_reference ORDER BY set_ref.set_reference " +
-                            "ASC SEPARATOR ', ') AS POLICY_SET_REFERENCES " +
-                            "FROM IDN_XACML_POLICY t1 LEFT JOIN idn_xacml_policy_reference ref ON " +
-                            "t1.POLICY_ID = ref.POLICY_ID AND t1.VERSION = ref.VERSION AND t1.TENANT_ID = ref.TENANT_ID " +
-                            "LEFT JOIN idn_xacml_policy_set_reference set_ref ON " +
-                            "t1.POLICY_ID = set_ref.POLICY_ID AND t1.VERSION = set_ref.VERSION AND " +
-                            "t1.TENANT_ID = set_ref.TENANT_ID " +
-                            "WHERE t1.IS_IN_PAP = ? AND t1.TENANT_ID = ? AND " +
-                            "t1.version = (SELECT MAX(VERSION) FROM IDN_XACML_POLICY t2 " +
-                            "WHERE t2.POLICY_ID = t1.POLICY_ID) GROUP BY t1.POLICY_ID, t1.VERSION, t1.TENANT_ID");
+                    "SELECT t1.* FROM IDN_XACML_POLICY t1 WHERE t1.IS_IN_PAP = ? AND t1.TENANT_ID = ? AND " +
+                            "t1.VERSION =(SELECT MAX(VERSION) FROM IDN_XACML_POLICY t2 WHERE " +
+                            "t2.POLICY_ID = t1.POLICY_ID AND t2.TENANT_ID=?)");
             getAllPoliciesPrepStmt.setInt(1,1);
             getAllPoliciesPrepStmt.setInt(2, tenantId);
+            getAllPoliciesPrepStmt.setInt(3, tenantId);
             policies = getAllPoliciesPrepStmt.executeQuery();
 
             if(policies.next()){
@@ -557,17 +581,43 @@ public class PAPPolicyStore {
 
                     dto.setPolicyType(policies.getString("POLICY_TYPE"));
 
-                    String policyReferences = policies.getString("POLICY_REFERENCES");
-                    if (policyReferences != null && !policyReferences.trim().isEmpty()) {
-                        dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-                    }
-
-                    String policySetReferences = policies.getString("POLICY_SET_REFERENCES");
-                    if (policySetReferences != null && !policySetReferences.trim().isEmpty()) {
-                        dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-                    }
-
                     dto.setPolicyEditor(policies.getString("POLICY_EDITOR"));
+
+                    //Get policy references
+                    List<String> policyReferences = new ArrayList<String>();
+                    PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
+                            "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                    getPolicyRefsPrepStmt.setInt(1, tenantId);
+                    getPolicyRefsPrepStmt.setString(2, policies.getString("POLICY_ID"));
+                    getPolicyRefsPrepStmt.setInt(3, Integer.parseInt(version));
+                    ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
+
+                    if(policyRefs.next()){
+                        do{
+                            policyReferences.add(policyRefs.getString("REFERENCE"));
+                        } while(policyRefs.next());
+                    }
+                    dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
+                    IdentityDatabaseUtil.closeResultSet(policyRefs);
+                    IdentityDatabaseUtil.closeStatement(getPolicyRefsPrepStmt);
+
+                    //Get policy set references
+                    List<String> policySetReferences = new ArrayList<String>();
+                    PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
+                            "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                    getPolicySetRefsPrepStmt.setInt(1, tenantId);
+                    getPolicySetRefsPrepStmt.setString(2, policies.getString("POLICY_ID"));
+                    getPolicySetRefsPrepStmt.setInt(3, Integer.parseInt(version));
+                    ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
+
+                    if(policySetRefs.next()){
+                        do{
+                            policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                        } while(policySetRefs.next());
+                    }
+                    dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
+                    IdentityDatabaseUtil.closeResultSet(policySetRefs);
+                    IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
 
                     policyDTOList.add(dto);
 
