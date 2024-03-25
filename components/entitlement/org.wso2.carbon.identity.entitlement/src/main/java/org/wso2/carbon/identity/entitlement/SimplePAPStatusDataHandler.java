@@ -105,7 +105,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 return;
             }
         }
-        persistStatusToNewRDBMS(about, key, statusHolder, false);
+        persistStatusToNewRDBMS(about, key, statusHolder);
     }
 
 
@@ -256,7 +256,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
 
     }
 
-    private synchronized void persistStatusToNewRDBMS(String about, String key, List<StatusHolder> statusHolders, boolean isNew)
+    private synchronized void persistStatusToNewRDBMS(String about, String key, List<StatusHolder> statusHolders)
             throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
@@ -268,8 +268,9 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
 
             if(statusHolders != null && !statusHolders.isEmpty()){
 
-                if (isNew || useLastStatusOnly) {
-                    //Remove the previous statuses
+                if (useLastStatusOnly) {
+
+                    //Delete the previous status
                     PreparedStatement deleteStatusPrepStmt = null;
                     if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
                         deleteStatusPrepStmt = connection.prepareStatement(
@@ -282,9 +283,10 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                     deleteStatusPrepStmt.setInt(2, tenantId);
                     deleteStatusPrepStmt.executeUpdate();
                     IdentityDatabaseUtil.closeStatement(deleteStatusPrepStmt);
+
                 }
 
-                //Add status to the database
+                //Add new status to the database
                 PreparedStatement addStatusPrepStmt = null;
                 if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                     addStatusPrepStmt = connection.prepareStatement(
@@ -336,6 +338,50 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 assert addStatusPrepStmt != null;
                 addStatusPrepStmt.executeBatch();
                 IdentityDatabaseUtil.closeStatement(addStatusPrepStmt);
+
+
+                if(!useLastStatusOnly){
+                    //Get the existing status count
+                    PreparedStatement getStatusCountPrepStmt = null;
+                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                        getStatusCountPrepStmt = connection.prepareStatement(
+                                "SELECT COUNT(*) AS COUNT FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                    }else{
+                        getStatusCountPrepStmt = connection.prepareStatement(
+                                "SELECT COUNT(*) AS COUNT FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND " +
+                                        "SUBSCRIBER_TENANT_ID=?");
+                    }
+                    getStatusCountPrepStmt.setString(1, key);
+                    getStatusCountPrepStmt.setInt(2, tenantId);
+                    ResultSet count = getStatusCountPrepStmt.executeQuery();
+                    int statusCount = 0;
+                    if(count.next()){
+                        statusCount = count.getInt("COUNT");
+                    }
+                    IdentityDatabaseUtil.closeResultSet(count);
+                    IdentityDatabaseUtil.closeStatement(getStatusCountPrepStmt);
+
+                    //Delete old status data
+                    if(statusCount > maxRecodes){
+
+                        int oldRecordsCount = statusCount - maxRecodes;
+                        PreparedStatement deleteOldRecordsPrepStmt = null;
+                        if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                            deleteOldRecordsPrepStmt = connection.prepareStatement(
+                                    "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?" +
+                                            " ORDER BY STATUS_ID ASC LIMIT ?");
+                        }else{
+                            deleteOldRecordsPrepStmt = connection.prepareStatement(
+                                    "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?" +
+                                            " ORDER BY STATUS_ID ASC LIMIT ?");
+                        }
+                        deleteOldRecordsPrepStmt.setString(1, key);
+                        deleteOldRecordsPrepStmt.setInt(2, tenantId);
+                        deleteOldRecordsPrepStmt.setInt(3, oldRecordsCount);
+                        deleteOldRecordsPrepStmt.executeUpdate();
+                        IdentityDatabaseUtil.closeStatement(deleteOldRecordsPrepStmt);
+                    }
+                }
             }
 
             IdentityDatabaseUtil.commitTransaction(connection);
@@ -400,99 +446,28 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 } while (statusSet.next());
             }
 
-            if (statusHolders.size() > 0) {
-                StatusHolder[] array = statusHolders.toArray(new StatusHolder[statusHolders.size()]);
-                java.util.Arrays.sort(array, new StatusHolderComparator());
-                if (statusHolders.size() > maxRecodes) {
-                    statusHolders = new ArrayList<StatusHolder>();
-                    for (int i = 0; i < maxRecodes; i++) {
-                        statusHolders.add(array[i]);
-                    }
-                    persistStatusToNewRDBMS(about, key, statusHolders, true);
-                } else {
-                    statusHolders = new ArrayList<StatusHolder>(Arrays.asList(array));
-                }
-            }
+//            if (statusHolders.size() > 0) {
+//                StatusHolder[] array = statusHolders.toArray(new StatusHolder[statusHolders.size()]);
+//                java.util.Arrays.sort(array, new StatusHolderComparator());
+//                if (statusHolders.size() > maxRecodes) {
+//                    statusHolders = new ArrayList<StatusHolder>();
+//                    for (int i = 0; i < maxRecodes; i++) {
+//                        statusHolders.add(array[i]);
+//                    }
+//                    persistStatusToNewRDBMS(about, key, statusHolders, true);
+//                } else {
+//                    statusHolders = new ArrayList<StatusHolder>(Arrays.asList(array));
+//                }
+//            }
 
             return statusHolders;
 
         } catch (SQLException e) {
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, statusSet, getStatusPrepStmt);
         }
-
-
-
-
-
-
-
-
-
-
-
-//        if (resource != null && resource.getProperties() != null) {
-//            Properties properties = resource.getProperties();
-//            for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-//                PublisherPropertyDTO dto = new PublisherPropertyDTO();
-//                dto.setId((String) entry.getKey());
-//                Object value = entry.getValue();
-//                if (value instanceof ArrayList) {
-//                    List list = (ArrayList) entry.getValue();
-//                    if (list != null && list.size() > 0 && list.get(0) != null) {
-//                        StatusHolder statusHolder = new StatusHolder(about);
-//                        if (list.size() > 0 && list.get(0) != null) {
-//                            statusHolder.setType((String) list.get(0));
-//                        }
-//                        if (list.size() > 1 && list.get(1) != null) {
-//                            statusHolder.setTimeInstance((String) list.get(1));
-//                        } else {
-//                            continue;
-//                        }
-//                        if (list.size() > 2 && list.get(2) != null) {
-//                            String user = (String) list.get(2);
-//                            statusHolder.setUser(user);
-//                        } else {
-//                            continue;
-//                        }
-//                        if (list.size() > 3 && list.get(3) != null) {
-//                            statusHolder.setKey((String) list.get(3));
-//                        }
-//                        if (list.size() > 4 && list.get(4) != null) {
-//                            statusHolder.setSuccess(Boolean.parseBoolean((String) list.get(4)));
-//                        }
-//                        if (list.size() > 5 && list.get(5) != null) {
-//                            statusHolder.setMessage((String) list.get(5));
-//                        }
-//                        if (list.size() > 6 && list.get(6) != null) {
-//                            statusHolder.setTarget((String) list.get(6));
-//                        }
-//                        if (list.size() > 7 && list.get(7) != null) {
-//                            statusHolder.setTargetAction((String) list.get(7));
-//                        }
-//                        if (list.size() > 8 && list.get(8) != null) {
-//                            statusHolder.setVersion((String) list.get(8));
-//                        }
-//                        statusHolders.add(statusHolder);
-//                    }
-//                }
-//            }
-//        }
-//        if (statusHolders.size() > 0) {
-//            StatusHolder[] array = statusHolders.toArray(new StatusHolder[statusHolders.size()]);
-//            java.util.Arrays.sort(array, new StatusHolderComparator());
-//            if (statusHolders.size() > maxRecodes) {
-//                statusHolders = new ArrayList<StatusHolder>();
-//                for (int i = 0; i < maxRecodes; i++) {
-//                    statusHolders.add(array[i]);
-//                }
-//                persistStatus(path, statusHolders, true);
-//            } else {
-//                statusHolders = new ArrayList<StatusHolder>(Arrays.asList(array));
-//            }
-//        }
-//
-//        return statusHolders;
     }
 
 
