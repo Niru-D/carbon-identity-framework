@@ -33,10 +33,6 @@ import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderMo
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
 import org.wso2.carbon.identity.entitlement.policy.finder.registry.RegistryPolicyReader;
-import org.wso2.carbon.registry.core.Collection;
-import org.wso2.carbon.registry.core.Registry;
-import org.wso2.carbon.registry.core.Resource;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -51,20 +47,11 @@ public class PolicyStore extends AbstractPolicyFinderModule
         implements PolicyStoreManageModule {
 
     private static final String MODULE_NAME = "Registry Policy Finder Module";
-    private static final String PROPERTY_POLICY_STORE_PATH = "policyStorePath";
-    private static final String PROPERTY_ATTRIBUTE_SEPARATOR = "attributeValueSeparator";
-    private static final String DEFAULT_POLICY_STORE_PATH = "/repository/identity/entitlement" +
-                                                            "/policy/pdp/";
-    private static final String KEY_VALUE_POLICY_META_DATA = "policyMetaData";
     private static Log log = LogFactory.getLog(PolicyStore.class);
-    private String policyStorePath;
 
     @Override
     public void init(Properties properties) {
-        policyStorePath = properties.getProperty(PROPERTY_POLICY_STORE_PATH);
-        if (policyStorePath == null) {
-            policyStorePath = DEFAULT_POLICY_STORE_PATH;
-        }
+
     }
 
     @Override
@@ -309,7 +296,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
     public String getPolicy(String policyId) {
         PolicyDTO dto;
         try {
-//            dto = getPolicyReader().readPolicy(policyId);
             dto = new PolicyReader().readPolicy(policyId);
             return dto.getPolicy();
         } catch (Exception e) {
@@ -323,7 +309,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
     public int getPolicyOrder(String policyId) {
         PolicyDTO dto;
         try {
-//            dto = getPolicyReader().readPolicy(policyId);
             dto = new PolicyReader().readPolicy(policyId);
             return dto.getPolicyOrder();
         } catch (Exception e) {
@@ -365,7 +350,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
         List<String> policies = new ArrayList<String>();
 
         try {
-//            PolicyDTO[] policyDTOs = getPolicyReader().readAllPolicies(false, true);
             PolicyDTO[] policyDTOs = new PolicyReader().readAllPolicies(false, true);
             for (PolicyDTO dto : policyDTOs) {
                 if (dto.getPolicy() != null) {
@@ -386,7 +370,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
     public String[] getPolicyIdentifiers() {
         String[] policyIds = null;
         try {
-//            policyIds = getPolicyReader().getAllPolicyIds();
             policyIds = new PolicyReader().getAllPolicyIds();
         } catch (Exception e) {
             log.error("Policy identifiers can not be retrieved from registry policy finder module", e);
@@ -399,7 +382,6 @@ public class PolicyStore extends AbstractPolicyFinderModule
 
         // retrieve policies that are not active
         try {
-//            PolicyDTO dto = getPolicyReader().readPolicy(policyId);
             PolicyDTO dto = new PolicyReader().readPolicy(policyId);
             if (dto != null && dto.getPolicy() != null && !dto.isActive()) {
                 return dto.getPolicy();

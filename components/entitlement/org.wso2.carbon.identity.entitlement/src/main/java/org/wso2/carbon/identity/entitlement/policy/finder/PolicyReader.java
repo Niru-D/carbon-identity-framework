@@ -43,7 +43,7 @@ import java.sql.SQLException;
 import java.util.*;
 
 /**
- * Registry policy reader
+ * PDP policy reader
  */
 public class PolicyReader {
 
@@ -51,14 +51,6 @@ public class PolicyReader {
      * logger
      */
     private static Log log = LogFactory.getLog(PolicyReader.class);
-    /**
-     * Governance registry instance of current tenant
-     */
-    private Registry registry;
-    /**
-     * policy store path of the registry
-     */
-    private String policyStorePath;
 
     /**
      * constructor
@@ -69,7 +61,7 @@ public class PolicyReader {
     }
 
     /**
-     * Reads given policy resource as PolicyDTO
+     * Reads given policyId as PolicyDTO
      *
      * @param policyId policy id
      * @return PolicyDTO
@@ -86,6 +78,7 @@ public class PolicyReader {
 
         return policy;
     }
+
 
     /**
      * Reads All ordered active policies as PolicyDTO
@@ -125,8 +118,7 @@ public class PolicyReader {
 
 
     /**
-     * This returns all the policy ids as String list. Here we assume registry resource name as
-     * the policy id.
+     * This returns all policy ids as a String list.
      *
      * @return policy ids as String[]
      * @throws EntitlementException throws if fails
@@ -147,6 +139,7 @@ public class PolicyReader {
 
         return policyIDs.toArray(new String[policyIDs.size()]);
     }
+
 
     /**
      * This reads the policy combining algorithm
@@ -182,11 +175,12 @@ public class PolicyReader {
         }
     }
 
+
     /**
-     * This returns given policy as Registry resource
+     * This returns given policy as a policy DTO
      *
      * @param policyId policy id
-     * @return policy as Registry resource
+     * @return policyDTO
      * @throws EntitlementException throws, if fails
      */
     private PolicyDTO getPolicy(String policyId) throws EntitlementException {
@@ -270,6 +264,7 @@ public class PolicyReader {
             IdentityDatabaseUtil.closeAllConnections(connection, policy, getAllPDPPolicy);
         }
     }
+
 
     /**
      * This returns all the policies as PolicyDTOs.

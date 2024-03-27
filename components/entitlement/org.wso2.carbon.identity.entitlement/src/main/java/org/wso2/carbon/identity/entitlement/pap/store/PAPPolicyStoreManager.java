@@ -37,16 +37,8 @@ public class PAPPolicyStoreManager {
         storeReader = new PAPPolicyStoreReader(store);
     }
 
-    public void addOrUpdatePolicy(PolicyDTO policy) throws EntitlementException {
-        store.addOrUpdatePolicy(policy, PDPConstants.ENTITLEMENT_POLICY_PAP);
-    }
-
     public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy) throws EntitlementException {
         store.addOrUpdatePolicyToNewRDBMS(policy);
-    }
-
-    public void removePolicy(String policyId) throws EntitlementException {
-        store.removePolicy(policyId);
     }
 
     public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
@@ -75,10 +67,6 @@ public class PAPPolicyStoreManager {
 
     public PolicyDTO getMetaDataPolicy(String policyId) throws EntitlementException {
         return storeReader.readMetaDataPolicyDTO(policyId);
-    }
-
-    public PolicyDTO getPolicy(Resource resource) throws EntitlementException {
-        return storeReader.readPolicyDTO(resource);
     }
 
     public PolicyDTO[] getAllLightPolicyDTOs() throws EntitlementException {

@@ -226,8 +226,9 @@ public class EntitlementServiceComponent {
 
             // Read XACML policy files from a pre-defined location in the
             // filesystem and load to registry at the server startup
-            PAPPolicyStore papPolicyStore = new PAPPolicyStore(
-                    registryService.getGovernanceSystemRegistry());
+//            PAPPolicyStore papPolicyStore = new PAPPolicyStore(
+//                    registryService.getGovernanceSystemRegistry());
+            PAPPolicyStore papPolicyStore = new PAPPolicyStore();
 
             String startUpPolicyAdding = EntitlementConfigHolder.getInstance().getEngineProperties().getProperty(
                     PDPConstants.START_UP_POLICY_ADDING);

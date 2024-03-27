@@ -302,7 +302,7 @@ public class EntitlementPolicyAdminService {
     }
 
     /**
-     * Gets light weight policy DTO for given policy id
+     * Gets lightweight policy DTO for given policy id
      *
      * @param policyId policy id
      * @return returns policy
@@ -359,7 +359,6 @@ public class EntitlementPolicyAdminService {
                 oldPolicy = new PolicyDTO();
                 oldPolicy.setPolicyId(policyId);
             }
-            policyAdmin.removePolicy(policyId);
             policyAdmin.removePolicyFromNewRDBMS(policyId);
         } catch (EntitlementException e ) {
             oldPolicy = new PolicyDTO();
@@ -368,10 +367,6 @@ public class EntitlementPolicyAdminService {
             throw e;
         }
         handleStatus(EntitlementConstants.StatusTypes.DELETE_POLICY, oldPolicy, true, null);
-
-        //remove versions
-        //related to registry operations
-        EntitlementAdminEngine.getInstance().getVersionManager().deletePolicy(policyId);
 
         // policy remove from PDP.  this is done by separate thread
         if (dePromote) {
@@ -427,7 +422,6 @@ public class EntitlementPolicyAdminService {
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-//        return publisher.retrieveSubscriber(subscribeId, false);
         return publisher.retrieveSubscriberFromNewRDBMS(subscribeId, false);
     }
 
@@ -440,7 +434,6 @@ public class EntitlementPolicyAdminService {
      */
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-//        String[] ids = publisher.retrieveSubscriberIds(searchString);
         String[] ids = publisher.retrieveSubscriberIdsFromNewRDBMS(searchString);
 
         if (ids != null) {
@@ -459,7 +452,6 @@ public class EntitlementPolicyAdminService {
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-//        publisher.persistSubscriber(holder, false);
         publisher.persistSubscriberToNewRDBMS(holder, false);
 
     }
@@ -473,7 +465,6 @@ public class EntitlementPolicyAdminService {
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-//        publisher.persistSubscriber(holder, true);
         publisher.persistSubscriberToNewRDBMS(holder, true);
 
     }
@@ -487,7 +478,6 @@ public class EntitlementPolicyAdminService {
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-//        publisher.deleteSubscriber(subscriberId);
         publisher.deleteSubscriberFromNewRDBMS(subscriberId);
 
     }
@@ -511,7 +501,6 @@ public class EntitlementPolicyAdminService {
             policyIds = EntitlementAdminEngine.getInstance().getPapPolicyStoreManager().getPolicyIds();
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
-//            subscriberIds = publisher.retrieveSubscriberIds("*");
             subscriberIds = publisher.retrieveSubscriberIdsFromNewRDBMS("*");
         }
 
@@ -653,41 +642,23 @@ public class EntitlementPolicyAdminService {
         if(versions == null){
             throw new EntitlementException("Error obtaining policy versions");
         }
-//        Arrays.sort(versions);
         return versions;
 
     }
 
     public void orderPolicy(String policyId, int newOrder) throws EntitlementException {
 
-        PolicyDTO policyDTO = new PolicyDTO();
-        policyDTO.setPolicyId(policyId);
-        policyDTO.setPolicyOrder(newOrder);
-        PAPPolicyStoreManager storeManager = EntitlementAdminEngine.
-                getInstance().getPapPolicyStoreManager();
-        if (storeManager.isExistPolicy(policyId)) {
-            storeManager.addOrUpdatePolicy(policyDTO);
-        }
-        publishToPDP(new String[]{policyDTO.getPolicyId()}, EntitlementConstants.PolicyPublish.ACTION_ORDER, null,
+        publishToPDP(new String[]{policyId}, EntitlementConstants.PolicyPublish.ACTION_ORDER, null,
                      false, newOrder);
     }
 
     public void enableDisablePolicy(String policyId, boolean enable) throws EntitlementException {
 
-        PolicyDTO policyDTO = new PolicyDTO();
-        policyDTO.setPolicyId(policyId);
-        policyDTO.setActive(enable);
-        PAPPolicyStoreManager storeManager = EntitlementAdminEngine.
-                getInstance().getPapPolicyStoreManager();
-        if (storeManager.isExistPolicy(policyId)) {
-            storeManager.addOrUpdatePolicy(policyDTO);
-        }
-
         if (enable) {
-            publishToPDP(new String[]{policyDTO.getPolicyId()}, null,
+            publishToPDP(new String[]{policyId}, null,
                          EntitlementConstants.PolicyPublish.ACTION_ENABLE);
         } else {
-            publishToPDP(new String[]{policyDTO.getPolicyId()}, null,
+            publishToPDP(new String[]{policyId}, null,
                          EntitlementConstants.PolicyPublish.ACTION_DISABLE);
         }
     }
@@ -779,7 +750,6 @@ public class EntitlementPolicyAdminService {
                     log.error("Policy versioning is not supported", e);
                 }
             }
-            policyAdmin.addOrUpdatePolicy(policyDTO);
             policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
         } catch (EntitlementException e) {
             handleStatus(operation, policyDTO, false, e.getMessage());

@@ -25,7 +25,7 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import java.util.Properties;
 
 /**
- * This is the entitlement policy data store that is used to persist meta data of the policies
+ * This is the entitlement policy data store that is used to persist metadata of the policies
  * Such as global policy combining algorithm.
  */
 public interface PolicyDataStore {
@@ -84,21 +84,5 @@ public interface PolicyDataStore {
      */
     public PolicyStoreDTO[] getPolicyData();
 
-    /**
-     * Set policy data for give policy id
-     *
-     * @param policyId      policy id as <code>String</code>
-     * @param policyDataDTO policy data such as order and so on <code>PolicyStoreDTO</code>
-     * @throws EntitlementException if it is failed
-     */
-    public void setPolicyData(String policyId, PolicyStoreDTO policyDataDTO) throws EntitlementException;
-
-    /**
-     * Remove policy data for give policy id
-     *
-     * @param policyId policy id as <code>String</code>
-     * @throws EntitlementException
-     */
-    public void removePolicyData(String policyId) throws EntitlementException;
 
 }

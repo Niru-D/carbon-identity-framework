@@ -50,11 +50,6 @@ public interface PolicyVersionManager {
      */
     public String createVersion(PolicyDTO policyDTO) throws EntitlementException;
 
-    /**
-     * @param policyId
-     * @throws EntitlementException
-     */
-    public void deletePolicy(String policyId) throws EntitlementException;
 
     /**
      * @param policyId

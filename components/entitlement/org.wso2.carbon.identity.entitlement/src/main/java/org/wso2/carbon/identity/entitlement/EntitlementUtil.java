@@ -410,7 +410,7 @@ public class EntitlementUtil {
      */
     public static boolean isPolicyExists(String policyId, Registry registry) throws EntitlementException {
         PAPPolicyStoreReader policyReader = null;
-        policyReader = new PAPPolicyStoreReader(new PAPPolicyStore(registry));
+        policyReader = new PAPPolicyStoreReader(new PAPPolicyStore());
         return policyReader.isExistPolicy(policyId);
     }
 
@@ -438,7 +438,8 @@ public class EntitlementUtil {
         policyObj = getPolicy(policyDTO.getPolicy());
 
         if (policyObj != null) {
-            PAPPolicyStore policyStore = new PAPPolicyStore(registry);
+//            PAPPolicyStore policyStore = new PAPPolicyStore(registry);
+            PAPPolicyStore policyStore = new PAPPolicyStore();
             policyAdmin = new PAPPolicyStoreManager();
             policyDTO.setPolicyId(policyObj.getId().toASCIIString());
             policyDTO.setActive(true);
@@ -455,7 +456,8 @@ public class EntitlementUtil {
             } catch (EntitlementException e) {
                 log.error("Policy versioning is not supported", e);
             }
-            policyAdmin.addOrUpdatePolicy(policyDTO);
+//            policyAdmin.addOrUpdatePolicy(policyDTO);
+            policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
 
             PAPPolicyStoreReader reader = new PAPPolicyStoreReader(policyStore);
             policyDTO = reader.readPolicyDTO(policyDTO.getPolicyId());
@@ -475,7 +477,8 @@ public class EntitlementUtil {
                 if (promote) {
                     addPolicyToPDP(policyStoreDTO);
                 }
-                policyAdmin.addOrUpdatePolicy(policyDTO);
+//                policyAdmin.addOrUpdatePolicy(policyDTO);
+                policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
             }
             return true;
         } else {
@@ -527,7 +530,7 @@ public class EntitlementUtil {
      */
     public static PolicyDTO getPolicy(String policyId, Registry registry) throws EntitlementException {
         PAPPolicyStoreReader policyReader = null;
-        policyReader = new PAPPolicyStoreReader(new PAPPolicyStore(registry));
+        policyReader = new PAPPolicyStoreReader(new PAPPolicyStore());
         return policyReader.readPolicyDTO(policyId);
     }
 

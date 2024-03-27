@@ -29,11 +29,6 @@ import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pdp.EntitlementEngine;
-import org.wso2.carbon.registry.core.Collection;
-import org.wso2.carbon.registry.core.Registry;
-import org.wso2.carbon.registry.core.RegistryConstants;
-import org.wso2.carbon.registry.core.Resource;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -44,7 +39,7 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * This is default implementation, where data are stored in carbon registry
+ * This is default implementation
  */
 public class DefaultPolicyDataStore implements PolicyDataStore {
 
@@ -53,7 +48,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     public static final String POLICY_COMBINING_PREFIX_3 =
             "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:";
     private static Log log = LogFactory.getLog(DefaultPolicyDataStore.class);
-    private String policyDataCollection = PDPConstants.ENTITLEMENT_POLICY_DATA;
+
 
     @Override
     public void init(Properties properties) throws EntitlementException {
@@ -113,6 +108,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         return new DenyOverridesPolicyAlg();
     }
 
+
     @Override
     public void setGlobalPolicyAlgorithm(String policyCombiningAlgorithm) throws EntitlementException {
 
@@ -159,6 +155,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         }
     }
 
+
     @Override
     public String getGlobalPolicyAlgorithmName() {
 
@@ -196,12 +193,14 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         return algorithm;
     }
 
+
     @Override
     public String[] getAllGlobalPolicyAlgorithmNames() {
 
         return new String[]{"deny-overrides", "permit-overrides", "first-applicable",
                 "ordered-deny-overrides", "ordered-permit-overrides", "only-one-applicable"};
     }
+
 
     @Override
     public PolicyStoreDTO getPolicyData(String policyId) {
@@ -280,60 +279,5 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         }
     }
 
-    @Override
-    public void setPolicyData(String policyId, PolicyStoreDTO policyDataDTO) throws EntitlementException {
 
-        Registry registry = getGovernanceRegistry();
-        try {
-            String path = policyDataCollection + policyId;
-            Resource resource;
-            if (registry.resourceExists(path)) {
-                resource = registry.get(path);
-            } else {
-                resource = registry.newCollection();
-            }
-
-            if (policyDataDTO.isSetActive()) {
-                resource.setProperty("active", Boolean.toString(policyDataDTO.isActive()));
-            }
-            if (policyDataDTO.isSetOrder()) {
-                int order = policyDataDTO.getPolicyOrder();
-                if (order > 0) {
-                    resource.setProperty("order", Integer.toString(order));
-                }
-            }
-            registry.put(path, resource);
-        } catch (RegistryException e) {
-            log.error("Error while updating Policy data in policy store ", e);
-            throw new EntitlementException("Error while updating Policy data in policy store");
-        }
-    }
-
-    @Override
-    public void removePolicyData(String policyId) throws EntitlementException {
-
-        Registry registry = getGovernanceRegistry();
-        try {
-            String path = policyDataCollection + policyId;
-            if (registry.resourceExists(path)) {
-                registry.delete(path);
-            }
-        } catch (RegistryException e) {
-            log.error("Error while deleting Policy data in policy store ", e);
-            throw new EntitlementException("Error while deleting Policy data in policy store");
-        }
-
-    }
-
-    private Registry getGovernanceRegistry() throws EntitlementException {
-
-        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
-        Registry registry = EntitlementServiceComponent.getGovernanceRegistry(tenantId);
-
-        if (registry == null) {
-            throw new EntitlementException("Unable to get governance registry for tenant: " + tenantId);
-        }
-
-        return registry;
-    }
 }

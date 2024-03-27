@@ -26,15 +26,7 @@ import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
-import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
-import org.wso2.carbon.registry.core.Resource;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
-import java.nio.charset.Charset;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class PAPPolicyStoreReader {
 
@@ -59,15 +51,15 @@ public class PAPPolicyStoreReader {
      */
     public synchronized AbstractPolicy readPolicy(String policyId, PolicyFinder finder)
             throws EntitlementException {
-//        Resource resource = store.getPolicy(policyId, PDPConstants.ENTITLEMENT_POLICY_PAP);
+
         PolicyDTO dto = store.getPolicy(policyId);
         if (dto != null) {
-            //String policy = new String((byte[]) resource.getContent(), Charset.forName("UTF-8"));
             String policy = dto.getPolicy();
             return PAPPolicyReader.getInstance(null).getPolicy(policy);
         }
         return null;
     }
+
 
     /**
      * Reads All policies as Light Weight PolicyDTO
@@ -77,25 +69,10 @@ public class PAPPolicyStoreReader {
      */
     public PolicyDTO[] readAllLightPolicyDTOs() throws EntitlementException {
 
-//        String[] resources = null;
-//        resources = store.getAllPolicyIds();
-//
-//        if (resources == null) {
-//            return new PolicyDTO[0];
-//        }
-//
-//        List<PolicyDTO> policyDTOList = new ArrayList<PolicyDTO>();
-//
-//        for (String resource : resources) {
-//            PolicyDTO policyDTO = readLightPolicyDTO(resource);
-//            policyDTOList.add(policyDTO);
-//        }
-//
-//        return policyDTOList.toArray(new PolicyDTO[policyDTOList.size()]);
-
         return store.getAllPolicies();
 
     }
+
 
     /**
      * Reads PolicyDTO for given policy id
@@ -105,67 +82,6 @@ public class PAPPolicyStoreReader {
      * @throws EntitlementException throws, if fails
      */
     public PolicyDTO readPolicyDTO(String policyId) throws EntitlementException {
-//        Resource resource = null;
-//        try {
-//            resource = store.getPolicy(policyId, PDPConstants.ENTITLEMENT_POLICY_PAP);
-//            if (resource == null) {
-//                log.error("Policy does not exist in the system with id " + policyId);
-//                throw new EntitlementException("Policy does not exist in the system with id " + policyId);
-//            }
-//
-//            dto = new PolicyDTO();
-//            dto.setPolicyId(policyId);
-//            dto.setPolicy(new String((byte[]) resource.getContent(), Charset.forName("UTF-8")));
-//            dto.setActive(Boolean.parseBoolean(resource.getProperty(PDPConstants.ACTIVE_POLICY)));
-//            String policyOrder = resource.getProperty(PDPConstants.POLICY_ORDER);
-//            if (policyOrder != null) {
-//                dto.setPolicyOrder(Integer.parseInt(policyOrder));
-//            } else {
-//                dto.setPolicyOrder(0);
-//            }
-//            dto.setPolicyType(resource.getProperty(PDPConstants.POLICY_TYPE));
-//            String version = resource.getProperty(PDPConstants.POLICY_VERSION);
-//            if (version != null) {
-//                dto.setVersion(version);
-//            }
-//            String lastModifiedTime = resource.getProperty(PDPConstants.LAST_MODIFIED_TIME);
-//            if (lastModifiedTime != null) {
-//                dto.setLastModifiedTime(lastModifiedTime);
-//            }
-//            String lastModifiedUser = resource.getProperty(PDPConstants.LAST_MODIFIED_USER);
-//            if (lastModifiedUser != null) {
-//                dto.setLastModifiedUser(lastModifiedUser);
-//            }
-//            String policyReferences = resource.getProperty(PDPConstants.POLICY_REFERENCE);
-//            if (policyReferences != null && policyReferences.trim().length() > 0) {
-//                dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-//            }
-//
-//            String policySetReferences = resource.getProperty(PDPConstants.POLICY_SET_REFERENCE);
-//            if (policySetReferences != null && policySetReferences.trim().length() > 0) {
-//                dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-//            }
-//            //read policy meta data that is used for basic policy editor
-//            dto.setPolicyEditor(resource.getProperty(PDPConstants.POLICY_EDITOR_TYPE));
-//            String basicPolicyEditorMetaDataAmount = resource.getProperty(PDPConstants.
-//                    BASIC_POLICY_EDITOR_META_DATA_AMOUNT);
-//            if (basicPolicyEditorMetaDataAmount != null) {
-//                int amount = Integer.parseInt(basicPolicyEditorMetaDataAmount);
-//                String[] basicPolicyEditorMetaData = new String[amount];
-//                for (int i = 0; i < amount; i++) {
-//                    basicPolicyEditorMetaData[i] = resource.
-//                            getProperty(PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i);
-//                }
-//                dto.setPolicyEditorData(basicPolicyEditorMetaData);
-//            }
-//            PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder();
-//            dto.setAttributeDTOs(policyAttributeBuilder.
-//                    getPolicyMetaDataFromRegistryProperties(resource.getProperties()));
-//        } catch (RegistryException e) {
-//            log.error("Error while loading entitlement policy " + policyId + " from PAP policy store", e);
-//            throw new EntitlementException("Error while loading entitlement policy " + policyId +
-//                    " from PAP policy store");
-//        }
 
         PolicyDTO dto = store.getPolicy(policyId);
         if (dto == null) {
@@ -175,17 +91,17 @@ public class PAPPolicyStoreReader {
         return dto;
     }
 
+
     /**
-     * Checks whether policy is exist for given policy id
+     * Checks whether policy exists for the given policy id
      *
      * @param policyId policy id
      * @return true of false
      */
     public boolean isExistPolicy(String policyId) {
-//        Resource resource = null;
+
         PolicyDTO dto = null;
         try {
-//            resource = store.getPolicy(policyId, PDPConstants.ENTITLEMENT_POLICY_PAP);
             dto = store.getPolicy(policyId);
             if (dto != null) {
                 return true;
@@ -205,47 +121,6 @@ public class PAPPolicyStoreReader {
      * @throws EntitlementException throws, if fails
      */
     public PolicyDTO readLightPolicyDTO(String policyId) throws EntitlementException {
-
-//        Resource resource = null;
-//        PolicyDTO dto = null;
-//        resource = store.getPolicy(policyId, PDPConstants.ENTITLEMENT_POLICY_PAP);
-//        if (resource == null) {
-//            return null;
-//        }
-//        dto = new PolicyDTO();
-//        dto.setPolicyId(policyId);
-//        String version = resource.getProperty(PDPConstants.POLICY_VERSION);
-//        if (version != null) {
-//            dto.setVersion(version);
-//        }
-//        String lastModifiedTime = resource.getProperty(PDPConstants.LAST_MODIFIED_TIME);
-//        if (lastModifiedTime != null) {
-//            dto.setLastModifiedTime(lastModifiedTime);
-//        }
-//        String lastModifiedUser = resource.getProperty(PDPConstants.LAST_MODIFIED_USER);
-//        if (lastModifiedUser != null) {
-//            dto.setLastModifiedUser(lastModifiedUser);
-//        }
-//        dto.setActive(Boolean.parseBoolean(resource.getProperty(PDPConstants.ACTIVE_POLICY)));
-//        String policyOrder = resource.getProperty(PDPConstants.POLICY_ORDER);
-//        if (policyOrder != null) {
-//            dto.setPolicyOrder(Integer.parseInt(policyOrder));
-//        } else {
-//            dto.setPolicyOrder(0);
-//        }
-//        dto.setPolicyType(resource.getProperty(PDPConstants.POLICY_TYPE));
-//
-//        String policyReferences = resource.getProperty(PDPConstants.POLICY_REFERENCE);
-//        if (policyReferences != null && policyReferences.trim().length() > 0) {
-//            dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-//        }
-//
-//        String policySetReferences = resource.getProperty(PDPConstants.POLICY_SET_REFERENCE);
-//        if (policySetReferences != null && policySetReferences.trim().length() > 0) {
-//            dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-//        }
-//
-//        dto.setPolicyEditor(resource.getProperty(PDPConstants.POLICY_EDITOR_TYPE));
 
         PolicyDTO dto = store.getPolicy(policyId);
         if (dto == null) {
@@ -268,62 +143,6 @@ public class PAPPolicyStoreReader {
      * @throws EntitlementException throws, if fails
      */
     public PolicyDTO readMetaDataPolicyDTO(String policyId) throws EntitlementException {
-//        Resource resource = null;
-//        PolicyDTO dto = null;
-//
-//        resource = store.getPolicy(policyId, PDPConstants.ENTITLEMENT_POLICY_PAP);
-//        if (resource == null) {
-//            return null;
-//        }
-//        dto = new PolicyDTO();
-//        dto.setPolicyId(policyId);
-//        dto.setActive(Boolean.parseBoolean(resource.getProperty(PDPConstants.ACTIVE_POLICY)));
-//        String policyOrder = resource.getProperty(PDPConstants.POLICY_ORDER);
-//        if (policyOrder != null) {
-//            dto.setPolicyOrder(Integer.parseInt(policyOrder));
-//        } else {
-//            dto.setPolicyOrder(0);
-//        }
-
-//        String version = resource.getProperty(PDPConstants.POLICY_VERSION);
-//        if (version != null) {
-//            dto.setVersion(version);
-//        }
-//        String lastModifiedTime = resource.getProperty(PDPConstants.LAST_MODIFIED_TIME);
-//        if (lastModifiedTime != null) {
-//            dto.setLastModifiedTime(lastModifiedTime);
-//        }
-//        String lastModifiedUser = resource.getProperty(PDPConstants.LAST_MODIFIED_USER);
-//        if (lastModifiedUser != null) {
-//            dto.setLastModifiedUser(lastModifiedUser);
-//        }
-//        dto.setPolicyType(resource.getProperty(PDPConstants.POLICY_TYPE));
-
-//        String policyReferences = resource.getProperty(PDPConstants.POLICY_REFERENCE);
-//        if (policyReferences != null && policyReferences.trim().length() > 0) {
-//            dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-//        }
-//
-//        String policySetReferences = resource.getProperty(PDPConstants.POLICY_SET_REFERENCE);
-//        if (policySetReferences != null && policySetReferences.trim().length() > 0) {
-//            dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-//        }
-//
-//        dto.setPolicyEditor(resource.getProperty(PDPConstants.POLICY_EDITOR_TYPE));
-//        String basicPolicyEditorMetaDataAmount = resource.getProperty(PDPConstants.
-//                BASIC_POLICY_EDITOR_META_DATA_AMOUNT);
-//        if (basicPolicyEditorMetaDataAmount != null) {
-//            int amount = Integer.parseInt(basicPolicyEditorMetaDataAmount);
-//            String[] basicPolicyEditorMetaData = new String[amount];
-//            for (int i = 0; i < amount; i++) {
-//                basicPolicyEditorMetaData[i] = resource.
-//                        getProperty(PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i);
-//            }
-//            dto.setPolicyEditorData(basicPolicyEditorMetaData);
-//        }
-//        PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder();
-//        dto.setAttributeDTOs(policyAttributeBuilder.
-//                getPolicyMetaDataFromRegistryProperties(resource.getProperties()));
 
         PolicyDTO dto = store.getPolicy(policyId);
         if(dto == null){
@@ -334,76 +153,5 @@ public class PAPPolicyStoreReader {
 
     }
 
-    /**
-     * Reads PolicyDTO for given registry resource
-     *
-     * @param resource Registry resource
-     * @return PolicyDTO
-     * @throws EntitlementException throws, if fails
-     */
-    public PolicyDTO readPolicyDTO(Resource resource) throws EntitlementException {
-        String policy = null;
-        String policyId = null;
-        AbstractPolicy absPolicy = null;
-        PolicyDTO dto = null;
-        try {
-            policy = new String((byte[]) resource.getContent(), Charset.forName("UTF-8"));
-            absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policy);
-            policyId = absPolicy.getId().toASCIIString();
-            dto = new PolicyDTO();
-            dto.setPolicyId(policyId);
-            dto.setPolicy(policy);
-            dto.setActive(Boolean.parseBoolean(resource.getProperty(PDPConstants.ACTIVE_POLICY)));
-            String policyOrder = resource.getProperty(PDPConstants.POLICY_ORDER);
-            if (policyOrder != null) {
-                dto.setPolicyOrder(Integer.parseInt(policyOrder));
-            } else {
-                dto.setPolicyOrder(0);
-            }
-            String version = resource.getProperty(PDPConstants.POLICY_VERSION);
-            if (version != null) {
-                dto.setVersion(version);
-            }
-            String lastModifiedTime = resource.getProperty(PDPConstants.LAST_MODIFIED_TIME);
-            if (lastModifiedTime != null) {
-                dto.setLastModifiedTime(lastModifiedTime);
-            }
-            String lastModifiedUser = resource.getProperty(PDPConstants.LAST_MODIFIED_USER);
-            if (lastModifiedUser != null) {
-                dto.setLastModifiedUser(lastModifiedUser);
-            }
-            dto.setPolicyType(resource.getProperty(PDPConstants.POLICY_TYPE));
-            String policyReferences = resource.getProperty(PDPConstants.POLICY_REFERENCE);
-            if (policyReferences != null && policyReferences.trim().length() > 0) {
-                dto.setPolicyIdReferences(policyReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-            }
 
-            String policySetReferences = resource.getProperty(PDPConstants.POLICY_SET_REFERENCE);
-            if (policySetReferences != null && policySetReferences.trim().length() > 0) {
-                dto.setPolicySetIdReferences(policySetReferences.split(PDPConstants.ATTRIBUTE_SEPARATOR));
-            }
-
-            //read policy meta data that is used for basic policy editor
-            dto.setPolicyEditor(resource.getProperty(PDPConstants.POLICY_EDITOR_TYPE));
-            String basicPolicyEditorMetaDataAmount = resource.getProperty(PDPConstants.
-                    BASIC_POLICY_EDITOR_META_DATA_AMOUNT);
-            if (basicPolicyEditorMetaDataAmount != null) {
-                int amount = Integer.parseInt(basicPolicyEditorMetaDataAmount);
-                String[] basicPolicyEditorMetaData = new String[amount];
-                for (int i = 0; i < amount; i++) {
-                    basicPolicyEditorMetaData[i] = resource.
-                            getProperty(PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i);
-                }
-                dto.setPolicyEditorData(basicPolicyEditorMetaData);
-            }
-            PolicyAttributeBuilder policyAttributeBuilder = new PolicyAttributeBuilder();
-            dto.setAttributeDTOs(policyAttributeBuilder.
-                    getPolicyMetaDataFromRegistryProperties(resource.getProperties()));
-            return dto;
-        } catch (RegistryException e) {
-            log.error("Error while loading entitlement policy " + policyId + " from PAP policy store", e);
-            throw new EntitlementException("Error while loading entitlement policy " + policyId +
-                    " from PAP policy store");
-        }
-    }
 }
