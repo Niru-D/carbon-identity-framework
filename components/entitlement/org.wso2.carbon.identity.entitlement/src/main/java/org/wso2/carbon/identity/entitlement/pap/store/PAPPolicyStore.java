@@ -585,7 +585,7 @@ public class PAPPolicyStore {
      * @throws EntitlementException throws, if fails
      */
 
-    public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy)
+    public void addOrUpdatePolicy(PolicyDTO policy)
             throws EntitlementException {
 
         boolean newPolicy = false;
@@ -765,7 +765,7 @@ public class PAPPolicyStore {
      * @throws EntitlementException throws, if fails
      */
 
-    public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
+    public void removePolicy(String policyId) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();

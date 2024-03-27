@@ -77,11 +77,11 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
         //If the action is DELETE_POLICY, delete the policy or the subscriber status
         for (StatusHolder holder : statusHolder) {
             if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
-                deletedPersistedDataFromNewRDBMS(about, key);
+                deletePersistedData(about, key);
                 return;
             }
         }
-        persistStatusToNewRDBMS(about, key, statusHolder);
+        persistStatus(about, key, statusHolder);
     }
 
 
@@ -140,7 +140,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
     }
 
 
-    private synchronized void deletedPersistedDataFromNewRDBMS(String about, String key) throws EntitlementException {
+    private synchronized void deletePersistedData(String about, String key) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -170,7 +170,7 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
     }
 
 
-    private synchronized void persistStatusToNewRDBMS(String about, String key, List<StatusHolder> statusHolders)
+    private synchronized void persistStatus(String about, String key, List<StatusHolder> statusHolders)
             throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);

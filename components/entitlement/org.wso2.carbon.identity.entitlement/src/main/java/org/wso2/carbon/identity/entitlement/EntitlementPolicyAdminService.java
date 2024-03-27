@@ -359,7 +359,7 @@ public class EntitlementPolicyAdminService {
                 oldPolicy = new PolicyDTO();
                 oldPolicy.setPolicyId(policyId);
             }
-            policyAdmin.removePolicyFromNewRDBMS(policyId);
+            policyAdmin.removePolicy(policyId);
         } catch (EntitlementException e ) {
             oldPolicy = new PolicyDTO();
             oldPolicy.setPolicyId(policyId);
@@ -422,7 +422,7 @@ public class EntitlementPolicyAdminService {
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        return publisher.retrieveSubscriberFromNewRDBMS(subscribeId, false);
+        return publisher.retrieveSubscriber(subscribeId, false);
     }
 
     /**
@@ -434,7 +434,7 @@ public class EntitlementPolicyAdminService {
      */
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        String[] ids = publisher.retrieveSubscriberIdsFromNewRDBMS(searchString);
+        String[] ids = publisher.retrieveSubscriberIds(searchString);
 
         if (ids != null) {
             return ids;
@@ -452,7 +452,7 @@ public class EntitlementPolicyAdminService {
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.persistSubscriberToNewRDBMS(holder, false);
+        publisher.persistSubscriber(holder, false);
 
     }
 
@@ -465,7 +465,7 @@ public class EntitlementPolicyAdminService {
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.persistSubscriberToNewRDBMS(holder, true);
+        publisher.persistSubscriber(holder, true);
 
     }
 
@@ -478,7 +478,7 @@ public class EntitlementPolicyAdminService {
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.deleteSubscriberFromNewRDBMS(subscriberId);
+        publisher.deleteSubscriber(subscriberId);
 
     }
 
@@ -501,7 +501,7 @@ public class EntitlementPolicyAdminService {
             policyIds = EntitlementAdminEngine.getInstance().getPapPolicyStoreManager().getPolicyIds();
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
-            subscriberIds = publisher.retrieveSubscriberIdsFromNewRDBMS("*");
+            subscriberIds = publisher.retrieveSubscriberIds("*");
         }
 
         if (policyIds == null || policyIds.length < 1) {
@@ -750,7 +750,7 @@ public class EntitlementPolicyAdminService {
                     log.error("Policy versioning is not supported", e);
                 }
             }
-            policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
+            policyAdmin.addOrUpdatePolicy(policyDTO);
         } catch (EntitlementException e) {
             handleStatus(operation, policyDTO, false, e.getMessage());
             throw e;

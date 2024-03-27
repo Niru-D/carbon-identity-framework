@@ -122,7 +122,7 @@ public class PolicyPublishExecutor {
                 holder = new PublisherDataHolder(policyPublisherModule.getModuleName());
             } else {
                 try {
-                    holder = publisher.retrieveSubscriberFromNewRDBMS(subscriberId, true);
+                    holder = publisher.retrieveSubscriber(subscriberId, true);
                 } catch (EntitlementException e) {
                     log.error("Subscriber details can not be retrieved. So skip publishing policies " +
                             "for subscriber : " + subscriberId);

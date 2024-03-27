@@ -456,8 +456,8 @@ public class EntitlementUtil {
             } catch (EntitlementException e) {
                 log.error("Policy versioning is not supported", e);
             }
-//            policyAdmin.addOrUpdatePolicy(policyDTO);
-            policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
+
+            policyAdmin.addOrUpdatePolicy(policyDTO);
 
             PAPPolicyStoreReader reader = new PAPPolicyStoreReader(policyStore);
             policyDTO = reader.readPolicyDTO(policyDTO.getPolicyId());
@@ -477,8 +477,7 @@ public class EntitlementUtil {
                 if (promote) {
                     addPolicyToPDP(policyStoreDTO);
                 }
-//                policyAdmin.addOrUpdatePolicy(policyDTO);
-                policyAdmin.addOrUpdatePolicyToNewRDBMS(policyDTO);
+                policyAdmin.addOrUpdatePolicy(policyDTO);
             }
             return true;
         } else {

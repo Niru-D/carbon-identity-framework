@@ -100,12 +100,12 @@ public class PolicyPublisher {
         try {
             PublisherDataHolder pdpDataHolder = null;
             try {
-                pdpDataHolder = retrieveSubscriberFromNewRDBMS(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
+                pdpDataHolder = retrieveSubscriber(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
             } catch (Exception e) {
                 // ignore
             }
             if (pdpDataHolder == null) {
-                persistSubscriberToNewRDBMS(holder, false);
+                persistSubscriber(holder, false);
             }
         } catch (EntitlementException e) {
             // ignore
@@ -142,7 +142,7 @@ public class PolicyPublisher {
         executor.run();
     }
 
-    public void persistSubscriberToNewRDBMS(PublisherDataHolder holder, boolean update) throws EntitlementException {
+    public void persistSubscriber(PublisherDataHolder holder, boolean update) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -203,7 +203,7 @@ public class PolicyPublisher {
             IdentityDatabaseUtil.closeResultSet(rs1);
             IdentityDatabaseUtil.closeStatement(findSubscriberExistencePrepStmt);
 
-            populatePropertiesInNewRDBMS(holder,oldHolder);
+            populateProperties(holder,oldHolder);
             PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();
 
             //Create a new subscriber
@@ -296,7 +296,7 @@ public class PolicyPublisher {
     }
 
 
-    public void deleteSubscriberFromNewRDBMS(String subscriberId) throws EntitlementException {
+    public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -331,7 +331,7 @@ public class PolicyPublisher {
     }
 
 
-    public PublisherDataHolder retrieveSubscriberFromNewRDBMS(String id, boolean returnSecrets) throws EntitlementException {
+    public PublisherDataHolder retrieveSubscriber(String id, boolean returnSecrets) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -363,7 +363,7 @@ public class PolicyPublisher {
     }
 
 
-    public String[] retrieveSubscriberIdsFromNewRDBMS(String searchString) throws EntitlementException {
+    public String[] retrieveSubscriberIds(String searchString) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -406,7 +406,7 @@ public class PolicyPublisher {
     }
 
 
-    private void populatePropertiesInNewRDBMS(PublisherDataHolder holder,
+    private void populateProperties(PublisherDataHolder holder,
                                     PublisherDataHolder oldHolder) {
 
         PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();

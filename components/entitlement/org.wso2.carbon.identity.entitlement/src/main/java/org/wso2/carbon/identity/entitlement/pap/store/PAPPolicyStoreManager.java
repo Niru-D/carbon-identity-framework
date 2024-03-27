@@ -37,12 +37,12 @@ public class PAPPolicyStoreManager {
         storeReader = new PAPPolicyStoreReader(store);
     }
 
-    public void addOrUpdatePolicyToNewRDBMS(PolicyDTO policy) throws EntitlementException {
-        store.addOrUpdatePolicyToNewRDBMS(policy);
+    public void addOrUpdatePolicy(PolicyDTO policy) throws EntitlementException {
+        store.addOrUpdatePolicy(policy);
     }
 
-    public void removePolicyFromNewRDBMS(String policyId) throws EntitlementException {
-        store.removePolicyFromNewRDBMS(policyId);
+    public void removePolicy(String policyId) throws EntitlementException {
+        store.removePolicy(policyId);
     }
 
     public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
