@@ -30,6 +30,13 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pdp.EntitlementEngine;
 
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_POLICY_COMBINING_ALGORITHM_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PDP_POLICIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_COMBINING_ALGORITHM_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_POLICY_COMBINING_ALGORITHM_SQL;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,14 +72,13 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         ResultSet rs = null;
 
         try {
-            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(GET_POLICY_COMBINING_ALGORITHM_SQL);
             getPolicyCombiningAlgoPrepStmt.setInt(1, tenantId);
-            getPolicyCombiningAlgoPrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            getPolicyCombiningAlgoPrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             rs = getPolicyCombiningAlgoPrepStmt.executeQuery();
 
             if(rs.next()){
-                algorithm = rs.getString("CONFIG_VALUE");
+                algorithm = rs.getString(EntitlementTableColumns.CONFIG_VALUE);
             }
 
             if (algorithm == null || algorithm.trim().length() == 0) {
@@ -120,24 +126,21 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
 
         try {
             //Check the existence of the algorithm
-            getAlgoPresencePrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getAlgoPresencePrepStmt = connection.prepareStatement(GET_POLICY_COMBINING_ALGORITHM_SQL);
             getAlgoPresencePrepStmt.setInt(1, tenantId);
-            getAlgoPresencePrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            getAlgoPresencePrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             rs = getAlgoPresencePrepStmt.executeQuery();
 
             if(rs.next()){
                 //Update the algorithm
-                setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_CONFIG SET CONFIG_VALUE=? WHERE TENANT_ID=? AND CONFIG_KEY=?");
+                setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(UPDATE_POLICY_COMBINING_ALGORITHM_SQL);
             }else{
                 //Insert the algorithm
-                setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
-                        "INSERT INTO IDN_XACML_CONFIG (CONFIG_VALUE, TENANT_ID, CONFIG_KEY) VALUES (?, ?, ?)");
+                setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(CREATE_POLICY_COMBINING_ALGORITHM_SQL);
             }
             setPolicyCombiningAlgoPrepStmt.setString(1, policyCombiningAlgorithm);
             setPolicyCombiningAlgoPrepStmt.setInt(2, tenantId);
-            setPolicyCombiningAlgoPrepStmt.setString(3, "globalPolicyCombiningAlgorithm");
+            setPolicyCombiningAlgoPrepStmt.setString(3, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             setPolicyCombiningAlgoPrepStmt.executeUpdate();
 
             // performing cache invalidation
@@ -167,14 +170,13 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
 
         try {
 
-            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(GET_POLICY_COMBINING_ALGORITHM_SQL);
             getPolicyCombiningAlgoPrepStmt.setInt(1, tenantId);
-            getPolicyCombiningAlgoPrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            getPolicyCombiningAlgoPrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             rs = getPolicyCombiningAlgoPrepStmt.executeQuery();
 
             if(rs.next()){
-                algorithm = rs.getString("CONFIG_VALUE");
+                algorithm = rs.getString(EntitlementTableColumns.CONFIG_VALUE);
             }
 
         } catch (SQLException e) {
@@ -212,18 +214,17 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         ResultSet policyData = null;
 
         try {
-            getAllPolicyData = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=? AND POLICY_ID=?");
-            getAllPolicyData.setInt(1, tenantId);
+            getAllPolicyData = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
+            getAllPolicyData.setString(1, policyId);
             getAllPolicyData.setInt(2, 1);
-            getAllPolicyData.setString(3, policyId);
+            getAllPolicyData.setInt(3, tenantId);
             policyData = getAllPolicyData.executeQuery();
 
             if(policyData.next()){
-                dataDTO.setPolicyOrder(policyData.getInt("POLICY_ORDER"));
-                boolean active = policyData.getInt("IS_ACTIVE") == 1;
+                dataDTO.setPolicyOrder(policyData.getInt(EntitlementTableColumns.POLICY_ORDER));
+                boolean active = policyData.getInt(EntitlementTableColumns.IS_ACTIVE) == 1;
                 dataDTO.setActive(active);
-                dataDTO.setPolicyType(policyData.getString("POLICY_TYPE"));
+                dataDTO.setPolicyType(policyData.getString(EntitlementTableColumns.POLICY_TYPE));
             }
             return dataDTO;
 
@@ -249,8 +250,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         ResultSet policyData = null;
 
         try {
-            getAllPolicyData = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=?");
+            getAllPolicyData = connection.prepareStatement(GET_ALL_PDP_POLICIES_SQL);
             getAllPolicyData.setInt(1, tenantId);
             getAllPolicyData.setInt(2, 1);
             policyData = getAllPolicyData.executeQuery();
@@ -258,11 +258,11 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
             if(policyData.next()){
                 do{
                     PolicyStoreDTO dataDTO = new PolicyStoreDTO();
-                    dataDTO.setPolicyId(policyData.getString("POLICY_ID"));
-                    dataDTO.setPolicyOrder(policyData.getInt("POLICY_ORDER"));
-                    boolean active = (policyData.getInt("IS_ACTIVE") == 1);
+                    dataDTO.setPolicyId(policyData.getString(EntitlementTableColumns.POLICY_ID));
+                    dataDTO.setPolicyOrder(policyData.getInt(EntitlementTableColumns.POLICY_ORDER));
+                    boolean active = (policyData.getInt(EntitlementTableColumns.IS_ACTIVE) == 1);
                     dataDTO.setActive(active);
-                    dataDTO.setPolicyType(policyData.getString("POLICY_TYPE"));
+                    dataDTO.setPolicyType(policyData.getString(EntitlementTableColumns.POLICY_TYPE));
                     policyStoreDTOs.add(dataDTO);
                 } while(policyData.next());
             }

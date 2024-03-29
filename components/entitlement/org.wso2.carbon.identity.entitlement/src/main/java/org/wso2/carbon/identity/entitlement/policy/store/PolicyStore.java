@@ -32,7 +32,17 @@ import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent
 import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
-import org.wso2.carbon.identity.entitlement.policy.finder.registry.RegistryPolicyReader;
+
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PUBLISHED_VERSIONS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_UNUSED_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ACTIVE_STATUS_AND_ORDER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PUBLISHED_POLICY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.PUBLISH_POLICY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.RESTORE_ACTIVE_STATUS_AND_ORDER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_ACTIVE_STATUS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_ORDER_SQL;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -46,6 +56,7 @@ import java.util.*;
 public class PolicyStore extends AbstractPolicyFinderModule
         implements PolicyStoreManageModule {
 
+    //TODO
     private static final String MODULE_NAME = "Registry Policy Finder Module";
     private static Log log = LogFactory.getLog(PolicyStore.class);
 
@@ -74,14 +85,14 @@ public class PolicyStore extends AbstractPolicyFinderModule
 
             //Get published version
             if (policy.getVersion() == null) {
-                try (PreparedStatement getPublishedVersionPrepStmt = connection.prepareStatement(
-                        "SELECT VERSION FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?")) {
+                try (PreparedStatement getPublishedVersionPrepStmt =
+                             connection.prepareStatement(GET_PUBLISHED_POLICY_VERSION_SQL)) {
                     getPublishedVersionPrepStmt.setString(1, policy.getPolicyId());
                     getPublishedVersionPrepStmt.setInt(2, tenantId);
                     getPublishedVersionPrepStmt.setInt(3, 1);
                     try (ResultSet rs = getPublishedVersionPrepStmt.executeQuery()) {
                         if (rs.next()) {
-                            version = rs.getInt("VERSION");
+                            version = rs.getInt(EntitlementTableColumns.VERSION);
                         } else {
                             throw new SQLException("No published version found for policy: " + policy.getPolicyId());
                         }
@@ -97,8 +108,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             //Update active status
             if (policy.isSetActive()) {
                 active = policy.isActive() ? 1 : 0;
-                PreparedStatement updateActiveStatusPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_POLICY SET IS_ACTIVE=? WHERE POLICY_ID=? AND TENANT_ID=? AND VERSION=?");
+                PreparedStatement updateActiveStatusPrepStmt = connection.prepareStatement(UPDATE_ACTIVE_STATUS_SQL);
                 updateActiveStatusPrepStmt.setInt(1, active);
                 updateActiveStatusPrepStmt.setString(2, policy.getPolicyId());
                 updateActiveStatusPrepStmt.setInt(3, tenantId);
@@ -111,9 +121,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             if (policy.isSetOrder()) {
                 if (policy.getPolicyOrder() > 0) {
                     order = policy.getPolicyOrder();
-                    PreparedStatement updateOrderPrepStmt = connection.prepareStatement(
-                            "UPDATE IDN_XACML_POLICY SET POLICY_ORDER=? WHERE POLICY_ID=? AND TENANT_ID=? " +
-                                    "AND VERSION=?");
+                    PreparedStatement updateOrderPrepStmt = connection.prepareStatement(UPDATE_ORDER_SQL);
                     updateOrderPrepStmt.setInt(1, order);
                     updateOrderPrepStmt.setString(2, policy.getPolicyId());
                     updateOrderPrepStmt.setInt(3, tenantId);
@@ -126,24 +134,23 @@ public class PolicyStore extends AbstractPolicyFinderModule
             if(!policy.isSetActive() && !policy.isSetOrder()){
 
                 //Get active status and order of the previously published policy version
-                PreparedStatement getActiveStatusAndOrderPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?");
+                PreparedStatement getActiveStatusAndOrderPrepStmt =
+                        connection.prepareStatement(GET_ACTIVE_STATUS_AND_ORDER_SQL);
                 getActiveStatusAndOrderPrepStmt.setString(1, policy.getPolicyId());
                 getActiveStatusAndOrderPrepStmt.setInt(2, tenantId);
                 getActiveStatusAndOrderPrepStmt.setInt(3, 1);
                 ResultSet rs = getActiveStatusAndOrderPrepStmt.executeQuery();
 
                 if(rs.next()){
-                    previousActive = rs.getInt("IS_ACTIVE");
-                    previousOrder = rs.getInt("POLICY_ORDER");
+                    previousActive = rs.getInt(EntitlementTableColumns.IS_ACTIVE);
+                    previousOrder = rs.getInt(EntitlementTableColumns.POLICY_ORDER);
                 }
                 IdentityDatabaseUtil.closeResultSet(rs);
                 IdentityDatabaseUtil.closeStatement(getActiveStatusAndOrderPrepStmt);
 
                 //Remove previously published versions of the policy
-                PreparedStatement updatePublishStatusPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_POLICY SET IS_IN_PDP=?, IS_ACTIVE=?, POLICY_ORDER=? WHERE POLICY_ID=? AND " +
-                                "TENANT_ID=? AND IS_IN_PDP=?");
+                PreparedStatement updatePublishStatusPrepStmt =
+                        connection.prepareStatement(DELETE_PUBLISHED_VERSIONS_SQL);
                 updatePublishStatusPrepStmt.setInt(1, 0);
                 updatePublishStatusPrepStmt.setInt(2, 0);
                 updatePublishStatusPrepStmt.setInt(3, 0);
@@ -155,9 +162,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
 
                 //When removing previously published versions,
                 // If the policy has been already removed from PAP, remove the policy from the database
-                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
-                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? " +
-                                "AND IS_IN_PAP=? AND IS_IN_PDP=?");
+                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(DELETE_UNUSED_POLICY_SQL);
                 removePolicyPrepStmt.setString(1, policy.getPolicyId());
                 removePolicyPrepStmt.setInt(2, tenantId);
                 removePolicyPrepStmt.setInt(3, 0);
@@ -167,9 +172,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             }
 
             //Publish the given version of the policy
-            PreparedStatement publishPolicyPrepStmt = connection.prepareStatement(
-                    "UPDATE IDN_XACML_POLICY SET IS_IN_PDP=? WHERE POLICY_ID=? AND TENANT_ID=? " +
-                            "AND VERSION=?");
+            PreparedStatement publishPolicyPrepStmt = connection.prepareStatement(PUBLISH_POLICY_VERSION_SQL);
             publishPolicyPrepStmt.setInt(1, 1);
             publishPolicyPrepStmt.setString(2, policy.getPolicyId());
             publishPolicyPrepStmt.setInt(3, tenantId);
@@ -179,9 +182,8 @@ public class PolicyStore extends AbstractPolicyFinderModule
 
             //If this is an update, keep the previous active status and order
             if(!policy.isSetActive() && !policy.isSetOrder()){
-                PreparedStatement updatePolicyStatusAndOrderPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_POLICY SET IS_ACTIVE=?, POLICY_ORDER=? WHERE POLICY_ID=? AND " +
-                                "TENANT_ID=? AND VERSION=?");
+                PreparedStatement updatePolicyStatusAndOrderPrepStmt =
+                        connection.prepareStatement(RESTORE_ACTIVE_STATUS_AND_ORDER_SQL);
                 updatePolicyStatusAndOrderPrepStmt.setInt(1, previousActive);
                 updatePolicyStatusAndOrderPrepStmt.setInt(2, previousOrder);
                 updatePolicyStatusAndOrderPrepStmt.setString(3, policy.getPolicyId());
@@ -216,12 +218,10 @@ public class PolicyStore extends AbstractPolicyFinderModule
         ResultSet rs = null;
 
         try {
-
-            getPolicyPublishStatus = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?");
+            getPolicyPublishStatus = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
             getPolicyPublishStatus.setString(1,policyId);
-            getPolicyPublishStatus.setInt(2, tenantId);
-            getPolicyPublishStatus.setInt(3, 1);
+            getPolicyPublishStatus.setInt(2, 1);
+            getPolicyPublishStatus.setInt(3, tenantId);
             rs = getPolicyPublishStatus.executeQuery();
 
             return rs.next();
@@ -251,9 +251,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
 
         try {
             //Remove the published state of the given policy (Remove from PDP)
-            PreparedStatement demotePolicyPrepStmt = connection.prepareStatement
-                    ("UPDATE IDN_XACML_POLICY SET IS_IN_PDP=?, IS_ACTIVE=?, POLICY_ORDER=? WHERE POLICY_ID=? " +
-                            "AND TENANT_ID=? AND IS_IN_PDP=?");
+            PreparedStatement demotePolicyPrepStmt = connection.prepareStatement(DELETE_PUBLISHED_VERSIONS_SQL);
             demotePolicyPrepStmt.setInt(1, 0);
             demotePolicyPrepStmt.setInt(2, 0);
             demotePolicyPrepStmt.setInt(3, 0);
@@ -264,9 +262,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             IdentityDatabaseUtil.closeStatement(demotePolicyPrepStmt);
 
             //If the policy has been already removed from PAP, remove the policy from the database
-            PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
-                    "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? " +
-                            "AND IS_IN_PAP=? AND IS_IN_PDP=?");
+            PreparedStatement removePolicyPrepStmt = connection.prepareStatement(DELETE_UNUSED_POLICY_SQL);
             removePolicyPrepStmt.setString(1, policyIdentifier);
             removePolicyPrepStmt.setInt(2, tenantId);
             removePolicyPrepStmt.setInt(3, 0);

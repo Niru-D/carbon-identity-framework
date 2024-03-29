@@ -25,11 +25,18 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
-import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
-import org.wso2.carbon.registry.core.Registry;
-import org.wso2.carbon.registry.core.RegistryConstants;
-import org.wso2.carbon.registry.core.Resource;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
+
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_POLICY_STATUS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_SUBSCRIBER_STATUS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_OLD_POLICY_STATUSES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_OLD_SUBSCRIBER_STATUSES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_STATUS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_SUBSCRIBER_STATUS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_STATUS_COUNT_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_STATUS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_STATUS_COUNT_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_STATUS_SQL;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -147,11 +154,9 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
         try {
             PreparedStatement deleteStatusPrepStmt = null;
             if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                deleteStatusPrepStmt = connection.prepareStatement(
-                        "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                deleteStatusPrepStmt = connection.prepareStatement(DELETE_POLICY_STATUS_SQL);
             }else{
-                deleteStatusPrepStmt = connection.prepareStatement(
-                        "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
+                deleteStatusPrepStmt = connection.prepareStatement(DELETE_SUBSCRIBER_STATUS_SQL);
             }
             deleteStatusPrepStmt.setString(1, key);
             deleteStatusPrepStmt.setInt(2, tenantId);
@@ -187,11 +192,9 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                     //Delete the previous status
                     PreparedStatement deleteStatusPrepStmt = null;
                     if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                        deleteStatusPrepStmt = connection.prepareStatement(
-                                "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                        deleteStatusPrepStmt = connection.prepareStatement(DELETE_POLICY_STATUS_SQL);
                     }else{
-                        deleteStatusPrepStmt = connection.prepareStatement(
-                                "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
+                        deleteStatusPrepStmt = connection.prepareStatement(DELETE_SUBSCRIBER_STATUS_SQL);
                     }
                     deleteStatusPrepStmt.setString(1, key);
                     deleteStatusPrepStmt.setInt(2, tenantId);
@@ -203,15 +206,9 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                 //Add new status to the database
                 PreparedStatement addStatusPrepStmt = null;
                 if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
-                    addStatusPrepStmt = connection.prepareStatement(
-                            "INSERT INTO IDN_XACML_STATUS (TYPE, SUCCESS, USER, TARGET, TARGET_ACTION," +
-                                    "TIME_INSTANCE, MESSAGE, POLICY_ID, POLICY_TENANT_ID, POLICY_VERSION) VALUES " +
-                                    "(?,?,?,?,?,?,?,?,?,?)");
+                    addStatusPrepStmt = connection.prepareStatement(CREATE_POLICY_STATUS_SQL);
                 }else{
-                    addStatusPrepStmt = connection.prepareStatement(
-                            "INSERT INTO IDN_XACML_STATUS (TYPE, SUCCESS, USER, TARGET, TARGET_ACTION," +
-                                    "TIME_INSTANCE, MESSAGE, SUBSCRIBER_ID, SUBSCRIBER_TENANT_ID) VALUES " +
-                                    "(?,?,?,?,?,?,?,?,?)");
+                    addStatusPrepStmt = connection.prepareStatement(CREATE_SUBSCRIBER_STATUS_SQL);
                 }
 
                 for(StatusHolder statusHolder : statusHolders){
@@ -258,19 +255,16 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                     //Get the existing status count
                     PreparedStatement getStatusCountPrepStmt = null;
                     if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                        getStatusCountPrepStmt = connection.prepareStatement(
-                                "SELECT COUNT(*) AS COUNT FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                        getStatusCountPrepStmt = connection.prepareStatement(GET_POLICY_STATUS_COUNT_SQL);
                     }else{
-                        getStatusCountPrepStmt = connection.prepareStatement(
-                                "SELECT COUNT(*) AS COUNT FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND " +
-                                        "SUBSCRIBER_TENANT_ID=?");
+                        getStatusCountPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_STATUS_COUNT_SQL);
                     }
                     getStatusCountPrepStmt.setString(1, key);
                     getStatusCountPrepStmt.setInt(2, tenantId);
                     ResultSet count = getStatusCountPrepStmt.executeQuery();
                     int statusCount = 0;
                     if(count.next()){
-                        statusCount = count.getInt("COUNT");
+                        statusCount = count.getInt(EntitlementTableColumns.STATUS_COUNT);
                     }
                     IdentityDatabaseUtil.closeResultSet(count);
                     IdentityDatabaseUtil.closeStatement(getStatusCountPrepStmt);
@@ -281,13 +275,9 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                         int oldRecordsCount = statusCount - maxRecodes;
                         PreparedStatement deleteOldRecordsPrepStmt = null;
                         if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                            deleteOldRecordsPrepStmt = connection.prepareStatement(
-                                    "DELETE FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?" +
-                                            " ORDER BY STATUS_ID ASC LIMIT ?");
+                            deleteOldRecordsPrepStmt = connection.prepareStatement(DELETE_OLD_POLICY_STATUSES_SQL);
                         }else{
-                            deleteOldRecordsPrepStmt = connection.prepareStatement(
-                                    "DELETE FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?" +
-                                            " ORDER BY STATUS_ID ASC LIMIT ?");
+                            deleteOldRecordsPrepStmt = connection.prepareStatement(DELETE_OLD_SUBSCRIBER_STATUSES_SQL);
                         }
                         deleteOldRecordsPrepStmt.setString(1, key);
                         deleteOldRecordsPrepStmt.setInt(2, tenantId);
@@ -320,11 +310,9 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
 
         try {
             if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
-                getStatusPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_STATUS WHERE POLICY_ID=? AND POLICY_TENANT_ID=?");
+                getStatusPrepStmt = connection.prepareStatement(GET_POLICY_STATUS_SQL);
             }else{
-                getStatusPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_STATUS WHERE SUBSCRIBER_ID=? AND SUBSCRIBER_TENANT_ID=?");
+                getStatusPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_STATUS_SQL);
             }
             getStatusPrepStmt.setString(1, key);
             getStatusPrepStmt.setInt(2, tenantId);
@@ -335,23 +323,23 @@ public class SimplePAPStatusDataHandler implements PAPStatusDataHandler {
                     StatusHolder statusHolder = new StatusHolder(about);
 
                     if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
-                        statusHolder.setKey(statusSet.getString("POLICY_ID"));
+                        statusHolder.setKey(statusSet.getString(EntitlementTableColumns.POLICY_ID));
                     }else{
-                        statusHolder.setKey(statusSet.getString("SUBSCRIBER_ID"));
+                        statusHolder.setKey(statusSet.getString(EntitlementTableColumns.SUBSCRIBER_ID));
                     }
-                    statusHolder.setType(statusSet.getString("TYPE"));
-                    statusHolder.setSuccess(statusSet.getInt("SUCCESS") == 1);
-                    statusHolder.setUser(statusSet.getString("USER"));
-                    statusHolder.setTarget(statusSet.getString("TARGET"));
-                    statusHolder.setTargetAction(statusSet.getString("TARGET_ACTION"));
-                    statusHolder.setTimeInstance(statusSet.getString("TIME_INSTANCE"));
-                    statusHolder.setMessage(statusSet.getString("MESSAGE"));
+                    statusHolder.setType(statusSet.getString(EntitlementTableColumns.STATUS_TYPE));
+                    statusHolder.setSuccess(statusSet.getInt(EntitlementTableColumns.SUCCESS) == 1);
+                    statusHolder.setUser(statusSet.getString(EntitlementTableColumns.USER));
+                    statusHolder.setTarget(statusSet.getString(EntitlementTableColumns.TARGET));
+                    statusHolder.setTargetAction(statusSet.getString(EntitlementTableColumns.TARGET_ACTION));
+                    statusHolder.setTimeInstance(statusSet.getString(EntitlementTableColumns.TIME_INSTANCE));
+                    statusHolder.setMessage(statusSet.getString(EntitlementTableColumns.MESSAGE));
 
                     String version;
-                    if(statusSet.getInt("POLICY_VERSION")==-1){
+                    if(statusSet.getInt(EntitlementTableColumns.POLICY_VERSION)==-1){
                         version = "";
                     }else{
-                        version = Integer.toString(statusSet.getInt("POLICY_VERSION"));
+                        version = Integer.toString(statusSet.getInt(EntitlementTableColumns.POLICY_VERSION));
                     }
                     statusHolder.setVersion(version);
 

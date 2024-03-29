@@ -29,11 +29,14 @@ import org.wso2.carbon.identity.entitlement.PolicyOrderComparator;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
-import org.wso2.carbon.registry.core.Collection;
-import org.wso2.carbon.registry.core.Registry;
-import org.wso2.carbon.registry.core.RegistryConstants;
-import org.wso2.carbon.registry.core.Resource;
-import org.wso2.carbon.registry.core.exceptions.RegistryException;
+
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PDP_POLICIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_META_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_COMBINING_ALGORITHM_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
 
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -155,14 +158,13 @@ public class PolicyReader {
         ResultSet algorithm = null;
 
         try {
-            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_CONFIG WHERE TENANT_ID=? AND CONFIG_KEY=?");
+            getPolicyCombiningAlgoPrepStmt = connection.prepareStatement(GET_POLICY_COMBINING_ALGORITHM_SQL);
             getPolicyCombiningAlgoPrepStmt.setInt(1, tenantId);
-            getPolicyCombiningAlgoPrepStmt.setString(2, "globalPolicyCombiningAlgorithm");
+            getPolicyCombiningAlgoPrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             algorithm = getPolicyCombiningAlgoPrepStmt.executeQuery();
 
             if(algorithm.next()){
-                return algorithm.getString("CONFIG_VALUE");
+                return algorithm.getString(EntitlementTableColumns.CONFIG_VALUE);
             }else{
                 return null;
             }
@@ -191,38 +193,37 @@ public class PolicyReader {
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-        PreparedStatement getAllPDPPolicy = null;
+        PreparedStatement getPDPPolicy = null;
         ResultSet policy = null;
         PolicyDTO dto = new PolicyDTO();
 
         try {
 
-            getAllPDPPolicy = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=? AND POLICY_ID=?");
-            getAllPDPPolicy.setInt(1, tenantId);
-            getAllPDPPolicy.setInt(2, 1);
-            getAllPDPPolicy.setString(3, policyId);
-            policy = getAllPDPPolicy.executeQuery();
+            getPDPPolicy = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
+            getPDPPolicy.setString(1, policyId);
+            getPDPPolicy.setInt(2, 1);
+            getPDPPolicy.setInt(3, tenantId);
+            policy = getPDPPolicy.executeQuery();
 
             if(policy.next()){
-                String policyString = policy.getString("POLICY");
+                String policyString = policy.getString(EntitlementTableColumns.POLICY);
                 AbstractPolicy absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policyString);
                 dto.setPolicyId(absPolicy.getId().toASCIIString());
                 dto.setPolicy(policyString);
-                int policyOrder = policy.getInt("POLICY_ORDER");
+                int policyOrder = policy.getInt(EntitlementTableColumns.POLICY_ORDER);
                 dto.setPolicyOrder(policyOrder);
-                int isActiveInt = policy.getInt("IS_ACTIVE");
+                int isActiveInt = policy.getInt(EntitlementTableColumns.IS_ACTIVE);
                 dto.setActive((isActiveInt != 0));
-                dto.setPolicyType(policy.getString("POLICY_TYPE"));
+                dto.setPolicyType(policy.getString(EntitlementTableColumns.POLICY_TYPE));
 
                 //Get policy metadata
                 PreparedStatement getPolicyMetaDataPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_ATTRIBUTE WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        GET_PAP_POLICY_META_DATA_SQL,
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_READ_ONLY
                 );
                 getPolicyMetaDataPrepStmt.setString(1, absPolicy.getId().toASCIIString());
-                getPolicyMetaDataPrepStmt.setInt(2, policy.getInt("VERSION"));
+                getPolicyMetaDataPrepStmt.setInt(2, policy.getInt(EntitlementTableColumns.VERSION));
                 getPolicyMetaDataPrepStmt.setInt(3, tenantId);
                 ResultSet metadata = getPolicyMetaDataPrepStmt.executeQuery();
 
@@ -237,10 +238,10 @@ public class PolicyReader {
                 for (int i = 0; i < metaDataAmount; i++) {
                     metadata.beforeFirst();
                     while (metadata.next()) {
-                        if (Objects.equals(metadata.getString("NAME"),
+                        if (Objects.equals(metadata.getString(EntitlementTableColumns.ATTRIBUTE_NAME),
                                 PDPConstants.POLICY_META_DATA + i)) {
                             properties.setProperty(PDPConstants.POLICY_META_DATA + i,
-                                    metadata.getString("VALUE"));
+                                    metadata.getString(EntitlementTableColumns.ATTRIBUTE_VALUE));
                             break;
                         }
                     }
@@ -261,7 +262,7 @@ public class PolicyReader {
             log.error("Error while retrieving entitlement policy : " + policyId, e);
             throw new EntitlementException("Error while retrieving entitlement policy : " + policyId, e);
         } finally {
-            IdentityDatabaseUtil.closeAllConnections(connection, policy, getAllPDPPolicy);
+            IdentityDatabaseUtil.closeAllConnections(connection, policy, getPDPPolicy);
         }
     }
 
@@ -286,37 +287,35 @@ public class PolicyReader {
 
         try {
 
-          getAllPDPPolicies = connection.prepareStatement(
-                  "SELECT * FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PDP=?");
+          getAllPDPPolicies = connection.prepareStatement(GET_ALL_PDP_POLICIES_SQL);
           getAllPDPPolicies.setInt(1, tenantId);
           getAllPDPPolicies.setInt(2, 1);
           policySet = getAllPDPPolicies.executeQuery();
 
           if(policySet.next()){
             do{
-                String policy = policySet.getString("POLICY");
+                String policy = policySet.getString(EntitlementTableColumns.POLICY);
                 AbstractPolicy absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policy);
                 PolicyDTO dto = new PolicyDTO();
                 dto.setPolicyId(absPolicy.getId().toASCIIString());
                 dto.setPolicy(policy);
-                int policyOrder = policySet.getInt("POLICY_ORDER");
+                int policyOrder = policySet.getInt(EntitlementTableColumns.POLICY_ORDER);
                 dto.setPolicyOrder(policyOrder);
-                int isActiveInt = policySet.getInt("IS_ACTIVE");
+                int isActiveInt = policySet.getInt(EntitlementTableColumns.IS_ACTIVE);
                 dto.setActive((isActiveInt != 0));
-                dto.setPolicyType(policySet.getString("POLICY_TYPE"));
+                dto.setPolicyType(policySet.getString(EntitlementTableColumns.POLICY_TYPE));
 
                 //Get policy references
                 List<String> policyReferences = new ArrayList<String>();
-                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                 getPolicyRefsPrepStmt.setInt(1, tenantId);
                 getPolicyRefsPrepStmt.setString(2, absPolicy.getId().toASCIIString());
-                getPolicyRefsPrepStmt.setInt(3, policySet.getInt("VERSION"));
+                getPolicyRefsPrepStmt.setInt(3, policySet.getInt(EntitlementTableColumns.VERSION));
                 ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
 
                 if(policyRefs.next()){
                     do{
-                        policyReferences.add(policyRefs.getString("REFERENCE"));
+                        policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
                     } while(policyRefs.next());
                 }
                 dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
@@ -325,16 +324,15 @@ public class PolicyReader {
 
                 //Get policy set references
                 List<String> policySetReferences = new ArrayList<String>();
-                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                 getPolicySetRefsPrepStmt.setInt(1, tenantId);
                 getPolicySetRefsPrepStmt.setString(2, absPolicy.getId().toASCIIString());
-                getPolicySetRefsPrepStmt.setInt(3, policySet.getInt("VERSION"));
+                getPolicySetRefsPrepStmt.setInt(3, policySet.getInt(EntitlementTableColumns.VERSION));
                 ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
 
                 if(policySetRefs.next()){
                     do{
-                        policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                        policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
                     } while(policySetRefs.next());
                 }
                 dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
@@ -343,12 +341,12 @@ public class PolicyReader {
 
                 //Get policy metadata
                 PreparedStatement getPolicyMetaDataPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_ATTRIBUTE WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        GET_PAP_POLICY_META_DATA_SQL,
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_READ_ONLY
                 );
                 getPolicyMetaDataPrepStmt.setString(1, absPolicy.getId().toASCIIString());
-                getPolicyMetaDataPrepStmt.setInt(2, policySet.getInt("VERSION"));
+                getPolicyMetaDataPrepStmt.setInt(2, policySet.getInt(EntitlementTableColumns.VERSION));
                 getPolicyMetaDataPrepStmt.setInt(3, tenantId);
                 ResultSet metadata = getPolicyMetaDataPrepStmt.executeQuery();
 
@@ -363,10 +361,10 @@ public class PolicyReader {
                 for (int i = 0; i < metaDataAmount; i++) {
                     metadata.beforeFirst();
                     while (metadata.next()) {
-                        if (Objects.equals(metadata.getString("NAME"),
+                        if (Objects.equals(metadata.getString(EntitlementTableColumns.ATTRIBUTE_NAME),
                                 PDPConstants.POLICY_META_DATA + i)) {
                             properties.setProperty(PDPConstants.POLICY_META_DATA + i,
-                                    metadata.getString("VALUE"));
+                                    metadata.getString(EntitlementTableColumns.ATTRIBUTE_VALUE));
                             break;
                         }
                     }

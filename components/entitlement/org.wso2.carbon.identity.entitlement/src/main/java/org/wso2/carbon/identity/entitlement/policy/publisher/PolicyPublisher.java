@@ -32,6 +32,16 @@ import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_SUBSCRIBER_PROPERTIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_SUBSCRIBER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_SUBSCRIBER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_EXISTENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_IDS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_SUBSCRIBER_MODULE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_SUBSCRIBER_PROPERTIES_SQL;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -169,8 +179,8 @@ public class PolicyPublisher {
             PublisherDataHolder oldHolder = null;
 
             //Find whether the subscriber already exists
-            PreparedStatement findSubscriberExistencePrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_SUBSCRIBER WHERE SUBSCRIBER_ID=? AND TENANT_ID=?");
+            PreparedStatement findSubscriberExistencePrepStmt =
+                    connection.prepareStatement(GET_SUBSCRIBER_EXISTENCE_SQL);
             findSubscriberExistencePrepStmt.setString(1, subscriberId);
             findSubscriberExistencePrepStmt.setInt(2, tenantId);
             ResultSet rs1 = findSubscriberExistencePrepStmt.executeQuery();
@@ -178,12 +188,7 @@ public class PolicyPublisher {
             if (rs1.next()) {
                 if (update) {
                     //Get the existing subscriber
-                    PreparedStatement getSubscriberPrepStmt = connection.prepareStatement(
-                            "SELECT s.SUBSCRIBER_ID, s.TENANT_ID, s.ENTITLEMENT_MODULE_NAME, p.PROPERTY_ID, " +
-                                    "p.DISPLAY_NAME, p.VALUE, p.IS_REQUIRED, p.DISPLAY_ORDER, p.IS_SECRET, p.MODULE " +
-                                    "FROM IDN_XACML_SUBSCRIBER s INNER JOIN IDN_XACML_SUBSCRIBER_PROPERTY p " +
-                                    "ON s.SUBSCRIBER_ID = p.SUBSCRIBER_ID AND s.TENANT_ID = p.TENANT_ID " +
-                                    "WHERE s.SUBSCRIBER_ID = ? AND s.TENANT_ID = ?");
+                    PreparedStatement getSubscriberPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_SQL);
                     getSubscriberPrepStmt .setString(1, subscriberId);
                     getSubscriberPrepStmt .setInt(2, tenantId);
                     ResultSet rs2 = getSubscriberPrepStmt.executeQuery();
@@ -208,18 +213,15 @@ public class PolicyPublisher {
 
             //Create a new subscriber
             if(!update){
-                PreparedStatement createSubscriberPrepStmt = connection.prepareStatement(
-                        "INSERT INTO IDN_XACML_SUBSCRIBER (SUBSCRIBER_ID, TENANT_ID, ENTITLEMENT_MODULE_NAME) " +
-                                "VALUES (?,?,?)");
+                PreparedStatement createSubscriberPrepStmt = connection.prepareStatement(CREATE_SUBSCRIBER_SQL);
                 createSubscriberPrepStmt.setString(1, subscriberId);
                 createSubscriberPrepStmt.setInt(2, tenantId);
                 createSubscriberPrepStmt.setString(3,holder.getModuleName());
                 createSubscriberPrepStmt.executeUpdate();
                 IdentityDatabaseUtil.closeStatement(createSubscriberPrepStmt);
 
-                PreparedStatement createSubscriberPropertiesPrepStmt = connection.prepareStatement(
-                        "INSERT INTO IDN_XACML_SUBSCRIBER_PROPERTY (PROPERTY_ID, DISPLAY_NAME, VALUE, IS_REQUIRED," +
-                                "DISPLAY_ORDER, IS_SECRET, MODULE, SUBSCRIBER_ID, TENANT_ID) VALUES (?,?,?,?,?,?,?,?,?)");
+                PreparedStatement createSubscriberPropertiesPrepStmt =
+                        connection.prepareStatement(CREATE_SUBSCRIBER_PROPERTIES_SQL);
 
                 for (PublisherPropertyDTO dto : propertyDTOs) {
                     if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
@@ -249,9 +251,8 @@ public class PolicyPublisher {
                 //Update the module of an existing subscriber
                 assert oldHolder != null;
                 if(!oldHolder.getModuleName().equalsIgnoreCase(holder.getModuleName()) ){
-                    PreparedStatement updateSubscriberPrepStmt = connection.prepareStatement(
-                            "UPDATE IDN_XACML_SUBSCRIBER SET ENTITLEMENT_MODULE_NAME=? WHERE SUBSCRIBER_ID=? " +
-                                    "AND TENANT_ID=?");
+                    PreparedStatement updateSubscriberPrepStmt =
+                            connection.prepareStatement(UPDATE_SUBSCRIBER_MODULE_SQL);
                     updateSubscriberPrepStmt.setString(1, holder.getModuleName());
                     updateSubscriberPrepStmt.setString(2, subscriberId);
                     updateSubscriberPrepStmt.setInt(3,tenantId);
@@ -260,9 +261,8 @@ public class PolicyPublisher {
                 }
 
                 //Update the property values of an existing subscriber
-                PreparedStatement updateSubscriberPropertiesPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_SUBSCRIBER_PROPERTY SET VALUE=? WHERE SUBSCRIBER_ID=? AND TENANT_ID=? " +
-                                "AND PROPERTY_ID=?");
+                PreparedStatement updateSubscriberPropertiesPrepStmt =
+                        connection.prepareStatement(UPDATE_SUBSCRIBER_PROPERTIES_SQL);
 
                 for (PublisherPropertyDTO dto : propertyDTOs) {
                     if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
@@ -312,8 +312,7 @@ public class PolicyPublisher {
         }
 
         try {
-            PreparedStatement deleteSubscriberPrepStmt = connection.prepareStatement(
-                    "DELETE FROM IDN_XACML_SUBSCRIBER WHERE SUBSCRIBER_ID=? AND TENANT_ID=?");
+            PreparedStatement deleteSubscriberPrepStmt = connection.prepareStatement(DELETE_SUBSCRIBER_SQL);
             deleteSubscriberPrepStmt.setString(1, subscriberId);
             deleteSubscriberPrepStmt.setInt(2, tenantId);
             deleteSubscriberPrepStmt.executeUpdate();
@@ -339,12 +338,7 @@ public class PolicyPublisher {
         ResultSet rs1 = null;
 
         try {
-            getSubscriberPrepStmt = connection.prepareStatement(
-                    "SELECT s.SUBSCRIBER_ID, s.TENANT_ID, s.ENTITLEMENT_MODULE_NAME, p.PROPERTY_ID, " +
-                            "p.DISPLAY_NAME, p.VALUE, p.IS_REQUIRED, p.DISPLAY_ORDER, p.IS_SECRET, p.MODULE FROM " +
-                            "IDN_XACML_SUBSCRIBER s INNER JOIN IDN_XACML_SUBSCRIBER_PROPERTY p " +
-                            "ON s.SUBSCRIBER_ID = p.SUBSCRIBER_ID AND s.TENANT_ID = p.TENANT_ID " +
-                            "WHERE s.SUBSCRIBER_ID = ? AND s.TENANT_ID = ?");
+            getSubscriberPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_SQL);
             getSubscriberPrepStmt .setString(1, id);
             getSubscriberPrepStmt .setInt(2, tenantId);
             rs1 = getSubscriberPrepStmt.executeQuery();
@@ -371,8 +365,7 @@ public class PolicyPublisher {
         ResultSet subscriberIds = null;
 
         try {
-            getSubscriberIdsPrepStmt = connection.prepareStatement(
-                    "SELECT SUBSCRIBER_ID FROM IDN_XACML_SUBSCRIBER WHERE TENANT_ID=?");
+            getSubscriberIdsPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_IDS_SQL);
             getSubscriberIdsPrepStmt.setInt(1, tenantId);
             subscriberIds = getSubscriberIdsPrepStmt.executeQuery();
 
@@ -382,7 +375,7 @@ public class PolicyPublisher {
 
             if(subscriberIds.next()){
                 do{
-                    String id = subscriberIds.getString("SUBSCRIBER_ID");
+                    String id = subscriberIds.getString(EntitlementTableColumns.SUBSCRIBER_ID);
                     Matcher matcher = pattern.matcher(id);
                     if (!matcher.matches()) {
                         continue;

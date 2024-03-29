@@ -31,13 +31,34 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
 
-import javax.sql.DataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
 import javax.xml.stream.XMLStreamException;
 import java.sql.*;
 import java.util.*;
+
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_ATTRIBUTES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_EDITOR_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_SET_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PAP_POLICY_BY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PAP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_UNPUBLISHED_POLICY_VERSIONS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PAP_POLICIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_BY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_EDITOR_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_IDS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_META_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_BY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
 
 
 public class PAPPolicyStore {
@@ -69,15 +90,14 @@ public class PAPPolicyStore {
         ResultSet policyIds = null;
 
         try {
-            getPolicyIdsPrepStmt = connection.prepareStatement(
-                    "SELECT DISTINCT POLICY_ID FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND IS_IN_PAP=?");
+            getPolicyIdsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_IDS_SQL);
             getPolicyIdsPrepStmt.setInt(1, tenantId);
             getPolicyIdsPrepStmt.setInt(2, 1);
             policyIds = getPolicyIdsPrepStmt.executeQuery();
 
             if(policyIds.next()){
                 do{
-                    policies.add(policyIds.getString("POLICY_ID"));
+                    policies.add(policyIds.getString(EntitlementTableColumns.POLICY_ID));
                 }while(policyIds.next());
             }else{
                 if (log.isDebugEnabled()) {
@@ -118,9 +138,7 @@ public class PAPPolicyStore {
         ResultSet policy = null;
 
         try {
-            getPolicyPrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE IS_IN_PAP = ? AND TENANT_ID = ? AND POLICY_ID=? AND " +
-                            "VERSION =(SELECT MAX(VERSION) FROM IDN_XACML_POLICY WHERE POLICY_ID = ? AND TENANT_ID=?)");
+            getPolicyPrepStmt = connection.prepareStatement(GET_PAP_POLICY_SQL);
             getPolicyPrepStmt.setInt(1,1);
             getPolicyPrepStmt.setInt(2, tenantId);
             getPolicyPrepStmt.setString(3, policyId);
@@ -131,47 +149,46 @@ public class PAPPolicyStore {
             if(policy.next()){
                 PolicyDTO dto = new PolicyDTO();
 
-                dto.setPolicyId(policy.getString("POLICY_ID"));
+                dto.setPolicyId(policy.getString(EntitlementTableColumns.POLICY_ID));
 
-                String version = String.valueOf(policy.getInt("VERSION"));
+                String version = String.valueOf(policy.getInt(EntitlementTableColumns.VERSION));
                 if (version != null) {
                     dto.setVersion(version);
                 }
 
-                String lastModifiedTime = policy.getString("LAST_MODIFIED_TIME");
+                String lastModifiedTime = policy.getString(EntitlementTableColumns.LAST_MODIFIED_TIME);
                 if (lastModifiedTime != null) {
                     dto.setLastModifiedTime(lastModifiedTime);
                 }
 
-                String lastModifiedUser = policy.getString("LAST_MODIFIED_USER");
+                String lastModifiedUser = policy.getString(EntitlementTableColumns.LAST_MODIFIED_USER);
                 if (lastModifiedUser != null) {
                     dto.setLastModifiedUser(lastModifiedUser);
                 }
 
-                int isActiveInt = policy.getInt("IS_ACTIVE");
+                int isActiveInt = policy.getInt(EntitlementTableColumns.IS_ACTIVE);
                 dto.setActive((isActiveInt != 0));
 
-                int policyOrder = policy.getInt("POLICY_ORDER");
+                int policyOrder = policy.getInt(EntitlementTableColumns.POLICY_ORDER);
                 dto.setPolicyOrder(policyOrder);
 
-                dto.setPolicyType(policy.getString("POLICY_TYPE"));
+                dto.setPolicyType(policy.getString(EntitlementTableColumns.POLICY_TYPE));
 
-                dto.setPolicyEditor(policy.getString("POLICY_EDITOR"));
+                dto.setPolicyEditor(policy.getString(EntitlementTableColumns.POLICY_EDITOR));
 
-                dto.setPolicy(policy.getString("POLICY"));
+                dto.setPolicy(policy.getString(EntitlementTableColumns.POLICY));
 
                 //Get policy references
                 List<String> policyReferences = new ArrayList<String>();
-                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                 getPolicyRefsPrepStmt.setInt(1, tenantId);
                 getPolicyRefsPrepStmt.setString(2, policyId);
-                getPolicyRefsPrepStmt.setInt(3, policy.getInt("VERSION"));
+                getPolicyRefsPrepStmt.setInt(3, policy.getInt(EntitlementTableColumns.VERSION));
                 ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
 
                 if(policyRefs.next()){
                     do{
-                        policyReferences.add(policyRefs.getString("REFERENCE"));
+                        policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
                     } while(policyRefs.next());
                 }
                 dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
@@ -180,16 +197,15 @@ public class PAPPolicyStore {
 
                 //Get policy set references
                 List<String> policySetReferences = new ArrayList<String>();
-                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                 getPolicySetRefsPrepStmt.setInt(1, tenantId);
                 getPolicySetRefsPrepStmt.setString(2, policyId);
-                getPolicySetRefsPrepStmt.setInt(3, policy.getInt("VERSION"));
+                getPolicySetRefsPrepStmt.setInt(3, policy.getInt(EntitlementTableColumns.VERSION));
                 ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
 
                 if(policySetRefs.next()){
                     do{
-                        policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                        policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
                     } while(policySetRefs.next());
                 }
                 dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
@@ -198,7 +214,7 @@ public class PAPPolicyStore {
 
                 //Get policy editor data
                 PreparedStatement getPolicyEditorDataPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_EDITOR_DATA WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        GET_PAP_POLICY_EDITOR_DATA_SQL,
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_READ_ONLY
                 );
@@ -218,9 +234,10 @@ public class PAPPolicyStore {
                 for (int i = 0; i < rowCount; i++) {
                     EditorMetadata.beforeFirst();
                     while (EditorMetadata.next()) {
-                        if (Objects.equals(EditorMetadata.getString("NAME"),
+                        if (Objects.equals(EditorMetadata.getString(EntitlementTableColumns.EDITOR_DATA_NAME),
                                 PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i)) {
-                            basicPolicyEditorMetaData[i] = EditorMetadata.getString("DATA");
+                            basicPolicyEditorMetaData[i] =
+                                    EditorMetadata.getString(EntitlementTableColumns.EDITOR_DATA);
                             break;
                         }
                     }
@@ -232,7 +249,7 @@ public class PAPPolicyStore {
 
                 //Get policy metadata
                 PreparedStatement getPolicyMetaDataPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_ATTRIBUTE WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        GET_PAP_POLICY_META_DATA_SQL,
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_READ_ONLY
                 );
@@ -252,10 +269,10 @@ public class PAPPolicyStore {
                 for (int i = 0; i < metaDataAmount; i++) {
                     metadata.beforeFirst();
                     while (metadata.next()) {
-                        if (Objects.equals(metadata.getString("NAME"),
+                        if (Objects.equals(metadata.getString(EntitlementTableColumns.ATTRIBUTE_NAME),
                                 PDPConstants.POLICY_META_DATA + i)) {
                             properties.setProperty(PDPConstants.POLICY_META_DATA + i,
-                                    metadata.getString("VALUE"));
+                                    metadata.getString(EntitlementTableColumns.ATTRIBUTE_VALUE));
                             break;
                         }
                     }
@@ -303,9 +320,7 @@ public class PAPPolicyStore {
         ResultSet policy = null;
 
         try {
-            getPolicyPrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE IS_IN_PAP = ? AND TENANT_ID = ? AND POLICY_ID=? AND " +
-                            "VERSION = ?");
+            getPolicyPrepStmt = connection.prepareStatement(GET_PAP_POLICY_BY_VERSION_SQL);
             getPolicyPrepStmt.setInt(1,1);
             getPolicyPrepStmt.setInt(2, tenantId);
             getPolicyPrepStmt.setString(3, policyId);
@@ -318,32 +333,32 @@ public class PAPPolicyStore {
                 dto.setPolicyId(policyId);
                 dto.setVersion(version);
 
-                String lastModifiedTime = policy.getString("LAST_MODIFIED_TIME");
+                String lastModifiedTime = policy.getString(EntitlementTableColumns.LAST_MODIFIED_TIME);
                 if (lastModifiedTime != null) {
                     dto.setLastModifiedTime(lastModifiedTime);
                 }
 
-                String lastModifiedUser = policy.getString("LAST_MODIFIED_USER");
+                String lastModifiedUser = policy.getString(EntitlementTableColumns.LAST_MODIFIED_USER);
                 if (lastModifiedUser != null) {
                     dto.setLastModifiedUser(lastModifiedUser);
                 }
 
-                int isActiveInt = policy.getInt("IS_ACTIVE");
+                int isActiveInt = policy.getInt(EntitlementTableColumns.IS_ACTIVE);
                 dto.setActive((isActiveInt != 0));
 
-                int policyOrder = policy.getInt("POLICY_ORDER");
+                int policyOrder = policy.getInt(EntitlementTableColumns.POLICY_ORDER);
                 dto.setPolicyOrder(policyOrder);
 
-                dto.setPolicyType(policy.getString("POLICY_TYPE"));
+                dto.setPolicyType(policy.getString(EntitlementTableColumns.POLICY_TYPE));
 
-                dto.setPolicyEditor(policy.getString("POLICY_EDITOR"));
+                dto.setPolicyEditor(policy.getString(EntitlementTableColumns.POLICY_EDITOR));
 
-                dto.setPolicy(policy.getString("POLICY"));
+                dto.setPolicy(policy.getString(EntitlementTableColumns.POLICY));
 
                 //Get policy references
                 List<String> policyReferences = new ArrayList<String>();
-                PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                PreparedStatement getPolicyRefsPrepStmt =
+                        connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                 getPolicyRefsPrepStmt.setInt(1, tenantId);
                 getPolicyRefsPrepStmt.setString(2, policyId);
                 getPolicyRefsPrepStmt.setInt(3, Integer.parseInt(version));
@@ -351,7 +366,7 @@ public class PAPPolicyStore {
 
                 if(policyRefs.next()){
                     do{
-                        policyReferences.add(policyRefs.getString("REFERENCE"));
+                        policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
                     } while(policyRefs.next());
                 }
                 dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
@@ -360,8 +375,8 @@ public class PAPPolicyStore {
 
                 //Get policy set references
                 List<String> policySetReferences = new ArrayList<String>();
-                PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                PreparedStatement getPolicySetRefsPrepStmt =
+                        connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                 getPolicySetRefsPrepStmt.setInt(1, tenantId);
                 getPolicySetRefsPrepStmt.setString(2, policyId);
                 getPolicySetRefsPrepStmt.setInt(3, Integer.parseInt(version));
@@ -369,16 +384,16 @@ public class PAPPolicyStore {
 
                 if(policySetRefs.next()){
                     do{
-                        policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                        policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
                     } while(policySetRefs.next());
                 }
                 dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
                 IdentityDatabaseUtil.closeResultSet(policySetRefs);
                 IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
 
-                //Get policy editor metadata
+                //Get policy editor data
                 PreparedStatement getPolicyEditorDataPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_EDITOR_DATA WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        GET_PAP_POLICY_EDITOR_DATA_SQL,
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_READ_ONLY
                 );
@@ -398,9 +413,9 @@ public class PAPPolicyStore {
                 for (int i = 0; i < rowCount; i++) {
                     EditorMetadata.beforeFirst();
                     while (EditorMetadata.next()) {
-                        if (Objects.equals(EditorMetadata.getString("NAME"),
+                        if (Objects.equals(EditorMetadata.getString(EntitlementTableColumns.EDITOR_DATA_NAME),
                                 PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i)) {
-                            basicPolicyEditorMetaData[i] = EditorMetadata.getString("DATA");
+                            basicPolicyEditorMetaData[i] = EditorMetadata.getString(EntitlementTableColumns.EDITOR_DATA);
                             break;
                         }
                     }
@@ -412,7 +427,7 @@ public class PAPPolicyStore {
 
                 //Get policy metadata
                 PreparedStatement getPolicyMetaDataPrepStmt = connection.prepareStatement(
-                        "SELECT * FROM IDN_XACML_POLICY_ATTRIBUTE WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?",
+                        GET_PAP_POLICY_META_DATA_SQL,
                         ResultSet.TYPE_SCROLL_INSENSITIVE,
                         ResultSet.CONCUR_READ_ONLY
                 );
@@ -432,10 +447,10 @@ public class PAPPolicyStore {
                 for (int i = 0; i < metaDataAmount; i++) {
                     metadata.beforeFirst();
                     while (metadata.next()) {
-                        if (Objects.equals(metadata.getString("NAME"),
+                        if (Objects.equals(metadata.getString(EntitlementTableColumns.ATTRIBUTE_NAME),
                                 PDPConstants.POLICY_META_DATA + i)) {
                             properties.setProperty(PDPConstants.POLICY_META_DATA + i,
-                                    metadata.getString("VALUE"));
+                                    metadata.getString(EntitlementTableColumns.ATTRIBUTE_VALUE));
                             break;
                         }
                     }
@@ -483,10 +498,7 @@ public class PAPPolicyStore {
 
         try {
             //Get all policies with latest version
-            getAllPoliciesPrepStmt = connection.prepareStatement(
-                    "SELECT t1.* FROM IDN_XACML_POLICY t1 WHERE t1.IS_IN_PAP = ? AND t1.TENANT_ID = ? AND " +
-                            "t1.VERSION =(SELECT MAX(VERSION) FROM IDN_XACML_POLICY t2 WHERE " +
-                            "t2.POLICY_ID = t1.POLICY_ID AND t2.TENANT_ID=?)");
+            getAllPoliciesPrepStmt = connection.prepareStatement(GET_ALL_PAP_POLICIES_SQL);
             getAllPoliciesPrepStmt.setInt(1,1);
             getAllPoliciesPrepStmt.setInt(2, tenantId);
             getAllPoliciesPrepStmt.setInt(3, tenantId);
@@ -496,45 +508,45 @@ public class PAPPolicyStore {
                 do{
                     PolicyDTO dto = new PolicyDTO();
 
-                    dto.setPolicyId(policies.getString("POLICY_ID"));
+                    dto.setPolicyId(policies.getString(EntitlementTableColumns.POLICY_ID));
 
-                    String version = String.valueOf(policies.getInt("VERSION"));
+                    String version = String.valueOf(policies.getInt(EntitlementTableColumns.VERSION));
                     if (version != null) {
                         dto.setVersion(version);
                     }
 
-                    String lastModifiedTime = policies.getString("LAST_MODIFIED_TIME");
+                    String lastModifiedTime = policies.getString(EntitlementTableColumns.LAST_MODIFIED_TIME);
                     if (lastModifiedTime != null) {
                         dto.setLastModifiedTime(lastModifiedTime);
                     }
 
-                    String lastModifiedUser = policies.getString("LAST_MODIFIED_USER");
+                    String lastModifiedUser = policies.getString(EntitlementTableColumns.LAST_MODIFIED_USER);
                     if (lastModifiedUser != null) {
                         dto.setLastModifiedUser(lastModifiedUser);
                     }
 
-                    int isActiveInt = policies.getInt("IS_ACTIVE");
+                    int isActiveInt = policies.getInt(EntitlementTableColumns.IS_ACTIVE);
                     dto.setActive((isActiveInt != 0));
 
-                    int policyOrder = policies.getInt("POLICY_ORDER");
+                    int policyOrder = policies.getInt(EntitlementTableColumns.POLICY_ORDER);
                     dto.setPolicyOrder(policyOrder);
 
-                    dto.setPolicyType(policies.getString("POLICY_TYPE"));
+                    dto.setPolicyType(policies.getString(EntitlementTableColumns.POLICY_TYPE));
 
-                    dto.setPolicyEditor(policies.getString("POLICY_EDITOR"));
+                    dto.setPolicyEditor(policies.getString(EntitlementTableColumns.POLICY_EDITOR));
 
                     //Get policy references
                     List<String> policyReferences = new ArrayList<String>();
-                    PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(
-                            "SELECT * FROM IDN_XACML_POLICY_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                    PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                     getPolicyRefsPrepStmt.setInt(1, tenantId);
-                    getPolicyRefsPrepStmt.setString(2, policies.getString("POLICY_ID"));
+                    getPolicyRefsPrepStmt.setString(2,
+                            policies.getString(EntitlementTableColumns.POLICY_ID));
                     getPolicyRefsPrepStmt.setInt(3, Integer.parseInt(version));
                     ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
 
                     if(policyRefs.next()){
                         do{
-                            policyReferences.add(policyRefs.getString("REFERENCE"));
+                            policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
                         } while(policyRefs.next());
                     }
                     dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
@@ -543,16 +555,17 @@ public class PAPPolicyStore {
 
                     //Get policy set references
                     List<String> policySetReferences = new ArrayList<String>();
-                    PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(
-                            "SELECT * FROM IDN_XACML_POLICY_SET_REFERENCE WHERE TENANT_ID=? AND POLICY_ID=? AND VERSION=?");
+                    PreparedStatement getPolicySetRefsPrepStmt =
+                            connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                     getPolicySetRefsPrepStmt.setInt(1, tenantId);
-                    getPolicySetRefsPrepStmt.setString(2, policies.getString("POLICY_ID"));
+                    getPolicySetRefsPrepStmt.setString(2,
+                            policies.getString(EntitlementTableColumns.POLICY_ID));
                     getPolicySetRefsPrepStmt.setInt(3, Integer.parseInt(version));
                     ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
 
                     if(policySetRefs.next()){
                         do{
-                            policySetReferences.add(policySetRefs.getString("SET_REFERENCE"));
+                            policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
                         } while(policySetRefs.next());
                     }
                     dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
@@ -644,10 +657,7 @@ public class PAPPolicyStore {
             //Write a new policy
             int active = policy.isActive() ? 1: 0;
             int promote = policy.isPromote() ? 1: 0;
-            PreparedStatement createPolicyPrepStmt = connection.prepareStatement(
-                        "INSERT INTO IDN_XACML_POLICY (POLICY_ID, VERSION, TENANT_ID, IS_IN_PDP, IS_IN_PAP, " +
-                                "POLICY, IS_ACTIVE, POLICY_TYPE, POLICY_EDITOR, POLICY_ORDER, LAST_MODIFIED_TIME, " +
-                                "LAST_MODIFIED_USER) VALUES (?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?)");
+            PreparedStatement createPolicyPrepStmt = connection.prepareStatement(CREATE_PAP_POLICY_SQL);
 
             createPolicyPrepStmt.setString(1, policyId);
             createPolicyPrepStmt.setInt(2, Integer.parseInt(policy.getVersion()));
@@ -668,9 +678,8 @@ public class PAPPolicyStore {
             if (omElement != null) {
                 Iterator iterator1 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_ID_REFERENCE);
                 if (iterator1 != null) {
-                    PreparedStatement createPolicyReferencesPrepStmt = connection.prepareStatement(
-                            "INSERT INTO IDN_XACML_POLICY_REFERENCE (REFERENCE, POLICY_ID, VERSION, TENANT_ID) " +
-                                    "VALUES (?, ?, ?, ?)");
+                    PreparedStatement createPolicyReferencesPrepStmt =
+                            connection.prepareStatement(CREATE_PAP_POLICY_REFS_SQL);
                     while (iterator1.hasNext()) {
                         OMElement policyReference = (OMElement) iterator1.next();
 
@@ -685,9 +694,8 @@ public class PAPPolicyStore {
                 }
                 Iterator iterator2 = omElement.getChildrenWithLocalName(PDPConstants.POLICY_SET_ID_REFERENCE);
                 if (iterator2 != null) {
-                    PreparedStatement createPolicySetReferencesPrepStmt = connection.prepareStatement(
-                            "INSERT INTO IDN_XACML_POLICY_SET_REFERENCE (SET_REFERENCE, POLICY_ID, VERSION, " +
-                                    "TENANT_ID) VALUES (?, ?, ?, ?)");
+                    PreparedStatement createPolicySetReferencesPrepStmt =
+                            connection.prepareStatement(CREATE_PAP_POLICY_SET_REFS_SQL);
                     while (iterator2.hasNext()) {
                         OMElement policySetReference = (OMElement) iterator2.next();
 
@@ -704,9 +712,8 @@ public class PAPPolicyStore {
 
             //Write attributes of the policy
             if(properties != null) {
-                PreparedStatement createAttributesPrepStmt = connection.prepareStatement(
-                        "INSERT INTO IDN_XACML_POLICY_ATTRIBUTE (NAME, VALUE, POLICY_ID, VERSION, TENANT_ID) " +
-                                "VALUES (?, ?, ?, ?, ?)");
+                PreparedStatement createAttributesPrepStmt =
+                        connection.prepareStatement(CREATE_PAP_POLICY_ATTRIBUTES_SQL);
 
                 for (Object o : properties.keySet()) {
                     String key = o.toString();
@@ -726,9 +733,8 @@ public class PAPPolicyStore {
             //Write policy editor data
             String[] policyMetaData = policy.getPolicyEditorData();
             if(policyMetaData != null && policyMetaData.length > 0) {
-                PreparedStatement createPolicyEditorDataPrepStmt = connection.prepareStatement(
-                        "INSERT INTO IDN_XACML_POLICY_EDITOR_DATA (NAME, DATA, POLICY_ID, VERSION, TENANT_ID) " +
-                                "VALUES (?, ?, ?, ?, ?)");
+                PreparedStatement createPolicyEditorDataPrepStmt =
+                        connection.prepareStatement(CREATE_PAP_POLICY_EDITOR_DATA_SQL);
                 int i = 0;
                 for (String policyData : policyMetaData) {
                     if (policyData != null && !policyData.isEmpty()) {
@@ -776,8 +782,7 @@ public class PAPPolicyStore {
         try {
 
             //Find whether the policy is published or not
-            PreparedStatement findPDPPresencePrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
+            PreparedStatement findPDPPresencePrepStmt = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
             findPDPPresencePrepStmt.setString(1, policyId);
             findPDPPresencePrepStmt.setInt(2, 1);
             findPDPPresencePrepStmt.setInt(3, tenantId);
@@ -786,8 +791,8 @@ public class PAPPolicyStore {
             if (rs1.next()) {
 
                 //Remove the unpublished versions of the policy from the database
-                PreparedStatement removePolicyByIdAndVersionPrepStmt = connection.prepareStatement(
-                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND IS_IN_PDP=?");
+                PreparedStatement removePolicyByIdAndVersionPrepStmt =
+                        connection.prepareStatement(DELETE_UNPUBLISHED_POLICY_VERSIONS_SQL);
                 removePolicyByIdAndVersionPrepStmt.setString(1, policyId);
                 removePolicyByIdAndVersionPrepStmt.setInt(2, tenantId);
                 removePolicyByIdAndVersionPrepStmt.setInt(3, 0);
@@ -795,8 +800,7 @@ public class PAPPolicyStore {
                 IdentityDatabaseUtil.closeStatement(removePolicyByIdAndVersionPrepStmt);
 
                 //Remove the published version of the policy from the PAP (It is still present in PDP)
-                PreparedStatement removePolicyFromPAPPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_POLICY SET IS_IN_PAP=? WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=?");
+                PreparedStatement removePolicyFromPAPPrepStmt = connection.prepareStatement(DELETE_PAP_POLICY_SQL);
                 removePolicyFromPAPPrepStmt.setInt(1, 0);
                 removePolicyFromPAPPrepStmt.setString(2, policyId);
                 removePolicyFromPAPPrepStmt.setInt(3, 1);
@@ -806,8 +810,7 @@ public class PAPPolicyStore {
 
             } else {
                 //Remove the policy from the database
-                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
-                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=?");
+                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(DELETE_POLICY_SQL);
                 removePolicyPrepStmt.setString(1, policyId);
                 removePolicyPrepStmt.setInt(2, tenantId);
                 removePolicyPrepStmt.executeUpdate();
@@ -846,8 +849,8 @@ public class PAPPolicyStore {
         try {
 
             //Find whether the policy is published or not
-            PreparedStatement findPDPPresencePrepStmt = connection.prepareStatement(
-                    "SELECT * FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND IS_IN_PDP=? AND TENANT_ID=? AND VERSION=?");
+            PreparedStatement findPDPPresencePrepStmt =
+                    connection.prepareStatement(GET_POLICY_PDP_PRESENCE_BY_VERSION_SQL);
             findPDPPresencePrepStmt.setString(1, policyId);
             findPDPPresencePrepStmt.setInt(2, 1);
             findPDPPresencePrepStmt.setInt(3, tenantId);
@@ -857,8 +860,8 @@ public class PAPPolicyStore {
             if (rs1.next()) {
 
                 //Remove the policy version from the PAP (It is still present in PDP)
-                PreparedStatement removePolicyFromPAPPrepStmt = connection.prepareStatement(
-                        "UPDATE IDN_XACML_POLICY SET IS_IN_PAP=? WHERE POLICY_ID=? AND VERSION=? AND TENANT_ID=?");
+                PreparedStatement removePolicyFromPAPPrepStmt =
+                        connection.prepareStatement(DELETE_PAP_POLICY_BY_VERSION_SQL);
                 removePolicyFromPAPPrepStmt.setInt(1, 0);
                 removePolicyFromPAPPrepStmt.setString(2, policyId);
                 removePolicyFromPAPPrepStmt.setInt(3, version);
@@ -868,8 +871,7 @@ public class PAPPolicyStore {
 
             } else {
                 //Remove the policy version from the database
-                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(
-                        "DELETE FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=? AND VERSION=?");
+                PreparedStatement removePolicyPrepStmt = connection.prepareStatement(DELETE_POLICY_VERSION_SQL);
                 removePolicyPrepStmt.setString(1, policyId);
                 removePolicyPrepStmt.setInt(2, tenantId);
                 removePolicyPrepStmt.setInt(3, version);

@@ -28,9 +28,10 @@ import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
-import org.wso2.carbon.registry.api.Collection;
-import org.wso2.carbon.registry.api.Registry;
-import org.wso2.carbon.registry.api.RegistryException;
+
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_LATEST_POLICY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_VERSIONS_SQL;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -76,16 +77,14 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
             PreparedStatement getLatestVersionPrepStmt = null;
             ResultSet latestVersion = null;
             try {
-                getLatestVersionPrepStmt = connection.prepareStatement(
-                        "SELECT MAX(VERSION) AS VERSION FROM IDN_XACML_POLICY WHERE POLICY_ID=? AND TENANT_ID=?" +
-                                " AND IS_IN_PAP=?");
+                getLatestVersionPrepStmt = connection.prepareStatement(GET_LATEST_POLICY_VERSION_SQL);
                 getLatestVersionPrepStmt.setString(1, policyId);
                 getLatestVersionPrepStmt.setInt(2, tenantId);
                 getLatestVersionPrepStmt.setInt(3, 1);
                 latestVersion = getLatestVersionPrepStmt.executeQuery();
 
                 if(latestVersion.next()){
-                    version = String.valueOf(latestVersion.getInt("VERSION"));
+                    version = String.valueOf(latestVersion.getInt(EntitlementTableColumns.VERSION));
                 }
 
             } catch (SQLException e) {
@@ -141,14 +140,13 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
         ResultSet versionsSet = null;
 
         try{
-            getVersionsPrepStmt = connection.prepareStatement(
-                    "SELECT VERSION FROM IDN_XACML_POLICY WHERE TENANT_ID=? AND POLICY_ID=?");
+            getVersionsPrepStmt = connection.prepareStatement(GET_POLICY_VERSIONS_SQL);
             getVersionsPrepStmt.setInt(1, tenantId);
             getVersionsPrepStmt.setString(2, policyId);
             versionsSet = getVersionsPrepStmt.executeQuery();
 
             while (versionsSet.next()){
-                versions.add(String.valueOf(versionsSet.getInt("VERSION")));
+                versions.add(String.valueOf(versionsSet.getInt(EntitlementTableColumns.VERSION)));
             }
 
         } catch (SQLException e){
