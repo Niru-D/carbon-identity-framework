@@ -296,7 +296,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             return dto.getPolicy();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
-                      "from registry policy finder module", e);
+                      "from the policy finder module", e);
         }
         return null;
     }
@@ -309,7 +309,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
             return dto.getPolicyOrder();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
-                      "from registry policy finder module", e);
+                      "from the policy finder module", e);
         }
         return -1;
     }
@@ -329,7 +329,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
                 }
             }
         } catch (Exception e) {
-            log.error("Policies can not be retrieved from registry policy finder module", e);
+            log.error("Policies can not be retrieved from the policy finder module", e);
         }
 
         log.debug("Retrieving of Active policies is finished.   " + new Date());
@@ -353,7 +353,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
                 }
             }
         } catch (Exception e) {
-            log.error("Policies can not be retrieved from registry policy finder module", e);
+            log.error("Policies can not be retrieved from the policy finder module", e);
         }
 
         log.debug("Retrieving of Ordered Policy Ids is finished. " + new Date());
@@ -368,7 +368,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
         try {
             policyIds = new PolicyReader().getAllPolicyIds();
         } catch (Exception e) {
-            log.error("Policy identifiers can not be retrieved from registry policy finder module", e);
+            log.error("Policy identifiers can not be retrieved from the policy finder module", e);
         }
         return policyIds;
     }
@@ -398,7 +398,7 @@ public class PolicyStore extends AbstractPolicyFinderModule
         try {
             policyDTOs = new PolicyReader().readAllPolicies(true, true);
         } catch (Exception e) {
-            log.error("Policies can not be retrieved from registry policy finder module", e);
+            log.error("Policies can not be retrieved from the policy finder module", e);
         }
 
         if (policyDTOs != null) {

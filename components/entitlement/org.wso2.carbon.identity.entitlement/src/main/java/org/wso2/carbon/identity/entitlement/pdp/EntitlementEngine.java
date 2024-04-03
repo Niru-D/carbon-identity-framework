@@ -517,9 +517,9 @@ public class EntitlementEngine {
 
 
     /**
-     * This method is returns the registry based policy finder for current tenant
+     * This method is returns the policy finder for current tenant
      *
-     * @return RegistryBasedPolicyFinder
+     * @return PolicyFinder
      */
     public PolicyFinder getPapPolicyFinder() {
         return papPolicyFinder;

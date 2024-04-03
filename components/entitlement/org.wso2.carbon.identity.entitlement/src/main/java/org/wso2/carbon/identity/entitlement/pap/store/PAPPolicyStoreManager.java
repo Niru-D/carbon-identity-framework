@@ -22,9 +22,6 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
-import org.wso2.carbon.registry.core.Resource;
-
-import java.sql.SQLException;
 
 public class PAPPolicyStoreManager {
 

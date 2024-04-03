@@ -32,7 +32,7 @@ import java.util.*;
 
 
 /**
- * This class phrase the xml representation of policy and build the policy meta data such as
+ * This class phrase the xml representation of policy and build the policy metadata such as
  * resource names, subject names action names and environment names, attribute ids and data types.
  */
 public class PolicyAttributeBuilder {
@@ -61,9 +61,9 @@ public class PolicyAttributeBuilder {
     }
 
     /**
-     * This creates properties object which contains the policy meta data.
+     * This creates properties object which contains the policy metadata.
      *
-     * @return properties object which contains the policy meta data
+     * @return properties object which contains the policy metadata
      * @throws EntitlementException throws
      */
     public Properties getPolicyMetaDataFromPolicy() throws EntitlementException {

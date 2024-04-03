@@ -62,7 +62,7 @@ public class PAPPolicyFinder extends PolicyFinderModule {
      * PolicyRepository.POLICY_SCHEMA_PROPERTY. If the retrieved property is null, then no schema
      * validation will occur.
      *
-     * @param policyReader Policy store repository for Registry
+     * @param policyReader Policy store repository
      */
     public PAPPolicyFinder(PAPPolicyStoreReader policyReader) {
         this.policyReader = policyReader;

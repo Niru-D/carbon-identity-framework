@@ -444,7 +444,7 @@ public class EntitlementPolicyAdminService {
     }
 
     /**
-     * Add subscriber details in to registry
+     * Add subscriber details
      *
      * @param holder subscriber data as PublisherDataHolder object
      * @throws EntitlementException throws, if fails
@@ -457,7 +457,7 @@ public class EntitlementPolicyAdminService {
     }
 
     /**
-     * Update subscriber details in registry
+     * Update subscriber details
      *
      * @param holder subscriber data as PublisherDataHolder object
      * @throws EntitlementException throws, if fails
@@ -470,7 +470,7 @@ public class EntitlementPolicyAdminService {
     }
 
     /**
-     * delete subscriber details from registry
+     * delete subscriber details
      *
      * @param subscriberId subscriber id
      * @throws EntitlementException throws, if fails

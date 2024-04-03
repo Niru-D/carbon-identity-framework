@@ -110,7 +110,6 @@ public class PolicyPublishExecutor {
         }
 
         PublisherDataHolder holder = null;
-        PublisherDataHolder holder2 = null;
         Set<PAPStatusDataHandler> papStatusDataHandler = publisher.getPapStatusDataHandlers();
         for (String subscriberId : subscriberIds) {
 
