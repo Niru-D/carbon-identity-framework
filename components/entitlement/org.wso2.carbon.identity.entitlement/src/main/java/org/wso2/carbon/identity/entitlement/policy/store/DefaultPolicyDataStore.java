@@ -32,9 +32,9 @@ import org.wso2.carbon.identity.entitlement.pdp.EntitlementEngine;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_POLICY_COMBINING_ALGORITHM_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PDP_POLICIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PDP_POLICY_DATA_SQL;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_COMBINING_ALGORITHM_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PDP_POLICY_DATA_SQL;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_POLICY_COMBINING_ALGORITHM_SQL;
 
 import java.sql.Connection;
@@ -214,7 +214,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         ResultSet policyData = null;
 
         try {
-            getAllPolicyData = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
+            getAllPolicyData = connection.prepareStatement(GET_PDP_POLICY_DATA_SQL);
             getAllPolicyData.setString(1, policyId);
             getAllPolicyData.setInt(2, 1);
             getAllPolicyData.setInt(3, tenantId);
@@ -250,7 +250,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         ResultSet policyData = null;
 
         try {
-            getAllPolicyData = connection.prepareStatement(GET_ALL_PDP_POLICIES_SQL);
+            getAllPolicyData = connection.prepareStatement(GET_ALL_PDP_POLICY_DATA_SQL);
             getAllPolicyData.setInt(1, tenantId);
             getAllPolicyData.setInt(2, 1);
             policyData = getAllPolicyData.executeQuery();

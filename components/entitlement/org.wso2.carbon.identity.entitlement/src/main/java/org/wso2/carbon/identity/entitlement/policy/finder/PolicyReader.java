@@ -36,7 +36,7 @@ import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_COMBINING_ALGORITHM_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PDP_POLICY_SQL;
 
 import java.nio.charset.Charset;
 import java.sql.Connection;
@@ -199,7 +199,7 @@ public class PolicyReader {
 
         try {
 
-            getPDPPolicy = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
+            getPDPPolicy = connection.prepareStatement(GET_PDP_POLICY_SQL);
             getPDPPolicy.setString(1, policyId);
             getPDPPolicy.setInt(2, 1);
             getPDPPolicy.setInt(3, tenantId);
