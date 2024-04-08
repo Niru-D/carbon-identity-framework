@@ -26,6 +26,8 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PAPStatusDataHandler;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
+import org.wso2.carbon.identity.entitlement.dao.SubscriberManageModule;
+import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
@@ -121,7 +123,9 @@ public class PolicyPublishExecutor {
                 holder = new PublisherDataHolder(policyPublisherModule.getModuleName());
             } else {
                 try {
-                    holder = publisher.retrieveSubscriber(subscriberId, true);
+                    //TODO - Configuration to choose between registry and new data structure
+                    SubscriberManageModule subscriberManager = new SubscriberManager();
+                    holder = subscriberManager.retrieveSubscriber(subscriberId, true);
                 } catch (EntitlementException e) {
                     log.error("Subscriber details can not be retrieved. So skip publishing policies " +
                             "for subscriber : " + subscriberId);

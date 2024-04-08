@@ -41,6 +41,8 @@ import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisher;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisherModule;
 import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.SubscriberManageModule;
+import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
@@ -420,9 +422,10 @@ public class EntitlementPolicyAdminService {
      */
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
+        //TODO - Configuration to choose between registry and new data structure
+        SubscriberManageModule subscriberManager = new SubscriberManager();
+        return subscriberManager.retrieveSubscriber(subscribeId, false);
 
-        PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        return publisher.retrieveSubscriber(subscribeId, false);
     }
 
     /**
@@ -433,8 +436,10 @@ public class EntitlementPolicyAdminService {
      * @throws EntitlementException throws, if fails
      */
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
-        PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        String[] ids = publisher.retrieveSubscriberIds(searchString);
+
+        //TODO - Configuration to choose between registry and new data structure
+        SubscriberManageModule subscriberManager = new SubscriberManager();
+        String[] ids = subscriberManager.retrieveSubscriberIds(searchString);
 
         if (ids != null) {
             return ids;
@@ -451,8 +456,9 @@ public class EntitlementPolicyAdminService {
      */
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
-        PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.persistSubscriber(holder, false);
+        //TODO - Configuration to choose between registry and new data structure
+        SubscriberManageModule subscriberManager = new SubscriberManager();
+        subscriberManager.persistSubscriber(holder, false);
 
     }
 
@@ -464,8 +470,9 @@ public class EntitlementPolicyAdminService {
      */
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
-        PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.persistSubscriber(holder, true);
+        //TODO - Configuration to choose between registry and new data structure
+        SubscriberManageModule subscriberManager = new SubscriberManager();
+        subscriberManager.persistSubscriber(holder, true);
 
     }
 
@@ -477,9 +484,9 @@ public class EntitlementPolicyAdminService {
      */
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
-        PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
-        publisher.deleteSubscriber(subscriberId);
-
+        //TODO - Configuration to choose between registry and new data structure
+        SubscriberManageModule subscriberManager = new SubscriberManager();
+        subscriberManager.deleteSubscriber(subscriberId);
     }
 
     /**
@@ -501,7 +508,9 @@ public class EntitlementPolicyAdminService {
             policyIds = EntitlementAdminEngine.getInstance().getPapPolicyStoreManager().getPolicyIds();
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
-            subscriberIds = publisher.retrieveSubscriberIds("*");
+            //TODO - Configuration to choose between registry and new data structure
+            SubscriberManageModule subscriberManager = new SubscriberManager();
+            subscriberIds = subscriberManager.retrieveSubscriberIds("*");
         }
 
         if (policyIds == null || policyIds.length < 1) {
@@ -544,7 +553,7 @@ public class EntitlementPolicyAdminService {
      * @param policyIds
      * @throws EntitlementException
      */
-    public void     publishToPDP(String[] policyIds, String action, String version, boolean enabled,
+    public void publishToPDP(String[] policyIds, String action, String version, boolean enabled,
                              int order) throws EntitlementException {
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
