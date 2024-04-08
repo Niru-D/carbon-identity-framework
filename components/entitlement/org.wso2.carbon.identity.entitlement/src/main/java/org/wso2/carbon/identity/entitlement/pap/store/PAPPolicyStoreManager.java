@@ -22,14 +22,19 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 
 public class PAPPolicyStoreManager {
 
     private static final Log log = LogFactory.getLog(PAPPolicyStoreManager.class);
-    private PAPPolicyStore store;
+
+    private PAPPolicyStoreModule store;
+
     private PAPPolicyStoreReader storeReader;
 
     public PAPPolicyStoreManager() {
+        //TODO - Configuration to choose between registry and new data structure
         store = new PAPPolicyStore();
         storeReader = new PAPPolicyStoreReader(store);
     }

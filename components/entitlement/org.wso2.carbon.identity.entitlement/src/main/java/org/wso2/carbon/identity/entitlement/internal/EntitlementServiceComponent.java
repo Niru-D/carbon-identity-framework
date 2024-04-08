@@ -42,7 +42,9 @@ import org.wso2.carbon.identity.entitlement.EntitlementUtil;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.listener.CacheClearingUserOperationListener;
-import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
+//import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.thrift.EntitlementService;
 import org.wso2.carbon.identity.entitlement.thrift.ThriftConfigConstants;
 import org.wso2.carbon.identity.entitlement.thrift.ThriftEntitlementServiceImpl;
@@ -210,7 +212,8 @@ public class EntitlementServiceComponent {
             new Thread(new SchemaBuilder(EntitlementConfigHolder.getInstance())).start();
 
             // Read XACML policy files from a pre-defined location in the filesystem
-            PAPPolicyStore papPolicyStore = new PAPPolicyStore();
+            //TODO - Configuration to choose between registry and new data structure
+            PAPPolicyStoreModule papPolicyStore = new PAPPolicyStore();
 
             String startUpPolicyAdding = EntitlementConfigHolder.getInstance().getEngineProperties().getProperty(
                     PDPConstants.START_UP_POLICY_ADDING);

@@ -27,18 +27,19 @@ import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
 
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 
 public class PAPPolicyStoreReader {
 
     // the optional logger used for error reporting
     private static Log log = LogFactory.getLog(PAPPolicyStoreReader.class);
 
-    private PAPPolicyStore store;
+    private PAPPolicyStoreModule store;
 
     /**
      * @param store
      */
-    public PAPPolicyStoreReader(PAPPolicyStore store) {
+    public PAPPolicyStoreReader(PAPPolicyStoreModule store) {
         this.store = store;
     }
 

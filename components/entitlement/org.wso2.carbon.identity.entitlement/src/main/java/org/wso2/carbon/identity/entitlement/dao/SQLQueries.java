@@ -21,7 +21,7 @@ package org.wso2.carbon.identity.entitlement.dao;
 
 /**
  * TODO
- * SQL Queries used in {@link }.
+ * SQL Queries
  */
 public class SQLQueries {
 

@@ -50,7 +50,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.sql.SQLException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -420,6 +419,7 @@ public class EntitlementPolicyAdminService {
      * @throws EntitlementException throws, if any error
      */
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
+
 
         PolicyPublisher publisher = EntitlementAdminEngine.getInstance().getPolicyPublisher();
         return publisher.retrieveSubscriber(subscribeId, false);

@@ -23,11 +23,13 @@ import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
-import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
+//import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_LATEST_POLICY_VERSION_SQL;
@@ -94,8 +96,8 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
                 IdentityDatabaseUtil.closeAllConnections(connection, latestVersion, getLatestVersionPrepStmt);
             }
         }
-
-        PAPPolicyStore policyStore = new PAPPolicyStore();
+        //TODO - Configuration to choose between registry and new data structure
+        PAPPolicyStoreModule policyStore = new PAPPolicyStore();
         PAPPolicyStoreReader reader = new PAPPolicyStoreReader(policyStore);
 
         PolicyDTO dto = policyStore.getPolicyByVersion(policyId, version);

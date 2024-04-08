@@ -55,18 +55,20 @@ import org.wso2.carbon.identity.entitlement.cache.EntitlementBaseCache;
 import org.wso2.carbon.identity.entitlement.cache.IdentityCacheEntry;
 import org.wso2.carbon.identity.entitlement.cache.IdentityCacheKey;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementExtensionBuilder;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
-import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
+//import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisher;
 import org.wso2.carbon.identity.entitlement.policy.store.PolicyStoreManageModule;
 import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
@@ -408,7 +410,9 @@ public class EntitlementUtil {
      */
     public static boolean isPolicyExists(String policyId) throws EntitlementException {
         PAPPolicyStoreReader policyReader = null;
-        policyReader = new PAPPolicyStoreReader(new PAPPolicyStore());
+        //TODO - Configuration to choose between registry and new data structure
+        PAPPolicyStoreModule store = new PAPPolicyStore();
+        policyReader = new PAPPolicyStoreReader(store);
         return policyReader.isExistPolicy(policyId);
     }
 
@@ -506,7 +510,9 @@ public class EntitlementUtil {
      */
     public static PolicyDTO getPolicy(String policyId, Registry registry) throws EntitlementException {
         PAPPolicyStoreReader policyReader = null;
-        policyReader = new PAPPolicyStoreReader(new PAPPolicyStore());
+        //TODO - Configuration to choose between registry and new data structure
+        PAPPolicyStoreModule store = new PAPPolicyStore();
+        policyReader = new PAPPolicyStoreReader(store);
         return policyReader.readPolicyDTO(policyId);
     }
 

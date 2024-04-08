@@ -15,9 +15,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.wso2.carbon.identity.entitlement.pap.store;
+package org.wso2.carbon.identity.entitlement.dao;
 
-import com.sun.media.sound.MidiDeviceReceiverEnvelope;
 import org.apache.axiom.om.OMElement;
 import org.apache.axiom.om.util.AXIOMUtil;
 import org.apache.commons.lang.StringUtils;
@@ -28,45 +27,26 @@ import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
-import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
 
-import java.sql.Connection;
-import java.sql.SQLException;
-
 import javax.xml.stream.XMLStreamException;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_ATTRIBUTES_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_EDITOR_DATA_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_REFS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_SET_REFS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PAP_POLICY_BY_VERSION_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PAP_POLICY_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_VERSION_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_UNPUBLISHED_POLICY_VERSIONS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PAP_POLICIES_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_BY_VERSION_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_EDITOR_DATA_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_IDS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_META_DATA_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_BY_VERSION_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.*;
 
 
-public class PAPPolicyStore {
+public class PAPPolicyStore implements PAPPolicyStoreModule {
 
     // The logger we'll use for all messages
     private static final Log log = LogFactory.getLog(PAPPolicyStore.class);
 
-    public PAPPolicyStore() {
+    @Override
+    public void PAPPolicyStore() {
 
     }
 
@@ -77,6 +57,7 @@ public class PAPPolicyStore {
      * @return policy ids as String[]
      * @throws EntitlementException throws if fails
      */
+    @Override
     public String[] getAllPolicyIds() throws EntitlementException {
 
         if (log.isDebugEnabled()) {
@@ -125,7 +106,7 @@ public class PAPPolicyStore {
      * @return policy as a PolicyDTO
      * @throws EntitlementException throws, if fails
      */
-
+    @Override
     public PolicyDTO getPolicy(String policyId) throws EntitlementException {
 
         if (log.isDebugEnabled()) {
@@ -308,6 +289,7 @@ public class PAPPolicyStore {
      * @return policy as a PolicyDTO
      * @throws EntitlementException throws, if fails
      */
+    @Override
     public PolicyDTO getPolicyByVersion(String policyId, String version) throws EntitlementException{
 
         if (log.isDebugEnabled()) {
@@ -484,6 +466,7 @@ public class PAPPolicyStore {
      * @return policies as a PolicyDTO array
      * @throws EntitlementException throws if fails
      */
+    @Override
     public PolicyDTO[] getAllPolicies() throws EntitlementException {
 
         if (log.isDebugEnabled()) {
@@ -597,7 +580,7 @@ public class PAPPolicyStore {
      * @param policy   policy DTO
      * @throws EntitlementException throws, if fails
      */
-
+    @Override
     public void addOrUpdatePolicy(PolicyDTO policy)
             throws EntitlementException {
 
@@ -770,7 +753,7 @@ public class PAPPolicyStore {
      * @param policyId policyId
      * @throws EntitlementException throws, if fails
      */
-
+    @Override
     public void removePolicy(String policyId) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
@@ -838,6 +821,7 @@ public class PAPPolicyStore {
      * @param version version
      * @throws EntitlementException throws, if fails
      */
+    @Override
     public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
