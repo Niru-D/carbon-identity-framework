@@ -22,14 +22,14 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
+import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStore;
+import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.RegistryPDPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
-import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * This manages the storing and reading of policies and policy metadata that is related
@@ -39,7 +39,7 @@ import java.util.Properties;
  */
 public class PolicyStoreManager {
 
-    private PolicyStoreManageModule policyStore = null;
+    private PDPPolicyStoreModule policyStore = null;
 
     private PolicyDataStore policyDataStore = null;
 
@@ -47,7 +47,7 @@ public class PolicyStoreManager {
 
     public PolicyStoreManager(PolicyDataStore policyDataStore) {
 
-        policyStore = new PolicyStore();
+        policyStore = new PDPPolicyStore();
         this.policyDataStore = policyDataStore;
     }
 
@@ -70,7 +70,7 @@ public class PolicyStoreManager {
         }
 
         policyStore.addPolicy(dto);
-        RegistryPolicyStoreManageModule
+        RegistryPDPPolicyStore
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_UPDATE);
     }
 
@@ -92,7 +92,7 @@ public class PolicyStoreManager {
         dto.setSetOrder(false);
 
         policyStore.updatePolicy(dto);
-        RegistryPolicyStoreManageModule
+        RegistryPDPPolicyStore
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_UPDATE);
     }
 
@@ -115,10 +115,10 @@ public class PolicyStoreManager {
         }
 
         if (policyDTO.isActive()) {
-            RegistryPolicyStoreManageModule
+            RegistryPDPPolicyStore
                     .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_ENABLE);
         } else {
-            RegistryPolicyStoreManageModule
+            RegistryPDPPolicyStore
                     .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_DISABLE);
         }
     }
@@ -140,7 +140,7 @@ public class PolicyStoreManager {
         if (policyStore.isPolicyOrderingSupport()) {
             policyStore.updatePolicy(dto);
         }
-        RegistryPolicyStoreManageModule
+        RegistryPDPPolicyStore
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_ORDER);
     }
 
@@ -152,7 +152,7 @@ public class PolicyStoreManager {
                                            policyDTO.getPolicyId());
         }
         policyStore.deletePolicy(policyDTO.getPolicyId());
-        RegistryPolicyStoreManageModule
+        RegistryPDPPolicyStore
                 .invalidateCache(policyDTO.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_DELETE);
     }
 

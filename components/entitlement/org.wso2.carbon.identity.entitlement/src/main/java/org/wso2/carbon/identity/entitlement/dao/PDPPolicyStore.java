@@ -16,7 +16,7 @@
 * under the License.
 */
 
-package org.wso2.carbon.identity.entitlement.policy.store;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -24,11 +24,9 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
-import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
@@ -53,12 +51,12 @@ import java.util.*;
 /**
  *
  */
-public class PolicyStore extends AbstractPolicyFinderModule
-        implements PolicyStoreManageModule {
+public class PDPPolicyStore extends AbstractPolicyFinderModule
+        implements PDPPolicyStoreModule {
 
     //TODO
     private static final String MODULE_NAME = "Registry Policy Finder Module";
-    private static Log log = LogFactory.getLog(PolicyStore.class);
+    private static Log log = LogFactory.getLog(PDPPolicyStore.class);
 
     @Override
     public void init(Properties properties) {

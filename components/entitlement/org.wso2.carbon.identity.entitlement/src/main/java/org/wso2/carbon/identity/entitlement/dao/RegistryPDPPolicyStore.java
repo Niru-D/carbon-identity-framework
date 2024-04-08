@@ -16,7 +16,7 @@
 * under the License.
 */
 
-package org.wso2.carbon.identity.entitlement.policy.store;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -49,8 +49,8 @@ import java.util.Set;
 /**
  *
  */
-public class RegistryPolicyStoreManageModule extends AbstractPolicyFinderModule
-        implements PolicyStoreManageModule {
+public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
+        implements PDPPolicyStoreModule {
 
     private static final String MODULE_NAME = "Registry Policy Finder Module";
     private static final String PROPERTY_POLICY_STORE_PATH = "policyStorePath";
@@ -58,7 +58,7 @@ public class RegistryPolicyStoreManageModule extends AbstractPolicyFinderModule
     private static final String DEFAULT_POLICY_STORE_PATH = "/repository/identity/entitlement" +
                                                             "/policy/pdp/";
     private static final String KEY_VALUE_POLICY_META_DATA = "policyMetaData";
-    private static Log log = LogFactory.getLog(RegistryPolicyStoreManageModule.class);
+    private static Log log = LogFactory.getLog(RegistryPDPPolicyStore.class);
     private String policyStorePath;
 
     @Override

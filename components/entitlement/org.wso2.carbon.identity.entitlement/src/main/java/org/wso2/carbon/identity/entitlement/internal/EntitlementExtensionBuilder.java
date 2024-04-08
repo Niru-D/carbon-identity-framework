@@ -34,7 +34,7 @@ import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisherModu
 import org.wso2.carbon.identity.entitlement.policy.publisher.PostPublisherModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PublisherVerificationModule;
 import org.wso2.carbon.identity.entitlement.policy.store.PolicyDataStore;
-import org.wso2.carbon.identity.entitlement.policy.store.PolicyStoreManageModule;
+import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStoreModule;
 import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
 
 import java.io.File;
@@ -335,8 +335,8 @@ public class EntitlementExtensionBuilder {
             }
 
             finderModule.init(finderModuleProps);
-            if (finderModule instanceof PolicyStoreManageModule) {
-                holder.addPolicyStore((PolicyStoreManageModule) finderModule, finderModuleProps);
+            if (finderModule instanceof PDPPolicyStoreModule) {
+                holder.addPolicyStore((PDPPolicyStoreModule) finderModule, finderModuleProps);
             }
             holder.addPolicyFinderModule(finderModule, finderModuleProps);
         }
@@ -378,12 +378,12 @@ public class EntitlementExtensionBuilder {
     private void populatePolicyStoreModule(Properties properties, EntitlementConfigHolder holder)
             throws Exception {
 
-        PolicyStoreManageModule policyStoreStore = null;
+        PDPPolicyStoreModule policyStoreStore = null;
 
         if (properties.getProperty("PDP.Policy.Store.Module") != null) {
             String className = properties.getProperty("PDP.Policy.Store.Module");
             Class clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
-            policyStoreStore = (PolicyStoreManageModule) clazz.newInstance();
+            policyStoreStore = (PDPPolicyStoreModule) clazz.newInstance();
 
             int j = 1;
             Properties storeProps = new Properties();

@@ -16,7 +16,7 @@
 * under the License.
 */
 
-package org.wso2.carbon.identity.entitlement.policy.store;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
@@ -29,7 +29,7 @@ import java.util.Properties;
  * loaded in to the PDP from different sources. This is specially written for storing policies.
  * There can be only one policy store manage module in PDP
  */
-public interface PolicyStoreManageModule extends PolicyFinderModule {
+public interface PDPPolicyStoreModule extends PolicyFinderModule {
 
     /**
      * init policy store module
