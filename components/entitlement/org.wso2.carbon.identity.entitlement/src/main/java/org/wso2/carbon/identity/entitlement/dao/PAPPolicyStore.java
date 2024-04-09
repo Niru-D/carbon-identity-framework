@@ -37,7 +37,26 @@ import java.sql.SQLException;
 import java.util.*;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.*;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_ATTRIBUTES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_EDITOR_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_SET_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_PAP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PAP_POLICY_BY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PAP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_POLICY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_UNPUBLISHED_POLICY_VERSIONS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PAP_POLICIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_BY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_EDITOR_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_IDS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_META_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_BY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_PDP_PRESENCE_SQL;
 
 
 public class PAPPolicyStore implements PAPPolicyStoreModule {

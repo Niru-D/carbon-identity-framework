@@ -38,12 +38,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.*;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_SUBSCRIBER_PROPERTIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.CREATE_SUBSCRIBER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_SUBSCRIBER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_EXISTENCE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_IDS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_SUBSCRIBER_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_SUBSCRIBER_MODULE_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_SUBSCRIBER_PROPERTIES_SQL;
 
 /**
  * This is for subscriber management
  */
-public class SubscriberManager implements SubscriberManageModule{
+public class SubscriberManager implements SubscriberManagerModule {
 
     public static final String SUBSCRIBER_ID = "subscriberId";
     private static Log log = LogFactory.getLog(SubscriberManager.class);

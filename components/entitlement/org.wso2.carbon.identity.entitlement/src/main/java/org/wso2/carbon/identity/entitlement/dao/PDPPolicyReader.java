@@ -16,7 +16,7 @@
 * under the License.
 */
 
-package org.wso2.carbon.identity.entitlement.policy.finder;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -30,36 +30,36 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
 
-import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PDP_POLICIES_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_META_DATA_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_COMBINING_ALGORITHM_SQL;
-import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PDP_POLICY_SQL;
-
-import java.nio.charset.Charset;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_ALL_PDP_POLICIES_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_META_DATA_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PAP_POLICY_SET_REFS_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_PDP_POLICY_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_COMBINING_ALGORITHM_SQL;
+
 /**
  * PDP policy reader
  */
-public class PolicyReader {
+public class PDPPolicyReader implements PDPPolicyReaderModule {
 
     /**
      * logger
      */
-    private static Log log = LogFactory.getLog(PolicyReader.class);
+    private static Log log = LogFactory.getLog(PDPPolicyReader.class);
 
     /**
      * constructor
      *
      */
-    public PolicyReader() {
+    @Override
+    public void PDPPolicyReader() {
 
     }
 
@@ -70,6 +70,7 @@ public class PolicyReader {
      * @return PolicyDTO
      * @throws EntitlementException throws, if fails
      */
+    @Override
     public PolicyDTO readPolicy(String policyId) throws EntitlementException {
 
         PolicyDTO policy = null;
@@ -91,6 +92,7 @@ public class PolicyReader {
      * @return Array of PolicyDTO
      * @throws EntitlementException throws, if fails
      */
+    @Override
     public PolicyDTO[] readAllPolicies(boolean active, boolean order) throws EntitlementException {
 
         PolicyDTO[] policies = null;
@@ -126,6 +128,7 @@ public class PolicyReader {
      * @return policy ids as String[]
      * @throws EntitlementException throws if fails
      */
+    @Override
     public String[] getAllPolicyIds() throws EntitlementException {
 
         List<String> policyIDs = new ArrayList<String>();
@@ -150,6 +153,7 @@ public class PolicyReader {
      * @return policy combining algorithm as String
      * @throws EntitlementException throws
      */
+    @Override
     public String readPolicyCombiningAlgorithm() throws EntitlementException {
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();

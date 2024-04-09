@@ -22,9 +22,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.PAPStatusDataHandler;
+import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandler;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
-import org.wso2.carbon.identity.entitlement.dao.SubscriberManageModule;
+import org.wso2.carbon.identity.entitlement.dao.SubscriberManagerModule;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
@@ -90,7 +90,7 @@ public class PolicyPublisher {
         try {
             PublisherDataHolder pdpDataHolder = null;
             //TODO - Configuration to choose between registry and new data structure
-            SubscriberManageModule subscriberManager = new SubscriberManager();
+            SubscriberManagerModule subscriberManager = new SubscriberManager();
             try {
 
                 pdpDataHolder = subscriberManager.retrieveSubscriber(EntitlementConstants.PDP_SUBSCRIBER_ID, false);

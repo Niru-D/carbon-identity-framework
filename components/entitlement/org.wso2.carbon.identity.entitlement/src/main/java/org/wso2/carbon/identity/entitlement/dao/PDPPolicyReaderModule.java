@@ -18,41 +18,40 @@
 package org.wso2.carbon.identity.entitlement.dao;
 
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
-
+import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 
 /**
- * This interface supports subscriber management
+ * This interface supports data retrieving from the PDP
  */
-public interface SubscriberManageModule {
+public interface PDPPolicyReaderModule {
 
     /**
-     * Creates a subscriber manager
+     * Initializes PDP Policy Reader module
      */
-    public void SubscriberManager();
-
-
-    /**
-     * Adds a subscriber
-     */
-    public void persistSubscriber(PublisherDataHolder holder, boolean update) throws EntitlementException;
-
-    /**
-     * Deletes a subscriber
-     */
-    public void deleteSubscriber(String subscriberId) throws EntitlementException;
+    public void PDPPolicyReader();
 
 
     /**
-     * Retrieves a subscriber
+     * Reads given policyId as PolicyDTO
      */
-    public PublisherDataHolder retrieveSubscriber(String id, boolean returnSecrets) throws EntitlementException;
+    public PolicyDTO readPolicy(String policyId) throws EntitlementException;
 
 
     /**
-     * Retrieves subscriber ids
+     * Reads All ordered active policies as PolicyDTO
      */
-    public String[] retrieveSubscriberIds(String searchString) throws EntitlementException;
+    public PolicyDTO[] readAllPolicies(boolean active, boolean order) throws EntitlementException;
 
+
+    /**
+     * This returns all policy ids as a String list.
+     */
+    public String[] getAllPolicyIds() throws EntitlementException;
+
+
+    /**
+     * This reads the policy combining algorithm
+     */
+    public String readPolicyCombiningAlgorithm() throws EntitlementException;
 
 }

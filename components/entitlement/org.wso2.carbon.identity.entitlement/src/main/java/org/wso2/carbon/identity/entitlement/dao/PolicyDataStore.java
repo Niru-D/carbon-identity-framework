@@ -16,7 +16,7 @@
 * under the License.
 */
 
-package org.wso2.carbon.identity.entitlement.policy.store;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.wso2.balana.combine.PolicyCombiningAlgorithm;
 import org.wso2.carbon.identity.entitlement.EntitlementException;

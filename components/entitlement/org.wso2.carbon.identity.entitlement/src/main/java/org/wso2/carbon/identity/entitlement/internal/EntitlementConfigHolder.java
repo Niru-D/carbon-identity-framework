@@ -19,7 +19,7 @@
 package org.wso2.carbon.identity.entitlement.internal;
 
 import org.wso2.carbon.identity.application.mgt.ApplicationManagementService;
-import org.wso2.carbon.identity.entitlement.PAPStatusDataHandler;
+import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandler;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.pap.EntitlementDataFinderModule;
 import org.wso2.carbon.identity.entitlement.pip.PIPAttributeFinder;
@@ -30,9 +30,9 @@ import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisherModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PostPublisherModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PublisherVerificationModule;
-import org.wso2.carbon.identity.entitlement.policy.store.PolicyDataStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStoreModule;
-import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
 import org.wso2.carbon.utils.ConfigurationContextService;
 
 import java.util.ArrayList;

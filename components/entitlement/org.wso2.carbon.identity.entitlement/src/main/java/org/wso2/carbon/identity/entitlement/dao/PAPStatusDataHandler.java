@@ -16,8 +16,9 @@
  * under the License.
  */
 
-package org.wso2.carbon.identity.entitlement;
+package org.wso2.carbon.identity.entitlement.dao;
 
+import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
 
 import java.util.List;

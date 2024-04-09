@@ -62,7 +62,7 @@ import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent
 import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
-import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
 import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;

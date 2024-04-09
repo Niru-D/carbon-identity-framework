@@ -21,15 +21,15 @@ package org.wso2.carbon.identity.entitlement.pap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.entitlement.PAPStatusDataHandler;
+import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandler;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisher;
-import org.wso2.carbon.identity.entitlement.policy.store.DefaultPolicyDataStore;
-import org.wso2.carbon.identity.entitlement.policy.store.PolicyDataStore;
+import org.wso2.carbon.identity.entitlement.dao.DefaultPolicyDataStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.policy.store.PolicyStoreManager;
-import org.wso2.carbon.identity.entitlement.policy.version.DefaultPolicyVersionManager;
-import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.DefaultPolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
 
 import java.util.Map;
 import java.util.Properties;
@@ -64,6 +64,7 @@ public class EntitlementAdminEngine {
             this.versionManager = versionManagers.entrySet().iterator().next().getKey();
         } else {
             //init without init()
+            //TODO - Configuration to choose between registry and new data structure
             this.versionManager = new DefaultPolicyVersionManager();
         }
         Map<PolicyDataStore, Properties> dataStoreModules = EntitlementServiceComponent.

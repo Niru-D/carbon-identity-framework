@@ -24,6 +24,7 @@ import org.wso2.carbon.base.ServerConfiguration;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.RegistryType;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
+import org.wso2.carbon.identity.entitlement.dao.*;
 import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.EntitlementFinderDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.EntitlementTreeNodeDTO;
@@ -40,9 +41,6 @@ import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisher;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisherModule;
-import org.wso2.carbon.identity.entitlement.policy.version.PolicyVersionManager;
-import org.wso2.carbon.identity.entitlement.dao.SubscriberManageModule;
-import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
@@ -423,7 +421,7 @@ public class EntitlementPolicyAdminService {
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManageModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new SubscriberManager();
         return subscriberManager.retrieveSubscriber(subscribeId, false);
 
     }
@@ -438,7 +436,7 @@ public class EntitlementPolicyAdminService {
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManageModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new SubscriberManager();
         String[] ids = subscriberManager.retrieveSubscriberIds(searchString);
 
         if (ids != null) {
@@ -457,7 +455,7 @@ public class EntitlementPolicyAdminService {
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManageModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new SubscriberManager();
         subscriberManager.persistSubscriber(holder, false);
 
     }
@@ -471,7 +469,7 @@ public class EntitlementPolicyAdminService {
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManageModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new SubscriberManager();
         subscriberManager.persistSubscriber(holder, true);
 
     }
@@ -485,7 +483,7 @@ public class EntitlementPolicyAdminService {
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManageModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new SubscriberManager();
         subscriberManager.deleteSubscriber(subscriberId);
     }
 
@@ -509,7 +507,7 @@ public class EntitlementPolicyAdminService {
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
             //TODO - Configuration to choose between registry and new data structure
-            SubscriberManageModule subscriberManager = new SubscriberManager();
+            SubscriberManagerModule subscriberManager = new SubscriberManager();
             subscriberIds = subscriberManager.retrieveSubscriberIds("*");
         }
 

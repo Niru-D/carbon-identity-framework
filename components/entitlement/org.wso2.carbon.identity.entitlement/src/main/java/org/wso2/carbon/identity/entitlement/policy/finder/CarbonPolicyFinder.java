@@ -43,8 +43,8 @@ import org.wso2.carbon.identity.entitlement.pdp.EntitlementEngine;
 import org.wso2.carbon.identity.entitlement.policy.PolicyReader;
 import org.wso2.carbon.identity.entitlement.policy.collection.PolicyCollection;
 import org.wso2.carbon.identity.entitlement.policy.collection.SimplePolicyCollection;
-import org.wso2.carbon.identity.entitlement.policy.store.DefaultPolicyDataStore;
-import org.wso2.carbon.identity.entitlement.policy.store.PolicyDataStore;
+import org.wso2.carbon.identity.entitlement.dao.DefaultPolicyDataStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 
 import java.net.URI;
 import java.net.URISyntaxException;

@@ -15,7 +15,7 @@
 * specific language governing permissions and limitations
 * under the License.
 */
-package org.wso2.carbon.identity.entitlement.policy.store;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;

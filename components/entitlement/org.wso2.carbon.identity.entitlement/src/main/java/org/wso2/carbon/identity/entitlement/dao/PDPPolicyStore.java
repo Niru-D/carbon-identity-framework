@@ -29,7 +29,9 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
-import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
+//import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
+import org.wso2.carbon.identity.entitlement.dao.PDPPolicyReaderModule;
+import org.wso2.carbon.identity.entitlement.dao.PDPPolicyReader;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PUBLISHED_VERSIONS_SQL;
@@ -290,7 +292,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
     public String getPolicy(String policyId) {
         PolicyDTO dto;
         try {
-            dto = new PolicyReader().readPolicy(policyId);
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            dto = policyReaderModule.readPolicy(policyId);
             return dto.getPolicy();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
@@ -303,7 +307,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
     public int getPolicyOrder(String policyId) {
         PolicyDTO dto;
         try {
-            dto = new PolicyReader().readPolicy(policyId);
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            dto = policyReaderModule.readPolicy(policyId);
             return dto.getPolicyOrder();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
@@ -320,7 +326,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         List<String> policies = new ArrayList<String>();
 
         try {
-            PolicyDTO[] policyDTOs = new PolicyReader().readAllPolicies(true, true);
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            PolicyDTO[] policyDTOs = policyReaderModule.readAllPolicies(true, true);
             for (PolicyDTO dto : policyDTOs) {
                 if (dto.getPolicy() != null) {
                     policies.add(dto.getPolicy());
@@ -344,7 +352,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         List<String> policies = new ArrayList<String>();
 
         try {
-            PolicyDTO[] policyDTOs = new PolicyReader().readAllPolicies(false, true);
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            PolicyDTO[] policyDTOs = policyReaderModule.readAllPolicies(false, true);
             for (PolicyDTO dto : policyDTOs) {
                 if (dto.getPolicy() != null) {
                     policies.add(dto.getPolicyId());
@@ -364,7 +374,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
     public String[] getPolicyIdentifiers() {
         String[] policyIds = null;
         try {
-            policyIds = new PolicyReader().getAllPolicyIds();
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            policyIds = policyReaderModule.getAllPolicyIds();
         } catch (Exception e) {
             log.error("Policy identifiers can not be retrieved from the policy finder module", e);
         }
@@ -376,7 +388,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         // retrieve policies that are not active
         try {
-            PolicyDTO dto = new PolicyReader().readPolicy(policyId);
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            PolicyDTO dto = policyReaderModule.readPolicy(policyId);
             if (dto != null && dto.getPolicy() != null && !dto.isActive()) {
                 return dto.getPolicy();
             }
@@ -394,7 +408,9 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         PolicyDTO[] policyDTOs = null;
         Map<String, Set<AttributeDTO>> attributeMap = null;
         try {
-            policyDTOs = new PolicyReader().readAllPolicies(true, true);
+            //TODO - Configuration to choose between registry and new data structure
+            PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
+            policyDTOs = policyReaderModule.readAllPolicies(true, true);
         } catch (Exception e) {
             log.error("Policies can not be retrieved from the policy finder module", e);
         }

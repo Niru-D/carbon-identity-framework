@@ -24,6 +24,7 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dao.RegistryPDPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
