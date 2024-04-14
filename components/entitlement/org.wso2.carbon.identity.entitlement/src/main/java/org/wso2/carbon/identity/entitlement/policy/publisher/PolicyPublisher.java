@@ -22,7 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandler;
+import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManagerModule;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
@@ -52,7 +52,7 @@ public class PolicyPublisher {
     /**
      * set of post publisher modules
      */
-    Set<PAPStatusDataHandler> papStatusDataHandlers = new HashSet<PAPStatusDataHandler>();
+    Set<PAPStatusDataHandlerModule> papStatusDataHandlers = new HashSet<PAPStatusDataHandlerModule>();
 
     /**
      * Verification publisher modules
@@ -140,11 +140,11 @@ public class PolicyPublisher {
         return publisherModules;
     }
 
-    public Set<PAPStatusDataHandler> getPapStatusDataHandlers() {
+    public Set<PAPStatusDataHandlerModule> getPapStatusDataHandlers() {
         return papStatusDataHandlers;
     }
 
-    public void setPapStatusDataHandlers(Set<PAPStatusDataHandler> papStatusDataHandlers) {
+    public void setPapStatusDataHandlers(Set<PAPStatusDataHandlerModule> papStatusDataHandlers) {
         this.papStatusDataHandlers = papStatusDataHandlers;
     }
 

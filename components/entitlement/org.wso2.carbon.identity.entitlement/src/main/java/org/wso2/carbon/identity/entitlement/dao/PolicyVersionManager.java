@@ -15,46 +15,142 @@
 * specific language governing permissions and limitations
 * under the License.
 */
-
 package org.wso2.carbon.identity.entitlement.dao;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.wso2.carbon.context.CarbonContext;
+import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
+import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
+import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
 
+import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_LATEST_POLICY_VERSION_SQL;
+import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_POLICY_VERSIONS_SQL;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 /**
- * This manages the policy versions
+ *
  */
-public interface PolicyVersionManager {
-
-    /**
-     * init policy version handler
-     *
-     * @param properties
-     */
-    public void init(Properties properties);
-
-    /**
-     * @param policyId
-     * @param version
-     * @return
-     * @throws EntitlementException
-     */
-    public PolicyDTO getPolicy(String policyId, String version) throws EntitlementException;
-
-    /**
-     * @param policyDTO
-     * @return
-     * @throws EntitlementException
-     */
-    public String createVersion(PolicyDTO policyDTO) throws EntitlementException;
+public class PolicyVersionManager implements PolicyVersionManagerModule {
 
 
-    /**
-     * @param policyId
-     * @return
-     * @throws EntitlementException
-     */
-    public String[] getVersions(String policyId) throws EntitlementException;
+    private static Log log = LogFactory.getLog(PolicyVersionManager.class);
+
+    private static int DEFAULT_MAX_VERSION = 5;
+
+    private int maxVersions;
+
+    @Override
+    public void init(Properties properties) {
+        try {
+            maxVersions = Integer.parseInt(properties.getProperty("maxVersions"));
+        } catch (Exception e) {
+            // ignore
+        }
+        if (maxVersions == 0) {
+            maxVersions = DEFAULT_MAX_VERSION;
+        }
+    }
+
+    @Override
+    public PolicyDTO getPolicy(String policyId, String version) throws EntitlementException {
+
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+
+        // Zero means current version
+        if (version == null || version.trim().length() == 0) {
+
+            PreparedStatement getLatestVersionPrepStmt = null;
+            ResultSet latestVersion = null;
+            try {
+                getLatestVersionPrepStmt = connection.prepareStatement(GET_LATEST_POLICY_VERSION_SQL);
+                getLatestVersionPrepStmt.setString(1, policyId);
+                getLatestVersionPrepStmt.setInt(2, tenantId);
+                getLatestVersionPrepStmt.setInt(3, 1);
+                latestVersion = getLatestVersionPrepStmt.executeQuery();
+
+                if(latestVersion.next()){
+                    version = String.valueOf(latestVersion.getInt(EntitlementTableColumns.VERSION));
+                }
+
+            } catch (SQLException e) {
+                log.error(e);
+                throw new EntitlementException("Invalid policy version");
+            }finally {
+                IdentityDatabaseUtil.closeAllConnections(connection, latestVersion, getLatestVersionPrepStmt);
+            }
+        }
+        //TODO - Configuration to choose between registry and new data structure
+        PAPPolicyStoreModule policyStore = new PAPPolicyStore();
+        PAPPolicyStoreReader reader = new PAPPolicyStoreReader(policyStore);
+
+        PolicyDTO dto = policyStore.getPolicyByVersion(policyId, version);
+        if (dto == null) {
+            throw new EntitlementException("No policy with the given policyID and version");
+        }
+        return dto;
+    }
+
+    @Override
+    public String createVersion(PolicyDTO policyDTO) throws EntitlementException {
+
+        PAPPolicyStoreManager manager = new PAPPolicyStoreManager();
+        String version = "0";
+
+        if(manager.isExistPolicy(policyDTO.getPolicyId())){
+            PolicyDTO dto = manager.getLightPolicy(policyDTO.getPolicyId());
+            version = dto.getVersion();
+        }
+
+        int versionInt = Integer.parseInt(version);
+
+        // check whether this is larger than max version
+        if (versionInt > maxVersions) {
+            // delete the older version
+            int olderVersion = versionInt - maxVersions;
+            manager.removePolicyByVersion(policyDTO.getPolicyId(), olderVersion);
+        }
+
+        //new version
+        version = Integer.toString(versionInt + 1);
+        return version;
+    }
+
+    @Override
+    public String[] getVersions(String policyId) throws EntitlementException {
+
+        int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
+        Connection connection = IdentityDatabaseUtil.getDBConnection(false);
+        List<String> versions = new ArrayList<String>();
+        PreparedStatement getVersionsPrepStmt = null;
+        ResultSet versionsSet = null;
+
+        try{
+            getVersionsPrepStmt = connection.prepareStatement(GET_POLICY_VERSIONS_SQL);
+            getVersionsPrepStmt.setInt(1, tenantId);
+            getVersionsPrepStmt.setString(2, policyId);
+            versionsSet = getVersionsPrepStmt.executeQuery();
+
+            while (versionsSet.next()){
+                versions.add(String.valueOf(versionsSet.getInt(EntitlementTableColumns.VERSION)));
+            }
+
+        } catch (SQLException e){
+            log.error("Error while retrieving policy versions", e);
+        } finally {
+            IdentityDatabaseUtil.closeAllConnections(connection, versionsSet, getVersionsPrepStmt);
+        }
+        return versions.toArray(new String[versions.size()]);
+    }
 }

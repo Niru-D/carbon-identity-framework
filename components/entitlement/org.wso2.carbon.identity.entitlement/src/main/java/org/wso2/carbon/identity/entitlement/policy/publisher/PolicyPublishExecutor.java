@@ -23,7 +23,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandler;
+import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManagerModule;
@@ -33,7 +33,7 @@ import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
-import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
 import org.wso2.carbon.registry.api.Registry;
 
 import java.util.ArrayList;
@@ -112,7 +112,7 @@ public class PolicyPublishExecutor {
         }
 
         PublisherDataHolder holder = null;
-        Set<PAPStatusDataHandler> papStatusDataHandler = publisher.getPapStatusDataHandlers();
+        Set<PAPStatusDataHandlerModule> papStatusDataHandler = publisher.getPapStatusDataHandlers();
         for (String subscriberId : subscriberIds) {
 
             // there is only one known subscriber, if policies are publishing to PDP
@@ -177,7 +177,7 @@ public class PolicyPublishExecutor {
 
                 if (EntitlementConstants.PolicyPublish.ACTION_CREATE.equalsIgnoreCase(action) ||
                         EntitlementConstants.PolicyPublish.ACTION_UPDATE.equalsIgnoreCase(action)) {
-                    PolicyVersionManager manager = EntitlementAdminEngine.getInstance().getVersionManager();
+                    PolicyVersionManagerModule manager = EntitlementAdminEngine.getInstance().getVersionManager();
                     try {
                         policyDTO = manager.getPolicy(policyId, version);
                     } catch (EntitlementException e) {
@@ -214,7 +214,7 @@ public class PolicyPublishExecutor {
                             policyId, policyDTO.getVersion(), subscriberId, action, false, e.getMessage()));
                 }
 
-                for (PAPStatusDataHandler module : papStatusDataHandler) {
+                for (PAPStatusDataHandlerModule module : papStatusDataHandler) {
                     try {
                         module.handle(EntitlementConstants.Status.ABOUT_POLICY, policyId, policyHolders);
                         policyHolders = new ArrayList<StatusHolder>();
@@ -225,7 +225,7 @@ public class PolicyPublishExecutor {
                 }
             }
 
-            for (PAPStatusDataHandler module : papStatusDataHandler) {
+            for (PAPStatusDataHandlerModule module : papStatusDataHandler) {
                 try {
                     module.handle(EntitlementConstants.Status.ABOUT_SUBSCRIBER, subscriberId, subscriberHolders);
                     subscriberHolders = new ArrayList<StatusHolder>();

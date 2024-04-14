@@ -21,15 +21,15 @@ package org.wso2.carbon.identity.entitlement.pap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandler;
+import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDataStoreModule;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisher;
-import org.wso2.carbon.identity.entitlement.dao.DefaultPolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.policy.store.PolicyStoreManager;
-import org.wso2.carbon.identity.entitlement.dao.DefaultPolicyVersionManager;
 import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
 
 import java.util.Map;
 import java.util.Properties;
@@ -46,37 +46,37 @@ public class EntitlementAdminEngine {
             new ConcurrentHashMap<String, EntitlementAdminEngine>();
     private static Log log = LogFactory.getLog(EntitlementAdminEngine.class);
     private PolicyPublisher policyPublisher;
-    private PolicyVersionManager versionManager;
+    private PolicyVersionManagerModule versionManager;
     private EntitlementDataFinder entitlementDataFinder;
-    private PolicyDataStore policyDataStore;
+    private PolicyDataStoreModule policyDataStore;
     private PolicyStoreManager policyStoreManager;
     private PAPPolicyStoreManager papPolicyStoreManager;
-    private Set<PAPStatusDataHandler> papStatusDataHandlers;
+    private Set<PAPStatusDataHandlerModule> papStatusDataHandlers;
 
     public EntitlementAdminEngine() {
 
         this.entitlementDataFinder = new EntitlementDataFinder();
         this.policyPublisher = new PolicyPublisher();
         this.papPolicyStoreManager = new PAPPolicyStoreManager();
-        Map<PolicyVersionManager, Properties> versionManagers = EntitlementServiceComponent.
+        Map<PolicyVersionManagerModule, Properties> versionManagers = EntitlementServiceComponent.
                 getEntitlementConfig().getPolicyVersionModule();
         if (versionManagers != null && versionManagers.size() > 0) {
             this.versionManager = versionManagers.entrySet().iterator().next().getKey();
         } else {
             //init without init()
             //TODO - Configuration to choose between registry and new data structure
-            this.versionManager = new DefaultPolicyVersionManager();
+            this.versionManager = new PolicyVersionManager();
         }
-        Map<PolicyDataStore, Properties> dataStoreModules = EntitlementServiceComponent.
+        Map<PolicyDataStoreModule, Properties> dataStoreModules = EntitlementServiceComponent.
                 getEntitlementConfig().getPolicyDataStore();
         if (dataStoreModules != null && dataStoreModules.size() > 0) {
             this.policyDataStore = dataStoreModules.entrySet().iterator().next().getKey();
         } else {
             //init without init()
-            this.policyDataStore = new DefaultPolicyDataStore();
+            this.policyDataStore = new PolicyDataStore();
         }
 
-        Map<PAPStatusDataHandler, Properties> statusDataHandlers = EntitlementServiceComponent.
+        Map<PAPStatusDataHandlerModule, Properties> statusDataHandlers = EntitlementServiceComponent.
                 getEntitlementConfig().getPapStatusDataHandlers();
         papStatusDataHandlers = statusDataHandlers.keySet();
         this.policyPublisher.setPapStatusDataHandlers(papStatusDataHandlers);
@@ -114,7 +114,7 @@ public class EntitlementAdminEngine {
     /**
      * @return
      */
-    public PolicyVersionManager getVersionManager() {
+    public PolicyVersionManagerModule getVersionManager() {
         return versionManager;
     }
 
@@ -130,7 +130,7 @@ public class EntitlementAdminEngine {
     /**
      * @return
      */
-    public PolicyDataStore getPolicyDataStore() {
+    public PolicyDataStoreModule getPolicyDataStore() {
         return policyDataStore;
     }
 
@@ -150,7 +150,7 @@ public class EntitlementAdminEngine {
         return papPolicyStoreManager;
     }
 
-    public Set<PAPStatusDataHandler> getPapStatusDataHandlers() {
+    public Set<PAPStatusDataHandlerModule> getPapStatusDataHandlers() {
         return papStatusDataHandlers;
     }
 }

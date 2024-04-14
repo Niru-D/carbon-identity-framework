@@ -62,7 +62,7 @@ import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent
 import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
-import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
+import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
 import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
@@ -439,7 +439,7 @@ public class EntitlementUtil {
             }
 
             policyDTO.setPromote(promote);
-            PolicyVersionManager versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
+            PolicyVersionManagerModule versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
             try {
                 String version = versionManager.createVersion(policyDTO);
                 policyDTO.setVersion(version);

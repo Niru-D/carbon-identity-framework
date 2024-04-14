@@ -286,7 +286,7 @@ public class EntitlementPolicyAdminService {
         PolicyDTO policyDTO = null;
 
         try {
-            PolicyVersionManager versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
+            PolicyVersionManagerModule versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
             policyDTO = versionManager.getPolicy(policyId, version);
         } catch (EntitlementException e) {
             policyDTO = new PolicyDTO();
@@ -565,7 +565,7 @@ public class EntitlementPolicyAdminService {
      */
     public void rollBackPolicy(String policyId, String version) throws EntitlementException {
 
-        PolicyVersionManager versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
+        PolicyVersionManagerModule versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
         PolicyDTO policyDTO = versionManager.getPolicy(policyId, version);
         addOrUpdatePolicy(policyDTO, false);
 
@@ -579,11 +579,11 @@ public class EntitlementPolicyAdminService {
     public PaginatedStatusHolder getStatusData(String about, String key, String type,
                                                String searchString, int pageNumber) throws EntitlementException {
 
-        PAPStatusDataHandler dataRetrievingHandler = null;
-        Set<PAPStatusDataHandler> handlers = EntitlementAdminEngine.getInstance().
+        PAPStatusDataHandlerModule dataRetrievingHandler = null;
+        Set<PAPStatusDataHandlerModule> handlers = EntitlementAdminEngine.getInstance().
                 getPapStatusDataHandlers();
-        for (PAPStatusDataHandler handler : handlers) {
-            if (handler instanceof SimplePAPStatusDataHandler) {
+        for (PAPStatusDataHandlerModule handler : handlers) {
+            if (handler instanceof PAPStatusDataHandler) {
                 dataRetrievingHandler = handler;
                 break;
             }
@@ -699,7 +699,7 @@ public class EntitlementPolicyAdminService {
         }
 
         PAPPolicyStoreManager policyAdmin = EntitlementAdminEngine.getInstance().getPapPolicyStoreManager();
-        PolicyVersionManager versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
+        PolicyVersionManagerModule versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
 
         AbstractPolicy policyObj;
         String policyId = null;
@@ -911,7 +911,7 @@ public class EntitlementPolicyAdminService {
 
     private void handleStatus(String action, PolicyDTO policyDTO, boolean success, String message) {
 
-        Set<PAPStatusDataHandler> handlers = EntitlementServiceComponent.
+        Set<PAPStatusDataHandlerModule> handlers = EntitlementServiceComponent.
                 getEntitlementConfig().getPapStatusDataHandlers().keySet();
 
         String target = "PAP POLICY STORE";
@@ -935,7 +935,7 @@ public class EntitlementPolicyAdminService {
                                  target, targetAction, success, message);
 
         if (handlers != null) {
-            for (PAPStatusDataHandler handler : handlers) {
+            for (PAPStatusDataHandlerModule handler : handlers) {
                 try {
                     handler.handle(EntitlementConstants.Status.ABOUT_POLICY, holder);
                 } catch (EntitlementException e) {

@@ -24,7 +24,7 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStoreModule;
-import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDataStoreModule;
 import org.wso2.carbon.identity.entitlement.dao.RegistryPDPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
@@ -42,12 +42,13 @@ public class PolicyStoreManager {
 
     private PDPPolicyStoreModule policyStore = null;
 
-    private PolicyDataStore policyDataStore = null;
+    private PolicyDataStoreModule policyDataStore = null;
 
     private static Log log = LogFactory.getLog(PolicyStoreManager.class);
 
-    public PolicyStoreManager(PolicyDataStore policyDataStore) {
+    public PolicyStoreManager(PolicyDataStoreModule policyDataStore) {
 
+        //TODO - Configuration to choose between registry and new data structure
         policyStore = new PDPPolicyStore();
         this.policyDataStore = policyDataStore;
     }
