@@ -29,9 +29,6 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
-//import org.wso2.carbon.identity.entitlement.policy.finder.PolicyReader;
-import org.wso2.carbon.identity.entitlement.dao.PDPPolicyReaderModule;
-import org.wso2.carbon.identity.entitlement.dao.PDPPolicyReader;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.DELETE_PUBLISHED_VERSIONS_SQL;

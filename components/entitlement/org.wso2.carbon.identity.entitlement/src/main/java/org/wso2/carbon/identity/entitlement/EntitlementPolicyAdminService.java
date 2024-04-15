@@ -583,6 +583,7 @@ public class EntitlementPolicyAdminService {
         Set<PAPStatusDataHandlerModule> handlers = EntitlementAdminEngine.getInstance().
                 getPapStatusDataHandlers();
         for (PAPStatusDataHandlerModule handler : handlers) {
+            //TODO - Configuration to choose between registry and new data structure
             if (handler instanceof PAPStatusDataHandler) {
                 dataRetrievingHandler = handler;
                 break;

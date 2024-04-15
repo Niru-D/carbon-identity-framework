@@ -151,6 +151,7 @@ public class CarbonPolicyFinder extends org.wso2.balana.finder.PolicyFinderModul
             if (dataStoreModules != null && dataStoreModules.size() > 0) {
                 policyDataStore = dataStoreModules.entrySet().iterator().next().getKey();
             } else {
+                //TODO - Configuration to choose between registry and new data structure
                 policyDataStore = new PolicyDataStore();
             }
             policyCombiningAlgorithm = policyDataStore.getGlobalPolicyAlgorithm();

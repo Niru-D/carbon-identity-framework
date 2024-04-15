@@ -73,6 +73,7 @@ public class EntitlementAdminEngine {
             this.policyDataStore = dataStoreModules.entrySet().iterator().next().getKey();
         } else {
             //init without init()
+            //TODO - Configuration to choose between registry and new data structure
             this.policyDataStore = new PolicyDataStore();
         }
 
