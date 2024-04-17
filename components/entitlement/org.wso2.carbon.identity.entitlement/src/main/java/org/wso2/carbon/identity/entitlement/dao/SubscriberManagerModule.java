@@ -26,11 +26,6 @@ import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
  */
 public interface SubscriberManagerModule {
 
-    /**
-     * Creates a subscriber manager
-     */
-    public void SubscriberManager();
-
 
     /**
      * Adds a subscriber

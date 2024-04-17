@@ -64,11 +64,10 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
     // The logger we'll use for all messages
     private static final Log log = LogFactory.getLog(PAPPolicyStore.class);
 
-    @Override
-    public void PAPPolicyStore() {
+
+    public PAPPolicyStore() {
 
     }
-
 
     /**
      * This returns all policy ids as String list.
@@ -125,7 +124,6 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
      * @return policy as a PolicyDTO
      * @throws EntitlementException throws, if fails
      */
-    @Override
     public PolicyDTO getPolicy(String policyId) throws EntitlementException {
 
         if (log.isDebugEnabled()) {
@@ -308,7 +306,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
      * @return policy as a PolicyDTO
      * @throws EntitlementException throws, if fails
      */
-    @Override
+
     public PolicyDTO getPolicyByVersion(String policyId, String version) throws EntitlementException{
 
         if (log.isDebugEnabled()) {
@@ -485,7 +483,6 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
      * @return policies as a PolicyDTO array
      * @throws EntitlementException throws if fails
      */
-    @Override
     public PolicyDTO[] getAllPolicies() throws EntitlementException {
 
         if (log.isDebugEnabled()) {
@@ -599,7 +596,6 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
      * @param policy   policy DTO
      * @throws EntitlementException throws, if fails
      */
-    @Override
     public void addOrUpdatePolicy(PolicyDTO policy)
             throws EntitlementException {
 
@@ -840,7 +836,6 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
      * @param version version
      * @throws EntitlementException throws, if fails
      */
-    @Override
     public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);

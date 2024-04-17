@@ -21,9 +21,11 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
+import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
+import org.wso2.carbon.registry.core.Resource;
 
 public class PAPPolicyStoreManager {
 
@@ -40,7 +42,12 @@ public class PAPPolicyStoreManager {
     }
 
     public void addOrUpdatePolicy(PolicyDTO policy) throws EntitlementException {
-        store.addOrUpdatePolicy(policy);
+        //TODO - Configuration to choose between registry and new data structure
+        if (store instanceof PAPPolicyStore) {
+            ((PAPPolicyStore) store).addOrUpdatePolicy(policy);
+        } else if (store instanceof RegistryPAPPolicyStore) {
+            ((RegistryPAPPolicyStore) store).addOrUpdatePolicy(policy, PDPConstants.ENTITLEMENT_POLICY_PAP);
+        }
     }
 
     public void removePolicy(String policyId) throws EntitlementException {
@@ -48,7 +55,10 @@ public class PAPPolicyStoreManager {
     }
 
     public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
-        store.removePolicyByVersion(policyId, version);
+        //TODO - Configuration to choose between registry and new data structure
+        if (store instanceof PAPPolicyStore) {
+            ((PAPPolicyStore) store).removePolicyByVersion(policyId, version);
+        }
     }
 
     public String[] getPolicyIds() throws EntitlementException {
@@ -69,6 +79,10 @@ public class PAPPolicyStoreManager {
 
     public PolicyDTO getMetaDataPolicy(String policyId) throws EntitlementException {
         return storeReader.readMetaDataPolicyDTO(policyId);
+    }
+
+    public PolicyDTO getPolicy(Resource resource) throws EntitlementException {
+        return storeReader.readPolicyDTO(resource);
     }
 
     public PolicyDTO[] getAllLightPolicyDTOs() throws EntitlementException {

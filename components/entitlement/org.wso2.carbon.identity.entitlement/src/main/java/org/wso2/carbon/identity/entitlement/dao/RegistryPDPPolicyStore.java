@@ -30,7 +30,6 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.policy.finder.AbstractPolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
-import org.wso2.carbon.identity.entitlement.policy.finder.registry.RegistryPolicyReader;
 import org.wso2.carbon.registry.core.Collection;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
@@ -350,7 +349,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
      *
      * @return
      */
-    private RegistryPolicyReader getPolicyReader() {
+    private RegistryPDPPolicyReader getPolicyReader() {
 
         Registry registry = null;
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -360,7 +359,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         } catch (RegistryException e) {
             log.error("Error while obtaining registry for tenant :  " + tenantId, e);
         }
-        return new RegistryPolicyReader(registry, policyStorePath);
+        return new RegistryPDPPolicyReader(registry, policyStorePath);
     }
 
     /**

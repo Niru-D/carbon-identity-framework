@@ -39,6 +39,7 @@ import org.wso2.carbon.identity.entitlement.cache.PolicyStatus;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dao.PolicyDataStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.RegistryPolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pdp.EntitlementEngine;

@@ -49,6 +49,7 @@ import org.wso2.carbon.identity.entitlement.cache.DecisionCache;
 import org.wso2.carbon.identity.entitlement.cache.PolicyCache;
 import org.wso2.carbon.identity.entitlement.cache.SimpleDecisionCache;
 import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyFinder;
 //import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;

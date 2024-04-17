@@ -58,8 +58,7 @@ public class PDPPolicyReader implements PDPPolicyReaderModule {
      * constructor
      *
      */
-    @Override
-    public void PDPPolicyReader() {
+    public PDPPolicyReader() {
 
     }
 

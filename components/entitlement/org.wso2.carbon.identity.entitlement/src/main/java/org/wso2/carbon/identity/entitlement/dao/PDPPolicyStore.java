@@ -289,7 +289,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
     public String getPolicy(String policyId) {
         PolicyDTO dto;
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             dto = policyReaderModule.readPolicy(policyId);
             return dto.getPolicy();
@@ -304,7 +303,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
     public int getPolicyOrder(String policyId) {
         PolicyDTO dto;
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             dto = policyReaderModule.readPolicy(policyId);
             return dto.getPolicyOrder();
@@ -323,7 +321,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         List<String> policies = new ArrayList<String>();
 
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             PolicyDTO[] policyDTOs = policyReaderModule.readAllPolicies(true, true);
             for (PolicyDTO dto : policyDTOs) {
@@ -349,7 +346,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         List<String> policies = new ArrayList<String>();
 
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             PolicyDTO[] policyDTOs = policyReaderModule.readAllPolicies(false, true);
             for (PolicyDTO dto : policyDTOs) {
@@ -371,7 +367,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
     public String[] getPolicyIdentifiers() {
         String[] policyIds = null;
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             policyIds = policyReaderModule.getAllPolicyIds();
         } catch (Exception e) {
@@ -385,7 +380,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         // retrieve policies that are not active
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             PolicyDTO dto = policyReaderModule.readPolicy(policyId);
             if (dto != null && dto.getPolicy() != null && !dto.isActive()) {
@@ -405,7 +399,6 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         PolicyDTO[] policyDTOs = null;
         Map<String, Set<AttributeDTO>> attributeMap = null;
         try {
-            //TODO - Configuration to choose between registry and new data structure
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
             policyDTOs = policyReaderModule.readAllPolicies(true, true);
         } catch (Exception e) {

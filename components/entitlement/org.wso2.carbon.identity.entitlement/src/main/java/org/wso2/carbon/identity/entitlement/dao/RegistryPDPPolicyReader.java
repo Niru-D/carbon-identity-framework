@@ -16,7 +16,7 @@
 * under the License.
 */
 
-package org.wso2.carbon.identity.entitlement.policy.finder.registry;
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -40,12 +40,12 @@ import java.util.List;
 /**
  * Registry policy reader
  */
-public class RegistryPolicyReader {
+public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
 
     /**
      * logger
      */
-    private static Log log = LogFactory.getLog(RegistryPolicyReader.class);
+    private static Log log = LogFactory.getLog(RegistryPDPPolicyReader.class);
     /**
      * Governance registry instance of current tenant
      */
@@ -61,7 +61,7 @@ public class RegistryPolicyReader {
      * @param registry        registry instance
      * @param policyStorePath policy store path of the registry
      */
-    public RegistryPolicyReader(Registry registry, String policyStorePath) {
+    public RegistryPDPPolicyReader(Registry registry, String policyStorePath) {
         this.registry = registry;
         this.policyStorePath = policyStorePath;
     }
@@ -73,6 +73,7 @@ public class RegistryPolicyReader {
      * @return PolicyDTO
      * @throws EntitlementException throws, if fails
      */
+    @Override
     public PolicyDTO readPolicy(String policyId) throws EntitlementException {
 
         Resource resource = null;
@@ -94,6 +95,7 @@ public class RegistryPolicyReader {
      * @return Array of PolicyDTO
      * @throws EntitlementException throws, if fails
      */
+    @Override
     public PolicyDTO[] readAllPolicies(boolean active, boolean order) throws EntitlementException {
 
         Resource[] resources = null;
@@ -130,6 +132,7 @@ public class RegistryPolicyReader {
      * @return policy ids as String[]
      * @throws EntitlementException throws if fails
      */
+    @Override
     public String[] getAllPolicyIds() throws EntitlementException {
 
         String path = null;
@@ -213,6 +216,7 @@ public class RegistryPolicyReader {
      * @return policy combining algorithm as String
      * @throws EntitlementException throws
      */
+    @Override
     public String readPolicyCombiningAlgorithm() throws EntitlementException {
         try {
             Collection policyCollection = null;
@@ -263,7 +267,7 @@ public class RegistryPolicyReader {
      * This returns all the policies as Registry resources.
      *
      * @return policies as Resource[]
-     * @throws org.wso2.carbon.identity.entitlement.EntitlementException throws if fails
+     * @throws EntitlementException throws if fails
      */
     private Resource[] getAllPolicyResource() throws EntitlementException {
 

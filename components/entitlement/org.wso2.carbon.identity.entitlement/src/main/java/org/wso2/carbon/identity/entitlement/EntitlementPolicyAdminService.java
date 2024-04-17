@@ -646,10 +646,16 @@ public class EntitlementPolicyAdminService {
      */
     public String[] getPolicyVersions(String policyId) throws EntitlementException {
 
-        String[] versions = EntitlementAdminEngine.getInstance().getVersionManager().getVersions(policyId);
+        PolicyVersionManagerModule versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
+        String[] versions = versionManager.getVersions(policyId);
         if(versions == null){
             throw new EntitlementException("Error obtaining policy versions");
         }
+        //TODO - add hybrid impl
+        if(versionManager instanceof RegistryPolicyVersionManager){
+            Arrays.sort(versions);
+        }
+
         return versions;
 
     }

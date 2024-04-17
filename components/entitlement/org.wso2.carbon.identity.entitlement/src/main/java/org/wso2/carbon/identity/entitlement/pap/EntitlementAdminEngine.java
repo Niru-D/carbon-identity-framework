@@ -21,15 +21,11 @@ package org.wso2.carbon.identity.entitlement.pap;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
-import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
-import org.wso2.carbon.identity.entitlement.dao.PolicyDataStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.*;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisher;
-import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.policy.store.PolicyStoreManager;
-import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManager;
-import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
 
 import java.util.Map;
 import java.util.Properties;

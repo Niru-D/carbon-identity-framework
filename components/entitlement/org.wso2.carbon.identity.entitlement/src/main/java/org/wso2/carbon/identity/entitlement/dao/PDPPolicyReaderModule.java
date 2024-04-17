@@ -25,11 +25,6 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
  */
 public interface PDPPolicyReaderModule {
 
-    /**
-     * Initializes PDP Policy Reader module
-     */
-    public void PDPPolicyReader();
-
 
     /**
      * Reads given policyId as PolicyDTO

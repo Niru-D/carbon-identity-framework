@@ -19,17 +19,11 @@ package org.wso2.carbon.identity.entitlement.dao;
 
 
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 
 /**
  * This interface supports to retrieve data from the PAP
  */
 public interface PAPPolicyStoreModule {
-
-    /**
-     * Initializes PAP Policy Store module
-     */
-    public void PAPPolicyStore();
 
 
     /**
@@ -39,39 +33,10 @@ public interface PAPPolicyStoreModule {
 
 
     /**
-     * Returns required policy
-     */
-    public PolicyDTO getPolicy(String policyId) throws EntitlementException;
-
-
-    /**
-     * Returns the requested policy version
-     */
-    public PolicyDTO getPolicyByVersion(String policyId, String version) throws EntitlementException;
-
-
-    /**
-     * Returns all policies
-     */
-    public PolicyDTO[] getAllPolicies() throws EntitlementException;
-
-
-    /**
-     * Adds the given policy to the policy store
-     */
-    public void addOrUpdatePolicy(PolicyDTO policy) throws EntitlementException;
-
-
-    /**
      * Removes the given policy from the policy store
      */
     public void removePolicy(String policyId) throws EntitlementException;
 
-
-    /**
-     * Removes the given policy version from the policy store
-     */
-    public void removePolicyByVersion(String policyId, int version) throws EntitlementException;
 
 
 }

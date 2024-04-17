@@ -24,7 +24,6 @@ import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
-import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
 
 import static org.wso2.carbon.identity.entitlement.PDPConstants.EntitlementTableColumns;
 import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.GET_LATEST_POLICY_VERSION_SQL;
@@ -91,15 +90,18 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
                 IdentityDatabaseUtil.closeAllConnections(connection, latestVersion, getLatestVersionPrepStmt);
             }
         }
-        //TODO - Configuration to choose between registry and new data structure
-        PAPPolicyStoreModule policyStore = new PAPPolicyStore();
-        PAPPolicyStoreReader reader = new PAPPolicyStoreReader(policyStore);
 
-        PolicyDTO dto = policyStore.getPolicyByVersion(policyId, version);
+        PAPPolicyStoreModule policyStore = new PAPPolicyStore();
+        PolicyDTO dto = null;
+        if (policyStore instanceof PAPPolicyStore) {
+            dto = ((PAPPolicyStore) policyStore).getPolicyByVersion(policyId, version);
+        }
+
         if (dto == null) {
             throw new EntitlementException("No policy with the given policyID and version");
         }
         return dto;
+
     }
 
     @Override

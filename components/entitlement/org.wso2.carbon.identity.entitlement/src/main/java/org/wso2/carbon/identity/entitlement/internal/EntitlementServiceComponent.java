@@ -40,6 +40,7 @@ import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementUtil;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
+import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.listener.CacheClearingUserOperationListener;
 //import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;

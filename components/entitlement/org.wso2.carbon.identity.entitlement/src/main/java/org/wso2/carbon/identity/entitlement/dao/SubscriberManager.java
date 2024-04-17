@@ -59,8 +59,7 @@ public class SubscriberManager implements SubscriberManagerModule {
     /**
      * Creates a subscriber manager
      */
-    @Override
-    public void SubscriberManager() {}
+    public SubscriberManager() {}
 
 
     /**
