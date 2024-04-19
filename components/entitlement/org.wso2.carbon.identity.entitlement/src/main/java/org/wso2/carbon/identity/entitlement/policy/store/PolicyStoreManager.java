@@ -23,9 +23,12 @@ import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.*;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
+import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * This manages the storing and reading of policies and policy metadata that is related
@@ -42,15 +45,15 @@ public class PolicyStoreManager {
     public PolicyStoreManager(PolicyDataStoreModule policyDataStore) {
 
         //TODO - Configuration to choose between registry and new data structure
-        policyStore = new PDPPolicyStore();
+//        policyStore = new PDPPolicyStore();
 
-//        Map<PDPPolicyStoreModule, Properties> policyCollections = EntitlementServiceComponent.
-//                getEntitlementConfig().getPolicyStore();
-//        if (policyCollections != null && policyCollections.size() > 0) {
-//            policyStore = policyCollections.entrySet().iterator().next().getKey();
-//        } else {
-//            policyStore = new RegistryPDPPolicyStore();
-//        }
+        Map<PDPPolicyStoreModule, Properties> policyCollections = EntitlementServiceComponent.
+                getEntitlementConfig().getPolicyStore();
+        if (policyCollections != null && policyCollections.size() > 0) {
+            policyStore = policyCollections.entrySet().iterator().next().getKey();
+        } else {
+            policyStore = new RegistryPDPPolicyStore();
+        }
 
         this.policyDataStore = policyDataStore;
     }

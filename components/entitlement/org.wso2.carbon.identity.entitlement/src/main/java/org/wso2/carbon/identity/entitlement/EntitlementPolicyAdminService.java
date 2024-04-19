@@ -421,7 +421,7 @@ public class EntitlementPolicyAdminService {
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManagerModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         return subscriberManager.retrieveSubscriber(subscribeId, false);
 
     }
@@ -436,7 +436,7 @@ public class EntitlementPolicyAdminService {
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManagerModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         String[] ids = subscriberManager.retrieveSubscriberIds(searchString);
 
         if (ids != null) {
@@ -455,7 +455,7 @@ public class EntitlementPolicyAdminService {
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManagerModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         subscriberManager.persistSubscriber(holder, false);
 
     }
@@ -469,7 +469,7 @@ public class EntitlementPolicyAdminService {
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManagerModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         subscriberManager.persistSubscriber(holder, true);
 
     }
@@ -483,7 +483,7 @@ public class EntitlementPolicyAdminService {
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
         //TODO - Configuration to choose between registry and new data structure
-        SubscriberManagerModule subscriberManager = new SubscriberManager();
+        SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         subscriberManager.deleteSubscriber(subscriberId);
     }
 
@@ -507,7 +507,7 @@ public class EntitlementPolicyAdminService {
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
             //TODO - Configuration to choose between registry and new data structure
-            SubscriberManagerModule subscriberManager = new SubscriberManager();
+            SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
             subscriberIds = subscriberManager.retrieveSubscriberIds("*");
         }
 
@@ -584,7 +584,7 @@ public class EntitlementPolicyAdminService {
                 getPapStatusDataHandlers();
         for (PAPStatusDataHandlerModule handler : handlers) {
             //TODO - Configuration to choose between registry and new data structure
-            if (handler instanceof PAPStatusDataHandler) {
+            if (handler instanceof RegistryPAPStatusDataHandler) {
                 dataRetrievingHandler = handler;
                 break;
             }

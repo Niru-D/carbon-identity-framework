@@ -121,7 +121,7 @@ public class PolicyPublishExecutor {
             } else {
                 try {
                     //TODO - Configuration to choose between registry and new data structure
-                    SubscriberManagerModule subscriberManager = new SubscriberManager();
+                    SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
                     holder = subscriberManager.retrieveSubscriber(subscriberId, true);
                 } catch (EntitlementException e) {
                     log.error("Subscriber details can not be retrieved. So skip publishing policies " +

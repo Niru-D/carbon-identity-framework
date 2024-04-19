@@ -405,7 +405,7 @@ public class EntitlementUtil {
     public static boolean isPolicyExists(String policyId) throws EntitlementException {
         PAPPolicyStoreReader policyReader = null;
         //TODO - Configuration to choose between registry and new data structure
-        PAPPolicyStoreModule store = new PAPPolicyStore();
+        PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
         policyReader = new PAPPolicyStoreReader(store);
         return policyReader.isExistPolicy(policyId);
     }
@@ -505,7 +505,7 @@ public class EntitlementUtil {
     public static PolicyDTO getPolicy(String policyId, Registry registry) throws EntitlementException {
         PAPPolicyStoreReader policyReader = null;
         //TODO - Configuration to choose between registry and new data structure
-        PAPPolicyStoreModule store = new PAPPolicyStore();
+        PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
         policyReader = new PAPPolicyStoreReader(store);
         return policyReader.readPolicyDTO(policyId);
     }

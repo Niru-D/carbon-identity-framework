@@ -61,7 +61,7 @@ public class EntitlementAdminEngine {
         } else {
             //init without init()
             //TODO - Configuration to choose between registry and new data structure
-            this.versionManager = new PolicyVersionManager();
+            this.versionManager = new RegistryPolicyVersionManager();
         }
         Map<PolicyDataStoreModule, Properties> dataStoreModules = EntitlementServiceComponent.
                 getEntitlementConfig().getPolicyDataStore();
@@ -70,7 +70,7 @@ public class EntitlementAdminEngine {
         } else {
             //init without init()
             //TODO - Configuration to choose between registry and new data structure
-            this.policyDataStore = new PolicyDataStore();
+            this.policyDataStore = new RegistryPolicyDataStore();
         }
 
         Map<PAPStatusDataHandlerModule, Properties> statusDataHandlers = EntitlementServiceComponent.

@@ -252,7 +252,7 @@ public class EntitlementEngine {
             PolicyFinder policyFinder = new PolicyFinder();
             Set<PolicyFinderModule> policyModules = new HashSet<PolicyFinderModule>();
             //TODO - Configuration to choose between registry and new data structure
-            PAPPolicyStoreModule store = new PAPPolicyStore();
+            PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
             PAPPolicyFinder papPolicyFinder = new PAPPolicyFinder(new PAPPolicyStoreReader(store));
             policyModules.add(papPolicyFinder);
             policyFinder.setModules(policyModules);

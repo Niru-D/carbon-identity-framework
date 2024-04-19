@@ -33,7 +33,7 @@ public class PAPPolicyStoreManager {
 
     public PAPPolicyStoreManager() {
         //TODO - Configuration to choose between registry and new data structure
-        store = new PAPPolicyStore();
+        store = new RegistryPAPPolicyStore();
         storeReader = new PAPPolicyStoreReader(store);
     }
 
