@@ -1,21 +1,21 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
-package org.wso2.carbon.identity.entitlement.policy.version;
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -24,7 +24,6 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
-import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
 import org.wso2.carbon.registry.api.Collection;
 import org.wso2.carbon.registry.api.Registry;
@@ -41,12 +40,10 @@ import java.util.Properties;
 /**
  *
  */
-public class DefaultPolicyVersionManager implements PolicyVersionManager {
+public class RegistryPolicyVersionManager implements PolicyVersionManagerModule {
 
 
-    private static Log log = LogFactory.getLog(DefaultPolicyVersionManager.class);
-
-    private static int DEFAULT_MAX_VERSION = 5;
+    private static final Log log = LogFactory.getLog(RegistryPolicyVersionManager.class);
 
     private int maxVersions;
 
@@ -58,7 +55,7 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
             // ignore
         }
         if (maxVersions == 0) {
-            maxVersions = DEFAULT_MAX_VERSION;
+            maxVersions = PDPConstants.DEFAULT_MAX_POLICY_VERSION;
         }
     }
 
@@ -66,10 +63,11 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
     public PolicyDTO getPolicy(String policyId, String version) throws EntitlementException {
 
         // Zero means current version
-        if (version == null || version.trim().length() == 0) {
+        if (version == null || version.trim().isEmpty()) {
             Registry registry = EntitlementServiceComponent.
                     getGovernanceRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
             try {
+                assert registry != null;
                 Collection collection = (Collection) registry.
                         get(PDPConstants.ENTITLEMENT_POLICY_VERSION + policyId);
                 if (collection != null) {
@@ -81,12 +79,14 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
             }
         }
 
-        PAPPolicyStore policyStore = new PAPPolicyStore();
+        RegistryPAPPolicyStore policyStore = new RegistryPAPPolicyStore();
         PAPPolicyStoreReader reader = new PAPPolicyStoreReader(policyStore);
 
-        Resource resource = policyStore.getPolicy(version,
+        Resource resource;
+        resource = policyStore.getPolicy(version,
                 PDPConstants.ENTITLEMENT_POLICY_VERSION + policyId +
                         RegistryConstants.PATH_SEPARATOR);
+
         if (resource == null) {
             throw new EntitlementException("Invalid policy version");
         }
@@ -97,7 +97,7 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
     @Override
     public String createVersion(PolicyDTO policyDTO) throws EntitlementException {
 
-        PAPPolicyStore policyStore = new PAPPolicyStore();
+        RegistryPAPPolicyStore policyStore = new RegistryPAPPolicyStore();
         Registry registry = EntitlementServiceComponent.
                 getGovernanceRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
 
@@ -107,6 +107,7 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
 
             Collection collection = null;
             try {
+                assert registry != null;
                 collection = (Collection) registry.
                         get(PDPConstants.ENTITLEMENT_POLICY_VERSION + policyDTO.getPolicyId());
             } catch (ResourceNotFoundException e) {
@@ -154,12 +155,13 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
         return version;
     }
 
-    @Override
-    public void deletePolicy(String policyId) throws EntitlementException {
+
+    public void deletePolicy(String policyId) {
 
         Registry registry = EntitlementServiceComponent.
                 getGovernanceRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
         try {
+            assert registry != null;
             if (registry.resourceExists(PDPConstants.ENTITLEMENT_POLICY_VERSION + policyId)) {
                 registry.delete(PDPConstants.ENTITLEMENT_POLICY_VERSION + policyId);
             }
@@ -169,14 +171,15 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
     }
 
     @Override
-    public String[] getVersions(String policyId) throws EntitlementException {
+    public String[] getVersions(String policyId) {
 
-        List<String> versions = new ArrayList<String>();
+        List<String> versions = new ArrayList<>();
         Registry registry = EntitlementServiceComponent.
                 getGovernanceRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
         Collection collection = null;
         try {
             try {
+                assert registry != null;
                 collection = (Collection) registry.
                         get(PDPConstants.ENTITLEMENT_POLICY_VERSION + policyId);
             } catch (ResourceNotFoundException e) {
@@ -191,6 +194,6 @@ public class DefaultPolicyVersionManager implements PolicyVersionManager {
         } catch (RegistryException e) {
             log.error("Error while creating new version of policy", e);
         }
-        return versions.toArray(new String[versions.size()]);
+        return versions.toArray(new String[0]);
     }
 }

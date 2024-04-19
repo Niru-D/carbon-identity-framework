@@ -44,7 +44,7 @@ import java.util.Set;
 /**
  * Entitlement PDP related admin services are exposed
  */
-public class EntitlementAdminService {
+public class  EntitlementAdminService {
 
 	private static Log log = LogFactory.getLog(EntitlementAdminService.class);
 

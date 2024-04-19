@@ -48,9 +48,11 @@ import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.cache.DecisionCache;
 import org.wso2.carbon.identity.entitlement.cache.PolicyCache;
 import org.wso2.carbon.identity.entitlement.cache.SimpleDecisionCache;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyFinder;
-import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
+//import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
 import org.wso2.carbon.identity.entitlement.pip.CarbonAttributeFinder;
 import org.wso2.carbon.identity.entitlement.pip.CarbonResourceFinder;
@@ -58,6 +60,7 @@ import org.wso2.carbon.identity.entitlement.pip.PIPExtension;
 import org.wso2.carbon.identity.entitlement.policy.PolicyRequestBuilder;
 import org.wso2.carbon.identity.entitlement.policy.finder.CarbonPolicyFinder;
 import org.wso2.carbon.identity.entitlement.policy.search.PolicySearch;
+import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.utils.CarbonUtils;
 import org.wso2.carbon.utils.multitenancy.MultitenantConstants;
 import org.xml.sax.SAXException;
@@ -248,7 +251,9 @@ public class EntitlementEngine {
             // Test PDP with all finders but policy finder is different
             PolicyFinder policyFinder = new PolicyFinder();
             Set<PolicyFinderModule> policyModules = new HashSet<PolicyFinderModule>();
-            PAPPolicyFinder papPolicyFinder = new PAPPolicyFinder(new PAPPolicyStoreReader(new PAPPolicyStore()));
+            //TODO - Configuration to choose between registry and new data structure
+            PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
+            PAPPolicyFinder papPolicyFinder = new PAPPolicyFinder(new PAPPolicyStoreReader(store));
             policyModules.add(papPolicyFinder);
             policyFinder.setModules(policyModules);
             this.papPolicyFinder = policyFinder;
@@ -517,9 +522,9 @@ public class EntitlementEngine {
 
 
     /**
-     * This method is returns the registry based policy finder for current tenant
+     * This method is returns the policy finder for current tenant
      *
-     * @return RegistryBasedPolicyFinder
+     * @return PolicyFinder
      */
     public PolicyFinder getPapPolicyFinder() {
         return papPolicyFinder;

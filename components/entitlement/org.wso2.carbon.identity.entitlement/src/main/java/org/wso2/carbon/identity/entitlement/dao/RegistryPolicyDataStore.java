@@ -1,21 +1,21 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
-package org.wso2.carbon.identity.entitlement.policy.store;
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -41,14 +41,14 @@ import java.util.Properties;
 /**
  * This is default implementation, where data are stored in carbon registry
  */
-public class DefaultPolicyDataStore implements PolicyDataStore {
+public class RegistryPolicyDataStore implements PolicyDataStoreModule {
 
     public static final String POLICY_COMBINING_PREFIX_1 =
             "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:";
     public static final String POLICY_COMBINING_PREFIX_3 =
             "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:";
-    private static Log log = LogFactory.getLog(DefaultPolicyDataStore.class);
-    private String policyDataCollection = PDPConstants.ENTITLEMENT_POLICY_DATA;
+    private static final Log log = LogFactory.getLog(RegistryPolicyDataStore.class);
+    private final String policyDataCollection = PDPConstants.ENTITLEMENT_POLICY_DATA;
 
     @Override
     public void init(Properties properties) throws EntitlementException {
@@ -67,7 +67,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
                 algorithm = collection.getProperty("globalPolicyCombiningAlgorithm");
             }
 
-            if (algorithm == null || algorithm.trim().length() == 0) {
+            if (algorithm == null || algorithm.trim().isEmpty()) {
                 // read algorithm from entitlement.properties file
                 algorithm = EntitlementServiceComponent.getEntitlementConfig().getEngineProperties().
                         getProperty(PDPConstants.PDP_GLOBAL_COMBINING_ALGORITHM);
@@ -79,7 +79,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
                 }
             }
 
-            if (algorithm != null && algorithm.trim().length() > 0) {
+            if (algorithm != null && !algorithm.trim().isEmpty()) {
                 if ("first-applicable".equals(algorithm) || "only-one-applicable".equals(algorithm)) {
                     algorithm = POLICY_COMBINING_PREFIX_1 + algorithm;
                 } else {
@@ -152,7 +152,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     @Override
     public String[] getAllGlobalPolicyAlgorithmNames() {
 
-        return new String[]{"deny-overrides", "permit-overrides", "first-applicable",
+        return new String[] {"deny-overrides", "permit-overrides", "first-applicable",
                 "ordered-deny-overrides", "ordered-permit-overrides", "only-one-applicable"};
     }
 
@@ -167,7 +167,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
                 Resource resource = registry.get(path);
                 String order = resource.getProperty("order");
                 String active = resource.getProperty("active");
-                if (order != null && order.trim().length() > 0) {
+                if (order != null && !order.trim().isEmpty()) {
                     dataDTO.setPolicyOrder(Integer.parseInt(order));
                 }
                 dataDTO.setActive(Boolean.parseBoolean(active));
@@ -187,7 +187,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
     public PolicyStoreDTO[] getPolicyData() {
 
 
-        List<PolicyStoreDTO> policyStoreDTOs = new ArrayList<PolicyStoreDTO>();
+        List<PolicyStoreDTO> policyStoreDTOs = new ArrayList<>();
         try {
             Registry registry = getGovernanceRegistry();
             if (registry.resourceExists(policyDataCollection)) {
@@ -201,7 +201,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
                         String active = resource.getProperty("active");
                         String id = path.substring(path.lastIndexOf(RegistryConstants.PATH_SEPARATOR) + 1);
                         dataDTO.setPolicyId(id);
-                        if (order != null && order.trim().length() > 0) {
+                        if (order != null && !order.trim().isEmpty()) {
                             dataDTO.setPolicyOrder(Integer.parseInt(order));
                         }
                         dataDTO.setActive(Boolean.parseBoolean(active));
@@ -216,10 +216,10 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         } catch (EntitlementException e) {
             log.error("Error while getting all policy data.", e);
         }
-        return policyStoreDTOs.toArray(new PolicyStoreDTO[policyStoreDTOs.size()]);
+        return policyStoreDTOs.toArray(new PolicyStoreDTO[0]);
     }
 
-    @Override
+
     public void setPolicyData(String policyId, PolicyStoreDTO policyDataDTO) throws EntitlementException {
 
         Registry registry = getGovernanceRegistry();
@@ -248,7 +248,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         }
     }
 
-    @Override
+
     public void removePolicyData(String policyId) throws EntitlementException {
 
         Registry registry = getGovernanceRegistry();
@@ -263,6 +263,7 @@ public class DefaultPolicyDataStore implements PolicyDataStore {
         }
 
     }
+
 
     private Registry getGovernanceRegistry() throws EntitlementException {
 
