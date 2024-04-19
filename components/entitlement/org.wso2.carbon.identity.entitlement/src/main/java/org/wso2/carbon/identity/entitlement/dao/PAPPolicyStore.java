@@ -84,7 +84,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-        List<String> policies = new ArrayList<String>();
+        List<String> policies = new ArrayList<>();
         PreparedStatement getPolicyIdsPrepStmt = null;
         ResultSet policyIds = null;
 
@@ -94,24 +94,24 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             getPolicyIdsPrepStmt.setInt(2, 1);
             policyIds = getPolicyIdsPrepStmt.executeQuery();
 
-            if(policyIds.next()){
-                do{
+            if (policyIds.next()) {
+                do {
                     policies.add(policyIds.getString(EntitlementTableColumns.POLICY_ID));
-                }while(policyIds.next());
-            }else{
+                } while (policyIds.next());
+            } else {
                 if (log.isDebugEnabled()) {
                     log.debug("Trying to access an entitlement policy which does not exist");
                 }
                 return null;
             }
 
-            return policies.toArray(new String[policies.size()]);
+            return policies.toArray(new String[0]);
 
         } catch (SQLException e) {
             log.error("Error while retrieving all entitlement policy identifiers from PAP policy store", e);
             throw new EntitlementException("Error while retrieving entitlement policy " +
-                                           "identifiers from PAP policy store");
-        }finally {
+                    "identifiers from PAP policy store");
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, policyIds, getPolicyIdsPrepStmt);
         }
     }
@@ -120,7 +120,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
     /**
      * This returns given policy as a PolicyDTO
      *
-     * @param policyId   policy id
+     * @param policyId policy id
      * @return policy as a PolicyDTO
      * @throws EntitlementException throws, if fails
      */
@@ -137,22 +137,20 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
         try {
             getPolicyPrepStmt = connection.prepareStatement(GET_PAP_POLICY_SQL);
-            getPolicyPrepStmt.setInt(1,1);
+            getPolicyPrepStmt.setInt(1, 1);
             getPolicyPrepStmt.setInt(2, tenantId);
             getPolicyPrepStmt.setString(3, policyId);
             getPolicyPrepStmt.setString(4, policyId);
             getPolicyPrepStmt.setInt(5, tenantId);
             policy = getPolicyPrepStmt.executeQuery();
 
-            if(policy.next()){
+            if (policy.next()) {
                 PolicyDTO dto = new PolicyDTO();
 
                 dto.setPolicyId(policy.getString(EntitlementTableColumns.POLICY_ID));
 
                 String version = String.valueOf(policy.getInt(EntitlementTableColumns.VERSION));
-                if (version != null) {
-                    dto.setVersion(version);
-                }
+                dto.setVersion(version);
 
                 String lastModifiedTime = policy.getString(EntitlementTableColumns.LAST_MODIFIED_TIME);
                 if (lastModifiedTime != null) {
@@ -177,36 +175,36 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                 dto.setPolicy(policy.getString(EntitlementTableColumns.POLICY));
 
                 //Get policy references
-                List<String> policyReferences = new ArrayList<String>();
+                List<String> policyReferences = new ArrayList<>();
                 PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                 getPolicyRefsPrepStmt.setInt(1, tenantId);
                 getPolicyRefsPrepStmt.setString(2, policyId);
                 getPolicyRefsPrepStmt.setInt(3, policy.getInt(EntitlementTableColumns.VERSION));
                 ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
 
-                if(policyRefs.next()){
-                    do{
+                if (policyRefs.next()) {
+                    do {
                         policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
-                    } while(policyRefs.next());
+                    } while (policyRefs.next());
                 }
-                dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
+                dto.setPolicyIdReferences(policyReferences.toArray(new String[0]));
                 IdentityDatabaseUtil.closeResultSet(policyRefs);
                 IdentityDatabaseUtil.closeStatement(getPolicyRefsPrepStmt);
 
                 //Get policy set references
-                List<String> policySetReferences = new ArrayList<String>();
+                List<String> policySetReferences = new ArrayList<>();
                 PreparedStatement getPolicySetRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                 getPolicySetRefsPrepStmt.setInt(1, tenantId);
                 getPolicySetRefsPrepStmt.setString(2, policyId);
                 getPolicySetRefsPrepStmt.setInt(3, policy.getInt(EntitlementTableColumns.VERSION));
                 ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
 
-                if(policySetRefs.next()){
-                    do{
+                if (policySetRefs.next()) {
+                    do {
                         policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
-                    } while(policySetRefs.next());
+                    } while (policySetRefs.next());
                 }
-                dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
+                dto.setPolicySetIdReferences(policySetReferences.toArray(new String[0]));
                 IdentityDatabaseUtil.closeResultSet(policySetRefs);
                 IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
 
@@ -284,7 +282,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
                 return dto;
 
-            }else {
+            } else {
                 return null;
             }
 
@@ -292,7 +290,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             log.error("Error while retrieving entitlement policy " + policyId + " from the PAP policy store", e);
             throw new EntitlementException("Error while retrieving entitlement policy " + policyId
                     + " from the PAP policy store");
-        }finally{
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, policy, getPolicyPrepStmt);
         }
     }
@@ -301,13 +299,13 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
     /**
      * This returns the requested policy version
      *
-     * @param policyId   policy id
-     * @param version   version
+     * @param policyId policy id
+     * @param version  version
      * @return policy as a PolicyDTO
      * @throws EntitlementException throws, if fails
      */
 
-    public PolicyDTO getPolicyByVersion(String policyId, String version) throws EntitlementException{
+    public PolicyDTO getPolicyByVersion(String policyId, String version) throws EntitlementException {
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving entitlement policy for the given version");
@@ -320,13 +318,13 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
         try {
             getPolicyPrepStmt = connection.prepareStatement(GET_PAP_POLICY_BY_VERSION_SQL);
-            getPolicyPrepStmt.setInt(1,1);
+            getPolicyPrepStmt.setInt(1, 1);
             getPolicyPrepStmt.setInt(2, tenantId);
             getPolicyPrepStmt.setString(3, policyId);
             getPolicyPrepStmt.setInt(4, Integer.parseInt(version));
             policy = getPolicyPrepStmt.executeQuery();
 
-            if(policy.next()){
+            if (policy.next()) {
                 PolicyDTO dto = new PolicyDTO();
 
                 dto.setPolicyId(policyId);
@@ -355,7 +353,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                 dto.setPolicy(policy.getString(EntitlementTableColumns.POLICY));
 
                 //Get policy references
-                List<String> policyReferences = new ArrayList<String>();
+                List<String> policyReferences = new ArrayList<>();
                 PreparedStatement getPolicyRefsPrepStmt =
                         connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                 getPolicyRefsPrepStmt.setInt(1, tenantId);
@@ -363,17 +361,17 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                 getPolicyRefsPrepStmt.setInt(3, Integer.parseInt(version));
                 ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
 
-                if(policyRefs.next()){
-                    do{
+                if (policyRefs.next()) {
+                    do {
                         policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
-                    } while(policyRefs.next());
+                    } while (policyRefs.next());
                 }
-                dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
+                dto.setPolicyIdReferences(policyReferences.toArray(new String[0]));
                 IdentityDatabaseUtil.closeResultSet(policyRefs);
                 IdentityDatabaseUtil.closeStatement(getPolicyRefsPrepStmt);
 
                 //Get policy set references
-                List<String> policySetReferences = new ArrayList<String>();
+                List<String> policySetReferences = new ArrayList<>();
                 PreparedStatement getPolicySetRefsPrepStmt =
                         connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                 getPolicySetRefsPrepStmt.setInt(1, tenantId);
@@ -381,12 +379,12 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                 getPolicySetRefsPrepStmt.setInt(3, Integer.parseInt(version));
                 ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
 
-                if(policySetRefs.next()){
-                    do{
+                if (policySetRefs.next()) {
+                    do {
                         policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
-                    } while(policySetRefs.next());
+                    } while (policySetRefs.next());
                 }
-                dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
+                dto.setPolicySetIdReferences(policySetReferences.toArray(new String[0]));
                 IdentityDatabaseUtil.closeResultSet(policySetRefs);
                 IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
 
@@ -463,7 +461,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
                 return dto;
 
-            }else {
+            } else {
                 return null;
             }
 
@@ -471,7 +469,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             log.error("Error while retrieving entitlement policy " + policyId + " from the PAP policy store", e);
             throw new EntitlementException("Error while retrieving entitlement policy " + policyId
                     + " from the PAP policy store");
-        }finally{
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, policy, getPolicyPrepStmt);
         }
     }
@@ -491,28 +489,26 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-        ResultSet policies =null;
-        PreparedStatement getAllPoliciesPrepStmt=null;
-        List<PolicyDTO> policyDTOList = new ArrayList<PolicyDTO>();
+        ResultSet policies = null;
+        PreparedStatement getAllPoliciesPrepStmt = null;
+        List<PolicyDTO> policyDTOList = new ArrayList<>();
 
         try {
             //Get all policies with latest version
             getAllPoliciesPrepStmt = connection.prepareStatement(GET_ALL_PAP_POLICIES_SQL);
-            getAllPoliciesPrepStmt.setInt(1,1);
+            getAllPoliciesPrepStmt.setInt(1, 1);
             getAllPoliciesPrepStmt.setInt(2, tenantId);
             getAllPoliciesPrepStmt.setInt(3, tenantId);
             policies = getAllPoliciesPrepStmt.executeQuery();
 
-            if(policies.next()){
-                do{
+            if (policies.next()) {
+                do {
                     PolicyDTO dto = new PolicyDTO();
 
                     dto.setPolicyId(policies.getString(EntitlementTableColumns.POLICY_ID));
 
                     String version = String.valueOf(policies.getInt(EntitlementTableColumns.VERSION));
-                    if (version != null) {
-                        dto.setVersion(version);
-                    }
+                    dto.setVersion(version);
 
                     String lastModifiedTime = policies.getString(EntitlementTableColumns.LAST_MODIFIED_TIME);
                     if (lastModifiedTime != null) {
@@ -535,7 +531,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                     dto.setPolicyEditor(policies.getString(EntitlementTableColumns.POLICY_EDITOR));
 
                     //Get policy references
-                    List<String> policyReferences = new ArrayList<String>();
+                    List<String> policyReferences = new ArrayList<>();
                     PreparedStatement getPolicyRefsPrepStmt = connection.prepareStatement(GET_PAP_POLICY_REFS_SQL);
                     getPolicyRefsPrepStmt.setInt(1, tenantId);
                     getPolicyRefsPrepStmt.setString(2,
@@ -543,17 +539,17 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                     getPolicyRefsPrepStmt.setInt(3, Integer.parseInt(version));
                     ResultSet policyRefs = getPolicyRefsPrepStmt.executeQuery();
 
-                    if(policyRefs.next()){
-                        do{
+                    if (policyRefs.next()) {
+                        do {
                             policyReferences.add(policyRefs.getString(EntitlementTableColumns.REFERENCE));
-                        } while(policyRefs.next());
+                        } while (policyRefs.next());
                     }
-                    dto.setPolicyIdReferences(policyReferences.toArray(new String[policyReferences.size()]));
+                    dto.setPolicyIdReferences(policyReferences.toArray(new String[0]));
                     IdentityDatabaseUtil.closeResultSet(policyRefs);
                     IdentityDatabaseUtil.closeStatement(getPolicyRefsPrepStmt);
 
                     //Get policy set references
-                    List<String> policySetReferences = new ArrayList<String>();
+                    List<String> policySetReferences = new ArrayList<>();
                     PreparedStatement getPolicySetRefsPrepStmt =
                             connection.prepareStatement(GET_PAP_POLICY_SET_REFS_SQL);
                     getPolicySetRefsPrepStmt.setInt(1, tenantId);
@@ -562,29 +558,29 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
                     getPolicySetRefsPrepStmt.setInt(3, Integer.parseInt(version));
                     ResultSet policySetRefs = getPolicySetRefsPrepStmt.executeQuery();
 
-                    if(policySetRefs.next()){
-                        do{
+                    if (policySetRefs.next()) {
+                        do {
                             policySetReferences.add(policySetRefs.getString(EntitlementTableColumns.SET_REFERENCE));
-                        } while(policySetRefs.next());
+                        } while (policySetRefs.next());
                     }
-                    dto.setPolicySetIdReferences(policySetReferences.toArray(new String[policySetReferences.size()]));
+                    dto.setPolicySetIdReferences(policySetReferences.toArray(new String[0]));
                     IdentityDatabaseUtil.closeResultSet(policySetRefs);
                     IdentityDatabaseUtil.closeStatement(getPolicySetRefsPrepStmt);
 
                     policyDTOList.add(dto);
 
-                }while (policies.next());
+                } while (policies.next());
 
-                return policyDTOList.toArray(new PolicyDTO[policyDTOList.size()]);
+                return policyDTOList.toArray(new PolicyDTO[0]);
 
-            }else {
+            } else {
                 return new PolicyDTO[0];
             }
 
         } catch (SQLException e) {
             log.error("Error while retrieving all entitlement policies from PAP policy store", e);
             throw new EntitlementException("Error while retrieving entitlement policies from PAP policy store");
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, policies, getAllPoliciesPrepStmt);
         }
     }
@@ -593,7 +589,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
     /**
      * This adds the given policy to the policy store
      *
-     * @param policy   policy DTO
+     * @param policy policy DTO
      * @throws EntitlementException throws, if fails
      */
     public void addOrUpdatePolicy(PolicyDTO policy)
@@ -609,7 +605,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             log.debug("Creating or updating entitlement policy");
         }
 
-        if (policy == null || policyId == null) {
+        if (policyId == null) {
             log.error("Error while creating or updating entitlement policy: " +
                     "Policy DTO or Policy Id can not be null");
             throw new EntitlementException("Invalid Entitlement Policy. Policy or policyId can not be Null");
@@ -629,9 +625,9 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             String policyType = null;
             if (policy.getPolicyType() != null && !policy.getPolicyType().trim().isEmpty()) {
                 policyType = policy.getPolicyType();
-                try{
+                try {
                     omElement = AXIOMUtil.stringToOM(policy.getPolicy());
-                }catch (XMLStreamException e) {
+                } catch (XMLStreamException e) {
                     log.warn("Failed converting the policy into the OMElement");
                 }
             } else {
@@ -653,8 +649,8 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             }
 
             //Write a new policy
-            int active = policy.isActive() ? 1: 0;
-            int promote = policy.isPromote() ? 1: 0;
+            int active = policy.isActive() ? 1 : 0;
+            int promote = policy.isPromote() ? 1 : 0;
             PreparedStatement createPolicyPrepStmt = connection.prepareStatement(CREATE_PAP_POLICY_SQL);
 
             createPolicyPrepStmt.setString(1, policyId);
@@ -709,7 +705,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             }
 
             //Write attributes of the policy
-            if(properties != null) {
+            if (properties != null) {
                 PreparedStatement createAttributesPrepStmt =
                         connection.prepareStatement(CREATE_PAP_POLICY_ATTRIBUTES_SQL);
 
@@ -730,7 +726,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
             //Write policy editor data
             String[] policyMetaData = policy.getPolicyEditorData();
-            if(policyMetaData != null && policyMetaData.length > 0) {
+            if (policyMetaData != null && policyMetaData.length > 0) {
                 PreparedStatement createPolicyEditorDataPrepStmt =
                         connection.prepareStatement(CREATE_PAP_POLICY_EDITOR_DATA_SQL);
                 int i = 0;
@@ -756,7 +752,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             throw new EntitlementException("Error while adding or updating entitlement policy in policy store");
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -823,7 +819,7 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while removing entitlement policy " + policyId + " from PAP policy store", e);
             throw new EntitlementException("Error while removing policy " + policyId + " from PAP policy store");
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -833,10 +829,10 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
      * This removes the given policy version from the policy store
      *
      * @param policyId policyId
-     * @param version version
+     * @param version  version
      * @throws EntitlementException throws, if fails
      */
-    public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
+    public void removePolicyByVersion(String policyId, int version) throws EntitlementException {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
@@ -883,9 +879,9 @@ public class PAPPolicyStore implements PAPPolicyStoreModule {
 
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollbackTransaction(connection);
-            log.error("Error while removing entitlement policy version " + policyId +" "+version+ " from PAP policy store", e);
-            throw new EntitlementException("Error while removing policy version " + policyId +" "+version+ " from PAP policy store");
-        }finally {
+            log.error("Error while removing entitlement policy version " + policyId + " " + version + " from PAP policy store", e);
+            throw new EntitlementException("Error while removing policy version " + policyId + " " + version + " from PAP policy store");
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }

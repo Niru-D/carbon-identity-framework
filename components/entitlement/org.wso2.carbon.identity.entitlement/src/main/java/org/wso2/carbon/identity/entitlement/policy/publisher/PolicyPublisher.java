@@ -1,30 +1,27 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.policy.publisher;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
-import org.wso2.carbon.identity.entitlement.dao.RegistrySubscriberManager;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManagerModule;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
@@ -43,17 +40,16 @@ public class PolicyPublisher {
 
     public static final String SUBSCRIBER_ID = "subscriberId";
     public static final String SUBSCRIBER_DISPLAY_NAME = "Subscriber Id";
-    private static Log log = LogFactory.getLog(PolicyPublisher.class);
 
     /**
      * set of publisher modules
      */
-    Set<PolicyPublisherModule> publisherModules = new HashSet<PolicyPublisherModule>();
+    Set<PolicyPublisherModule> publisherModules = new HashSet<>();
 
     /**
      * set of post publisher modules
      */
-    Set<PAPStatusDataHandlerModule> papStatusDataHandlers = new HashSet<PAPStatusDataHandlerModule>();
+    Set<PAPStatusDataHandlerModule> papStatusDataHandlers = new HashSet<>();
 
     /**
      * Verification publisher modules
@@ -87,7 +83,7 @@ public class PolicyPublisher {
         dto.setId(SUBSCRIBER_ID);
         dto.setDisplayName(SUBSCRIBER_DISPLAY_NAME);
         dto.setValue(EntitlementConstants.PDP_SUBSCRIBER_ID);
-        holder.setPropertyDTOs(new PublisherPropertyDTO[]{dto});
+        holder.setPropertyDTOs(new PublisherPropertyDTO[] {dto});
         try {
             PublisherDataHolder pdpDataHolder = null;
             //TODO - Configuration to choose between registry and new data structure
@@ -110,22 +106,17 @@ public class PolicyPublisher {
      * publish policy
      *
      * @param policyIds        policy ids to publish,
-     * @param version
-     * @param action
-     * @param enabled
-     * @param order
+     * @param version          version
+     * @param action           action
+     * @param enabled          enabled/disabled
+     * @param order            policy order
      * @param subscriberIds    subscriber ids to publish,
      * @param verificationCode verificationCode as String
-     * @throws EntitlementException throws if can not be created PolicyPublishExecutor instant
      */
     public void publishPolicy(String[] policyIds, String version, String action, boolean enabled, int order,
-                              String[] subscriberIds, String verificationCode) throws EntitlementException {
+                              String[] subscriberIds, String verificationCode) {
 
-        boolean toPDP = false;
-
-        if (subscriberIds == null) {
-            toPDP = true;
-        }
+        boolean toPDP = subscriberIds == null;
 
         PolicyPublishExecutor executor = new PolicyPublishExecutor(policyIds, version, action, enabled, order,
                 subscriberIds, this, toPDP, verificationCode);

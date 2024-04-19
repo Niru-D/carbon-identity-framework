@@ -34,7 +34,7 @@ public interface PAPStatusDataHandlerModule {
      *
      * @param properties properties
      */
-    public void init(Properties properties);
+    void init(Properties properties);
 
     /**
      * Handles
@@ -44,14 +44,14 @@ public interface PAPStatusDataHandlerModule {
      * @param statusHolder <code>StatusHolder</code>
      * @throws EntitlementException throws, if fails to handle
      */
-    public void handle(String about, String key, List<StatusHolder> statusHolder) throws EntitlementException;
+    void handle(String about, String key, List<StatusHolder> statusHolder) throws EntitlementException;
 
     /**
      * @param about        indicates what is related with this admin status action
      * @param statusHolder <code>StatusHolder</code>
      * @throws EntitlementException if fails to handle
      */
-    public void handle(String about, StatusHolder statusHolder) throws EntitlementException;
+    void handle(String about, StatusHolder statusHolder) throws EntitlementException;
 
     /**
      * @param about        indicates what is related with this admin status action
@@ -59,8 +59,8 @@ public interface PAPStatusDataHandlerModule {
      * @param type         admin action type
      * @param searchString search string for <code>StatusHolder</code>
      * @return An array of <code>StatusHolder</code>
-     * @throws EntitlementException
+     * @throws EntitlementException if fails
      */
-    public StatusHolder[] getStatusData(String about, String key, String type,
-                                        String searchString) throws EntitlementException;
+    StatusHolder[] getStatusData(String about, String key, String type,
+                                 String searchString) throws EntitlementException;
 }

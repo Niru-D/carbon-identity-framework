@@ -71,10 +71,10 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
      */
     @Override
     public String[] getAllPolicyIds() throws EntitlementException {
-        String path = null;
-        Collection collection = null;
-        List<String> resources = new ArrayList<String>();
-        String[] children = null;
+        String path;
+        Collection collection;
+        List<String> resources = new ArrayList<>();
+        String[] children;
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving all entitlement policies");
@@ -93,7 +93,7 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
             children = collection.getChildren();
             for (String child : children) {
                 String[] resourcePath = child.split("/");
-                if (resourcePath != null && resourcePath.length > 0) {
+                if (resourcePath.length > 0) {
                     resources.add(resourcePath[resourcePath.length - 1]);
                 }
             }
@@ -104,7 +104,7 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
                     "identifiers from PAP policy store");
         }
 
-        return resources.toArray(new String[resources.size()]);
+        return resources.toArray(new String[0]);
     }
 
 
@@ -112,12 +112,12 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
      * This returns given policy as Registry resource
      *
      * @param policyId   policy id
-     * @param collection
+     * @param collection collection
      * @return policy as Registry resource
      * @throws EntitlementException throws, if fails
      */
     public Resource getPolicy(String policyId, String collection) throws EntitlementException {
-        String path = null;
+        String path;
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving entitlement policy");
@@ -146,14 +146,14 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
     }
 
     /**
-     * @param policy
-     * @throws EntitlementException
+     * @param policy policy
+     * @throws EntitlementException throws, if fails
      */
     public void addOrUpdatePolicy(PolicyDTO policy, String policyId, String policyPath)
             throws EntitlementException {
 
-        String path = null;
-        Resource resource = null;
+        String path;
+        Resource resource;
         boolean newPolicy = false;
         OMElement omElement = null;
 
@@ -233,7 +233,7 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
             resource.setProperty(PDPConstants.LAST_MODIFIED_USER, CarbonContext.getThreadLocalCarbonContext()
                     .getUsername());
 
-            if (policy.getPolicyType() != null && policy.getPolicyType().trim().length() > 0) {
+            if (policy.getPolicyType() != null && !policy.getPolicyType().trim().isEmpty()) {
                 resource.setProperty(PDPConstants.POLICY_TYPE, policy.getPolicyType());
             } else {
                 try {
@@ -281,15 +281,15 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
                 }
             }
 
-            //before writing basic policy editor meta data as properties,
+            //before writing basic policy editor metadata as properties,
             //delete any properties related to them
             String policyEditor = resource.getProperty(PDPConstants.POLICY_EDITOR_TYPE);
             if (newPolicy && policyEditor != null) {
                 resource.removeProperty(PDPConstants.POLICY_EDITOR_TYPE);
             }
 
-            //write policy meta data that is used for basic policy editor
-            if (policy.getPolicyEditor() != null && policy.getPolicyEditor().trim().length() > 0) {
+            //write policy metadata that is used for basic policy editor
+            if (policy.getPolicyEditor() != null && !policy.getPolicyEditor().trim().isEmpty()) {
                 resource.setProperty(PDPConstants.POLICY_EDITOR_TYPE, policy.getPolicyEditor().trim());
             }
             String[] policyMetaData = policy.getPolicyEditorData();
@@ -306,7 +306,7 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
 
                 int i = 0;
                 for (String policyData : policyMetaData) {
-                    if (policyData != null && !"".equals(policyData)) {
+                    if (policyData != null && !policyData.isEmpty()) {
                         resource.setProperty(PDPConstants.BASIC_POLICY_EDITOR_META_DATA + i,
                                 policyData);
                     }
@@ -327,12 +327,12 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
 
 
     /**
-     * @param policyId
-     * @throws EntitlementException
+     * @param policyId policyId
+     * @throws EntitlementException throws, if fails
      */
     @Override
     public void removePolicy(String policyId) throws EntitlementException {
-        String path = null;
+        String path;
 
         if (log.isDebugEnabled()) {
             log.debug("Removing entitlement policy");

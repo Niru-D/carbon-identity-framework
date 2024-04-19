@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
@@ -22,6 +22,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
+import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 
@@ -43,9 +44,7 @@ import java.util.Properties;
 public class PolicyVersionManager implements PolicyVersionManagerModule {
 
 
-    private static Log log = LogFactory.getLog(PolicyVersionManager.class);
-
-    private static int DEFAULT_MAX_VERSION = 5;
+    private static final Log log = LogFactory.getLog(PolicyVersionManager.class);
 
     private int maxVersions;
 
@@ -57,7 +56,7 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
             // ignore
         }
         if (maxVersions == 0) {
-            maxVersions = DEFAULT_MAX_VERSION;
+            maxVersions = PDPConstants.DEFAULT_MAX_POLICY_VERSION;
         }
     }
 
@@ -68,7 +67,7 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
 
         // Zero means current version
-        if (version == null || version.trim().length() == 0) {
+        if (version == null || version.trim().isEmpty()) {
 
             PreparedStatement getLatestVersionPrepStmt = null;
             ResultSet latestVersion = null;
@@ -79,23 +78,21 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
                 getLatestVersionPrepStmt.setInt(3, 1);
                 latestVersion = getLatestVersionPrepStmt.executeQuery();
 
-                if(latestVersion.next()){
+                if (latestVersion.next()) {
                     version = String.valueOf(latestVersion.getInt(EntitlementTableColumns.VERSION));
                 }
 
             } catch (SQLException e) {
                 log.error(e);
                 throw new EntitlementException("Invalid policy version");
-            }finally {
+            } finally {
                 IdentityDatabaseUtil.closeAllConnections(connection, latestVersion, getLatestVersionPrepStmt);
             }
         }
 
-        PAPPolicyStoreModule policyStore = new PAPPolicyStore();
-        PolicyDTO dto = null;
-        if (policyStore instanceof PAPPolicyStore) {
-            dto = ((PAPPolicyStore) policyStore).getPolicyByVersion(policyId, version);
-        }
+        PAPPolicyStore policyStore = new PAPPolicyStore();
+        PolicyDTO dto;
+        dto = policyStore.getPolicyByVersion(policyId, version);
 
         if (dto == null) {
             throw new EntitlementException("No policy with the given policyID and version");
@@ -110,7 +107,7 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
         PAPPolicyStoreManager manager = new PAPPolicyStoreManager();
         String version = "0";
 
-        if(manager.isExistPolicy(policyDTO.getPolicyId())){
+        if (manager.isExistPolicy(policyDTO.getPolicyId())) {
             PolicyDTO dto = manager.getLightPolicy(policyDTO.getPolicyId());
             version = dto.getVersion();
         }
@@ -130,29 +127,29 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
     }
 
     @Override
-    public String[] getVersions(String policyId) throws EntitlementException {
+    public String[] getVersions(String policyId) {
 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-        List<String> versions = new ArrayList<String>();
+        List<String> versions = new ArrayList<>();
         PreparedStatement getVersionsPrepStmt = null;
         ResultSet versionsSet = null;
 
-        try{
+        try {
             getVersionsPrepStmt = connection.prepareStatement(GET_POLICY_VERSIONS_SQL);
             getVersionsPrepStmt.setInt(1, tenantId);
             getVersionsPrepStmt.setString(2, policyId);
             versionsSet = getVersionsPrepStmt.executeQuery();
 
-            while (versionsSet.next()){
+            while (versionsSet.next()) {
                 versions.add(String.valueOf(versionsSet.getInt(EntitlementTableColumns.VERSION)));
             }
 
-        } catch (SQLException e){
+        } catch (SQLException e) {
             log.error("Error while retrieving policy versions", e);
         } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, versionsSet, getVersionsPrepStmt);
         }
-        return versions.toArray(new String[versions.size()]);
+        return versions.toArray(new String[0]);
     }
 }

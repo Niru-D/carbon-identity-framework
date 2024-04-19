@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.dao;
 
@@ -47,10 +47,9 @@ import java.util.regex.Pattern;
 public class RegistrySubscriberManager implements SubscriberManagerModule {
 
     public static final String SUBSCRIBER_ID = "subscriberId";
-    public static final String SUBSCRIBER_DISPLAY_NAME = "Subscriber Id";
-    private static Log log = LogFactory.getLog(RegistrySubscriberManager.class);
+    private static final Log log = LogFactory.getLog(RegistrySubscriberManager.class);
 
-    private Registry registry;
+    private final Registry registry;
 
 
     /**
@@ -188,7 +187,7 @@ public class RegistrySubscriberManager implements SubscriberManagerModule {
                 Resource resource = registry.get(PDPConstants.ENTITLEMENT_POLICY_PUBLISHER +
                         RegistryConstants.PATH_SEPARATOR);
                 Collection collection = (Collection) resource;
-                List<String> list = new ArrayList<String>();
+                List<String> list = new ArrayList<>();
                 if (collection.getChildCount() > 0) {
                     searchString = searchString.replace("*", ".*");
                     Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
@@ -204,7 +203,7 @@ public class RegistrySubscriberManager implements SubscriberManagerModule {
                         }
                     }
                 }
-                return list.toArray(new String[list.size()]);
+                return list.toArray(new String[0]);
             }
         } catch (RegistryException e) {
             log.error("Error while retrieving subscriber of ids", e);
@@ -221,8 +220,8 @@ public class RegistrySubscriberManager implements SubscriberManagerModule {
 
         PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();
         for (PublisherPropertyDTO dto : propertyDTOs) {
-            if (dto.getId() != null && dto.getValue() != null && dto.getValue().trim().length() > 0) {
-                ArrayList<String> list = new ArrayList<String>();
+            if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
+                ArrayList<String> list = new ArrayList<>();
                 if (dto.isSecret()) {
                     PublisherPropertyDTO propertyDTO = null;
                     if (oldHolder != null) {

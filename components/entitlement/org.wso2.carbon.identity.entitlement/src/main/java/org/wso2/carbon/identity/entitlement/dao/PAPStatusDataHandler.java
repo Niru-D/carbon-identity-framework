@@ -23,6 +23,7 @@ import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.core.util.IdentityDatabaseUtil;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
+import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
 
@@ -53,24 +54,21 @@ import java.util.regex.Pattern;
  */
 public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
 
-    private static final int SEARCH_BY_USER = 0;
-    private static final int SEARCH_BY_POLICY = 1;
-    private static Log log = LogFactory.getLog(PAPStatusDataHandler.class);
-    private int DEFAULT_MAX_RECODES = 50;
-    private int maxRecodes;
+    private static final Log log = LogFactory.getLog(PAPStatusDataHandler.class);
+    private int maxRecords;
 
     @Override
     public void init(Properties properties) {
         String maxRecodesString = (String) properties.get("maxRecodesToPersist");
         if (maxRecodesString != null) {
             try {
-                maxRecodes = Integer.parseInt(maxRecodesString);
+                maxRecords = Integer.parseInt(maxRecodesString);
             } catch (Exception e) {
                 //ignore
             }
         }
-        if (maxRecodes == 0) {
-            maxRecodes = DEFAULT_MAX_RECODES;
+        if (maxRecords == 0) {
+            maxRecords = PDPConstants.DEFAULT_MAX_NO_OF_STATUS_RECORDS;
         }
     }
 
@@ -91,7 +89,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
 
     @Override
     public void handle(String about, StatusHolder statusHolder) throws EntitlementException {
-        List<StatusHolder> list = new ArrayList<StatusHolder>();
+        List<StatusHolder> list = new ArrayList<>();
         list.add(statusHolder);
         handle(about, statusHolder.getKey(), list);
     }
@@ -104,7 +102,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
         if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
 
             List<StatusHolder> holders = readStatus(key, EntitlementConstants.Status.ABOUT_POLICY);
-            List<StatusHolder> filteredHolders = new ArrayList<StatusHolder>();
+            List<StatusHolder> filteredHolders = new ArrayList<>();
             if (holders != null) {
                 searchString = searchString.replace("*", ".*");
                 Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
@@ -121,11 +119,11 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
                     }
                 }
             }
-            return filteredHolders.toArray(new StatusHolder[filteredHolders.size()]);
+            return filteredHolders.toArray(new StatusHolder[0]);
 
         } else {
 
-            List<StatusHolder> filteredHolders = new ArrayList<StatusHolder>();
+            List<StatusHolder> filteredHolders = new ArrayList<>();
             List<StatusHolder> holders = readStatus(key, EntitlementConstants.Status.ABOUT_SUBSCRIBER);
             if (holders != null) {
                 searchString = searchString.replace("*", ".*");
@@ -139,7 +137,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
                     filteredHolders.add(holder);
                 }
             }
-            return filteredHolders.toArray(new StatusHolder[filteredHolders.size()]);
+            return filteredHolders.toArray(new StatusHolder[0]);
         }
     }
 
@@ -149,10 +147,10 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         try {
-            PreparedStatement deleteStatusPrepStmt = null;
-            if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+            PreparedStatement deleteStatusPrepStmt;
+            if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                 deleteStatusPrepStmt = connection.prepareStatement(DELETE_POLICY_STATUS_SQL);
-            }else{
+            } else {
                 deleteStatusPrepStmt = connection.prepareStatement(DELETE_SUBSCRIBER_STATUS_SQL);
             }
             deleteStatusPrepStmt.setString(1, key);
@@ -166,7 +164,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -182,15 +180,15 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
             boolean useLastStatusOnly = Boolean.parseBoolean(
                     IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
 
-            if(statusHolders != null && !statusHolders.isEmpty()){
+            if (statusHolders != null && !statusHolders.isEmpty()) {
 
                 if (useLastStatusOnly) {
 
                     //Delete the previous status
-                    PreparedStatement deleteStatusPrepStmt = null;
-                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                    PreparedStatement deleteStatusPrepStmt;
+                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                         deleteStatusPrepStmt = connection.prepareStatement(DELETE_POLICY_STATUS_SQL);
-                    }else{
+                    } else {
                         deleteStatusPrepStmt = connection.prepareStatement(DELETE_SUBSCRIBER_STATUS_SQL);
                     }
                     deleteStatusPrepStmt.setString(1, key);
@@ -201,14 +199,14 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
                 }
 
                 //Add new status to the database
-                PreparedStatement addStatusPrepStmt = null;
-                if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
+                PreparedStatement addStatusPrepStmt;
+                if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                     addStatusPrepStmt = connection.prepareStatement(CREATE_POLICY_STATUS_SQL);
-                }else{
+                } else {
                     addStatusPrepStmt = connection.prepareStatement(CREATE_SUBSCRIBER_STATUS_SQL);
                 }
 
-                for(StatusHolder statusHolder : statusHolders){
+                for (StatusHolder statusHolder : statusHolders) {
 
                     String message = "";
                     if (statusHolder.getMessage() != null) {
@@ -237,7 +235,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
                     addStatusPrepStmt.setString(8, key);
                     addStatusPrepStmt.setInt(9, tenantId);
 
-                    if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
+                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                         addStatusPrepStmt.setInt(10, version);
                     }
 
@@ -248,32 +246,32 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
                 IdentityDatabaseUtil.closeStatement(addStatusPrepStmt);
 
 
-                if(!useLastStatusOnly){
+                if (!useLastStatusOnly) {
                     //Get the existing status count
-                    PreparedStatement getStatusCountPrepStmt = null;
-                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                    PreparedStatement getStatusCountPrepStmt;
+                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                         getStatusCountPrepStmt = connection.prepareStatement(GET_POLICY_STATUS_COUNT_SQL);
-                    }else{
+                    } else {
                         getStatusCountPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_STATUS_COUNT_SQL);
                     }
                     getStatusCountPrepStmt.setString(1, key);
                     getStatusCountPrepStmt.setInt(2, tenantId);
                     ResultSet count = getStatusCountPrepStmt.executeQuery();
                     int statusCount = 0;
-                    if(count.next()){
+                    if (count.next()) {
                         statusCount = count.getInt(EntitlementTableColumns.STATUS_COUNT);
                     }
                     IdentityDatabaseUtil.closeResultSet(count);
                     IdentityDatabaseUtil.closeStatement(getStatusCountPrepStmt);
 
                     //Delete old status data
-                    if(statusCount > maxRecodes){
+                    if (statusCount > maxRecords) {
 
-                        int oldRecordsCount = statusCount - maxRecodes;
-                        PreparedStatement deleteOldRecordsPrepStmt = null;
-                        if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                        int oldRecordsCount = statusCount - maxRecords;
+                        PreparedStatement deleteOldRecordsPrepStmt;
+                        if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                             deleteOldRecordsPrepStmt = connection.prepareStatement(DELETE_OLD_POLICY_STATUSES_SQL);
-                        }else{
+                        } else {
                             deleteOldRecordsPrepStmt = connection.prepareStatement(DELETE_OLD_SUBSCRIBER_STATUSES_SQL);
                         }
                         deleteOldRecordsPrepStmt.setString(1, key);
@@ -291,7 +289,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
             throw new EntitlementException("Error while persisting policy status", e);
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
 
@@ -303,25 +301,25 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         PreparedStatement getStatusPrepStmt = null;
         ResultSet statusSet = null;
-        List<StatusHolder> statusHolders = new ArrayList<StatusHolder>();
+        List<StatusHolder> statusHolders = new ArrayList<>();
 
         try {
-            if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
+            if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                 getStatusPrepStmt = connection.prepareStatement(GET_POLICY_STATUS_SQL);
-            }else{
+            } else {
                 getStatusPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_STATUS_SQL);
             }
             getStatusPrepStmt.setString(1, key);
             getStatusPrepStmt.setInt(2, tenantId);
             statusSet = getStatusPrepStmt.executeQuery();
 
-            if(statusSet.next()){
+            if (statusSet.next()) {
                 do {
                     StatusHolder statusHolder = new StatusHolder(about);
 
-                    if(EntitlementConstants.Status.ABOUT_POLICY.equals(about)){
+                    if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
                         statusHolder.setKey(statusSet.getString(EntitlementTableColumns.POLICY_ID));
-                    }else{
+                    } else {
                         statusHolder.setKey(statusSet.getString(EntitlementTableColumns.SUBSCRIBER_ID));
                     }
                     statusHolder.setType(statusSet.getString(EntitlementTableColumns.STATUS_TYPE));
@@ -333,9 +331,9 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
                     statusHolder.setMessage(statusSet.getString(EntitlementTableColumns.MESSAGE));
 
                     String version;
-                    if(statusSet.getInt(EntitlementTableColumns.POLICY_VERSION)==-1){
+                    if (statusSet.getInt(EntitlementTableColumns.POLICY_VERSION) == -1) {
                         version = "";
-                    }else{
+                    } else {
                         version = Integer.toString(statusSet.getInt(EntitlementTableColumns.POLICY_VERSION));
                     }
                     statusHolder.setVersion(version);

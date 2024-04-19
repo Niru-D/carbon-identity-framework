@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
@@ -54,7 +54,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             "urn:oasis:names:tc:xacml:1.0:policy-combining-algorithm:";
     public static final String POLICY_COMBINING_PREFIX_3 =
             "urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:";
-    private static Log log = LogFactory.getLog(PolicyDataStore.class);
+    private static final Log log = LogFactory.getLog(PolicyDataStore.class);
 
 
     @Override
@@ -77,11 +77,11 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             getPolicyCombiningAlgoPrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             rs = getPolicyCombiningAlgoPrepStmt.executeQuery();
 
-            if(rs.next()){
+            if (rs.next()) {
                 algorithm = rs.getString(EntitlementTableColumns.CONFIG_VALUE);
             }
 
-            if (algorithm == null || algorithm.trim().length() == 0) {
+            if (algorithm == null || algorithm.trim().isEmpty()) {
                 // read algorithm from entitlement.properties file
                 algorithm = EntitlementServiceComponent.getEntitlementConfig().getEngineProperties().
                         getProperty(PDPConstants.PDP_GLOBAL_COMBINING_ALGORITHM);
@@ -93,7 +93,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
                 }
             }
 
-            if (algorithm != null && algorithm.trim().length() > 0) {
+            if (algorithm != null && !algorithm.trim().isEmpty()) {
                 if ("first-applicable".equals(algorithm) || "only-one-applicable".equals(algorithm)) {
                     algorithm = POLICY_COMBINING_PREFIX_1 + algorithm;
                 } else {
@@ -122,7 +122,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         PreparedStatement getAlgoPresencePrepStmt = null;
         ResultSet rs = null;
-        PreparedStatement setPolicyCombiningAlgoPrepStmt = null;
+        PreparedStatement setPolicyCombiningAlgoPrepStmt;
 
         try {
             //Check the existence of the algorithm
@@ -131,10 +131,10 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             getAlgoPresencePrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             rs = getAlgoPresencePrepStmt.executeQuery();
 
-            if(rs.next()){
+            if (rs.next()) {
                 //Update the algorithm
                 setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(UPDATE_POLICY_COMBINING_ALGORITHM_SQL);
-            }else{
+            } else {
                 //Insert the algorithm
                 setPolicyCombiningAlgoPrepStmt = connection.prepareStatement(CREATE_POLICY_COMBINING_ALGORITHM_SQL);
             }
@@ -175,7 +175,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             getPolicyCombiningAlgoPrepStmt.setString(2, PDPConstants.GLOBAL_POLICY_COMBINING_ALGORITHM);
             rs = getPolicyCombiningAlgoPrepStmt.executeQuery();
 
-            if(rs.next()){
+            if (rs.next()) {
                 algorithm = rs.getString(EntitlementTableColumns.CONFIG_VALUE);
             }
 
@@ -199,7 +199,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     @Override
     public String[] getAllGlobalPolicyAlgorithmNames() {
 
-        return new String[]{"deny-overrides", "permit-overrides", "first-applicable",
+        return new String[] {"deny-overrides", "permit-overrides", "first-applicable",
                 "ordered-deny-overrides", "ordered-permit-overrides", "only-one-applicable"};
     }
 
@@ -210,7 +210,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
         PolicyStoreDTO dataDTO = new PolicyStoreDTO();
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-        PreparedStatement getAllPolicyData= null;
+        PreparedStatement getAllPolicyData = null;
         ResultSet policyData = null;
 
         try {
@@ -220,7 +220,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             getAllPolicyData.setInt(3, tenantId);
             policyData = getAllPolicyData.executeQuery();
 
-            if(policyData.next()){
+            if (policyData.next()) {
                 dataDTO.setPolicyOrder(policyData.getInt(EntitlementTableColumns.POLICY_ORDER));
                 boolean active = policyData.getInt(EntitlementTableColumns.IS_ACTIVE) == 1;
                 dataDTO.setActive(active);
@@ -234,7 +234,7 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             }
             log.error("Error while getting policy data for policyId: " + policyId, e);
             return dataDTO;
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, policyData, getAllPolicyData);
         }
     }
@@ -243,10 +243,10 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     @Override
     public PolicyStoreDTO[] getPolicyData() {
 
-        List<PolicyStoreDTO> policyStoreDTOs = new ArrayList<PolicyStoreDTO>();
+        List<PolicyStoreDTO> policyStoreDTOs = new ArrayList<>();
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         Connection connection = IdentityDatabaseUtil.getDBConnection(false);
-        PreparedStatement getAllPolicyData= null;
+        PreparedStatement getAllPolicyData = null;
         ResultSet policyData = null;
 
         try {
@@ -255,8 +255,8 @@ public class PolicyDataStore implements PolicyDataStoreModule {
             getAllPolicyData.setInt(2, 1);
             policyData = getAllPolicyData.executeQuery();
 
-            if(policyData.next()){
-                do{
+            if (policyData.next()) {
+                do {
                     PolicyStoreDTO dataDTO = new PolicyStoreDTO();
                     dataDTO.setPolicyId(policyData.getString(EntitlementTableColumns.POLICY_ID));
                     dataDTO.setPolicyOrder(policyData.getInt(EntitlementTableColumns.POLICY_ORDER));
@@ -264,17 +264,17 @@ public class PolicyDataStore implements PolicyDataStoreModule {
                     dataDTO.setActive(active);
                     dataDTO.setPolicyType(policyData.getString(EntitlementTableColumns.POLICY_TYPE));
                     policyStoreDTOs.add(dataDTO);
-                } while(policyData.next());
+                } while (policyData.next());
             }
-            return policyStoreDTOs.toArray(new PolicyStoreDTO[policyStoreDTOs.size()]);
+            return policyStoreDTOs.toArray(new PolicyStoreDTO[0]);
 
         } catch (SQLException e) {
             if (log.isDebugEnabled()) {
                 log.debug(e);
             }
             log.error("Error while getting all policy data", e);
-            return policyStoreDTOs.toArray(new PolicyStoreDTO[policyStoreDTOs.size()]);
-        }finally {
+            return policyStoreDTOs.toArray(new PolicyStoreDTO[0]);
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, policyData, getAllPolicyData);
         }
     }

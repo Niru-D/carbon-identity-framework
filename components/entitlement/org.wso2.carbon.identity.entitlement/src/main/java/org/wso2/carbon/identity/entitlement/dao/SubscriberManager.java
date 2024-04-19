@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.dao;
 
@@ -53,13 +53,14 @@ import static org.wso2.carbon.identity.entitlement.dao.SQLQueries.UPDATE_SUBSCRI
 public class SubscriberManager implements SubscriberManagerModule {
 
     public static final String SUBSCRIBER_ID = "subscriberId";
-    private static Log log = LogFactory.getLog(SubscriberManager.class);
+    private static final Log log = LogFactory.getLog(SubscriberManager.class);
 
 
     /**
      * Creates a subscriber manager
      */
-    public SubscriberManager() {}
+    public SubscriberManager() {
+    }
 
 
     /**
@@ -103,11 +104,11 @@ public class SubscriberManager implements SubscriberManagerModule {
                 if (update) {
                     //Get the existing subscriber
                     PreparedStatement getSubscriberPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_SQL);
-                    getSubscriberPrepStmt .setString(1, subscriberId);
-                    getSubscriberPrepStmt .setInt(2, tenantId);
+                    getSubscriberPrepStmt.setString(1, subscriberId);
+                    getSubscriberPrepStmt.setInt(2, tenantId);
                     ResultSet rs2 = getSubscriberPrepStmt.executeQuery();
 
-                    if(rs2.next()){
+                    if (rs2.next()) {
                         oldHolder = new PublisherDataHolder(rs2, false);
                     }
 
@@ -122,15 +123,15 @@ public class SubscriberManager implements SubscriberManagerModule {
             IdentityDatabaseUtil.closeResultSet(rs1);
             IdentityDatabaseUtil.closeStatement(findSubscriberExistencePrepStmt);
 
-            populateProperties(holder,oldHolder);
+            populateProperties(holder, oldHolder);
             PublisherPropertyDTO[] propertyDTOs = holder.getPropertyDTOs();
 
             //Create a new subscriber
-            if(!update){
+            if (!update) {
                 PreparedStatement createSubscriberPrepStmt = connection.prepareStatement(CREATE_SUBSCRIBER_SQL);
                 createSubscriberPrepStmt.setString(1, subscriberId);
                 createSubscriberPrepStmt.setInt(2, tenantId);
-                createSubscriberPrepStmt.setString(3,holder.getModuleName());
+                createSubscriberPrepStmt.setString(3, holder.getModuleName());
                 createSubscriberPrepStmt.executeUpdate();
                 IdentityDatabaseUtil.closeStatement(createSubscriberPrepStmt);
 
@@ -160,16 +161,16 @@ public class SubscriberManager implements SubscriberManagerModule {
                 createSubscriberPropertiesPrepStmt.executeBatch();
                 IdentityDatabaseUtil.closeStatement(createSubscriberPropertiesPrepStmt);
 
-            }else{
+            } else {
 
                 //Update the module of an existing subscriber
                 assert oldHolder != null;
-                if(!oldHolder.getModuleName().equalsIgnoreCase(holder.getModuleName()) ){
+                if (!oldHolder.getModuleName().equalsIgnoreCase(holder.getModuleName())) {
                     PreparedStatement updateSubscriberPrepStmt =
                             connection.prepareStatement(UPDATE_SUBSCRIBER_MODULE_SQL);
                     updateSubscriberPrepStmt.setString(1, holder.getModuleName());
                     updateSubscriberPrepStmt.setString(2, subscriberId);
-                    updateSubscriberPrepStmt.setInt(3,tenantId);
+                    updateSubscriberPrepStmt.setInt(3, tenantId);
                     updateSubscriberPrepStmt.executeUpdate();
                     IdentityDatabaseUtil.closeStatement(updateSubscriberPrepStmt);
                 }
@@ -181,12 +182,10 @@ public class SubscriberManager implements SubscriberManagerModule {
                 for (PublisherPropertyDTO dto : propertyDTOs) {
                     if (dto.getId() != null && dto.getValue() != null && !dto.getValue().trim().isEmpty()) {
 
-                        PublisherPropertyDTO propertyDTO = null;
-                        if (oldHolder != null) {
-                            propertyDTO = oldHolder.getPropertyDTO(dto.getId());
-                        }
+                        PublisherPropertyDTO propertyDTO;
+                        propertyDTO = oldHolder.getPropertyDTO(dto.getId());
                         if (propertyDTO != null && !propertyDTO.getValue().equalsIgnoreCase(dto.getValue())) {
-                            updateSubscriberPropertiesPrepStmt.setString(1,dto.getValue());
+                            updateSubscriberPropertiesPrepStmt.setString(1, dto.getValue());
                             updateSubscriberPropertiesPrepStmt.setString(2, subscriberId);
                             updateSubscriberPropertiesPrepStmt.setInt(3, tenantId);
                             updateSubscriberPropertiesPrepStmt.setString(4, dto.getId());
@@ -204,7 +203,7 @@ public class SubscriberManager implements SubscriberManagerModule {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while persisting subscriber details", e);
             throw new EntitlementException("Error while persisting subscriber details", e);
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -242,7 +241,7 @@ public class SubscriberManager implements SubscriberManagerModule {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while deleting subscriber details", e);
             throw new EntitlementException("Error while deleting subscriber details", e);
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -261,19 +260,19 @@ public class SubscriberManager implements SubscriberManagerModule {
 
         try {
             getSubscriberPrepStmt = connection.prepareStatement(GET_SUBSCRIBER_SQL);
-            getSubscriberPrepStmt .setString(1, id);
-            getSubscriberPrepStmt .setInt(2, tenantId);
+            getSubscriberPrepStmt.setString(1, id);
+            getSubscriberPrepStmt.setInt(2, tenantId);
             rs1 = getSubscriberPrepStmt.executeQuery();
-            if ( rs1.next()) {
+            if (rs1.next()) {
                 return new PublisherDataHolder(rs1, returnSecrets);
-            }else{
+            } else {
                 return null;
             }
 
         } catch (SQLException e) {
             log.error("Error while retrieving subscriber details of id : " + id, e);
             throw new EntitlementException("Error while retrieving subscriber details of id : " + id, e);
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, rs1, getSubscriberPrepStmt);
         }
     }
@@ -295,12 +294,12 @@ public class SubscriberManager implements SubscriberManagerModule {
             getSubscriberIdsPrepStmt.setInt(1, tenantId);
             subscriberIds = getSubscriberIdsPrepStmt.executeQuery();
 
-            List<String> subscriberIDList = new ArrayList<String>();
+            List<String> subscriberIDList = new ArrayList<>();
             searchString = searchString.replace("*", ".*");
             Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
 
-            if(subscriberIds.next()){
-                do{
+            if (subscriberIds.next()) {
+                do {
                     String id = subscriberIds.getString(EntitlementTableColumns.SUBSCRIBER_ID);
                     Matcher matcher = pattern.matcher(id);
                     if (!matcher.matches()) {
@@ -310,9 +309,9 @@ public class SubscriberManager implements SubscriberManagerModule {
 
                 } while (subscriberIds.next());
 
-                return subscriberIDList.toArray(new String[subscriberIDList.size()]);
+                return subscriberIDList.toArray(new String[0]);
 
-            }else {
+            } else {
                 return null;
             }
 

@@ -1,24 +1,22 @@
 /*
-*  Copyright (c) 2005-2010, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c) 2005-2010, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 package org.wso2.carbon.identity.entitlement.pap.store;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
@@ -29,11 +27,9 @@ import org.wso2.carbon.registry.core.Resource;
 
 public class PAPPolicyStoreManager {
 
-    private static final Log log = LogFactory.getLog(PAPPolicyStoreManager.class);
+    private final PAPPolicyStoreModule store;
 
-    private PAPPolicyStoreModule store;
-
-    private PAPPolicyStoreReader storeReader;
+    private final PAPPolicyStoreReader storeReader;
 
     public PAPPolicyStoreManager() {
         //TODO - Configuration to choose between registry and new data structure
@@ -54,7 +50,7 @@ public class PAPPolicyStoreManager {
         store.removePolicy(policyId);
     }
 
-    public void removePolicyByVersion(String policyId, int version) throws EntitlementException{
+    public void removePolicyByVersion(String policyId, int version) throws EntitlementException {
         //TODO - Configuration to choose between registry and new data structure
         if (store instanceof PAPPolicyStore) {
             ((PAPPolicyStore) store).removePolicyByVersion(policyId, version);

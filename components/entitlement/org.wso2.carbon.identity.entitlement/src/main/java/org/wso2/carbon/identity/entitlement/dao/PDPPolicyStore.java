@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.dao;
 
@@ -55,7 +55,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
     //TODO
     private static final String MODULE_NAME = "Registry Policy Finder Module";
-    private static Log log = LogFactory.getLog(PDPPolicyStore.class);
+    private static final Log log = LogFactory.getLog(PDPPolicyStore.class);
 
     @Override
     public void init(Properties properties) {
@@ -76,7 +76,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
             int active;
             int order;
-            int version = 0;
+            int version;
             int previousActive = 0;
             int previousOrder = 0;
 
@@ -128,7 +128,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
                 }
             }
 
-            if(!policy.isSetActive() && !policy.isSetOrder()){
+            if (!policy.isSetActive() && !policy.isSetOrder()) {
 
                 //Get active status and order of the previously published policy version
                 PreparedStatement getActiveStatusAndOrderPrepStmt =
@@ -138,7 +138,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
                 getActiveStatusAndOrderPrepStmt.setInt(3, 1);
                 ResultSet rs = getActiveStatusAndOrderPrepStmt.executeQuery();
 
-                if(rs.next()){
+                if (rs.next()) {
                     previousActive = rs.getInt(EntitlementTableColumns.IS_ACTIVE);
                     previousOrder = rs.getInt(EntitlementTableColumns.POLICY_ORDER);
                 }
@@ -178,7 +178,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
             IdentityDatabaseUtil.closeStatement(publishPolicyPrepStmt);
 
             //If this is an update, keep the previous active status and order
-            if(!policy.isSetActive() && !policy.isSetOrder()){
+            if (!policy.isSetActive() && !policy.isSetOrder()) {
                 PreparedStatement updatePolicyStatusAndOrderPrepStmt =
                         connection.prepareStatement(RESTORE_ACTIVE_STATUS_AND_ORDER_SQL);
                 updatePolicyStatusAndOrderPrepStmt.setInt(1, previousActive);
@@ -196,7 +196,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error("Error while publishing policy", e);
             throw new EntitlementException("Error while publishing policy", e);
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -216,7 +216,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         try {
             getPolicyPublishStatus = connection.prepareStatement(GET_POLICY_PDP_PRESENCE_SQL);
-            getPolicyPublishStatus.setString(1,policyId);
+            getPolicyPublishStatus.setString(1, policyId);
             getPolicyPublishStatus.setInt(2, 1);
             getPolicyPublishStatus.setInt(3, tenantId);
             rs = getPolicyPublishStatus.executeQuery();
@@ -225,7 +225,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         } catch (SQLException e) {
             return false;
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeAllConnections(connection, rs, getPolicyPublishStatus);
         }
     }
@@ -237,13 +237,13 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
 
     @Override
-    public boolean deletePolicy(String policyIdentifier) {
+    public void deletePolicy(String policyIdentifier) {
 
         Connection connection = IdentityDatabaseUtil.getDBConnection(true);
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
 
         if (policyIdentifier == null || policyIdentifier.trim().isEmpty()) {
-            return false;
+            return;
         }
 
         try {
@@ -268,13 +268,11 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
             IdentityDatabaseUtil.closeStatement(removePolicyPrepStmt);
 
             IdentityDatabaseUtil.commitTransaction(connection);
-            return true;
 
         } catch (SQLException e) {
             IdentityDatabaseUtil.rollbackTransaction(connection);
             log.error(e);
-            return false;
-        }finally {
+        } finally {
             IdentityDatabaseUtil.closeConnection(connection);
         }
     }
@@ -294,7 +292,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
             return dto.getPolicy();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
-                      "from the policy finder module", e);
+                    "from the policy finder module", e);
         }
         return null;
     }
@@ -308,7 +306,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
             return dto.getPolicyOrder();
         } catch (Exception e) {
             log.error("Policy with identifier " + policyId + " can not be retrieved " +
-                      "from the policy finder module", e);
+                    "from the policy finder module", e);
         }
         return -1;
     }
@@ -318,7 +316,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         log.debug("Retrieving of Active policies is started. " + new Date());
 
-        List<String> policies = new ArrayList<String>();
+        List<String> policies = new ArrayList<>();
 
         try {
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
@@ -334,7 +332,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         log.debug("Retrieving of Active policies is finished.   " + new Date());
 
-        return policies.toArray(new String[policies.size()]);
+        return policies.toArray(new String[0]);
     }
 
 
@@ -343,7 +341,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         log.debug("Retrieving of Ordered Policy Ids is started. " + new Date());
 
-        List<String> policies = new ArrayList<String>();
+        List<String> policies = new ArrayList<>();
 
         try {
             PDPPolicyReaderModule policyReaderModule = new PDPPolicyReader();
@@ -359,7 +357,7 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
 
         log.debug("Retrieving of Ordered Policy Ids is finished. " + new Date());
 
-        return policies.toArray(new String[policies.size()]);
+        return policies.toArray(new String[0]);
 
     }
 
@@ -406,15 +404,15 @@ public class PDPPolicyStore extends AbstractPolicyFinderModule
         }
 
         if (policyDTOs != null) {
-            attributeMap = new HashMap<String, Set<AttributeDTO>>();
+            attributeMap = new HashMap<>();
             for (PolicyDTO policyDTO : policyDTOs) {
                 Set<AttributeDTO> attributeDTOs =
-                        new HashSet<AttributeDTO>(Arrays.asList(policyDTO.getAttributeDTOs()));
+                        new HashSet<>(Arrays.asList(policyDTO.getAttributeDTOs()));
                 String[] policyIdRef = policyDTO.getPolicyIdReferences();
                 String[] policySetIdRef = policyDTO.getPolicySetIdReferences();
 
                 if (policyIdRef != null && policyIdRef.length > 0 || policySetIdRef != null &&
-                                                                     policySetIdRef.length > 0) {
+                        policySetIdRef.length > 0) {
                     for (PolicyDTO dto : policyDTOs) {
                         if (policyIdRef != null) {
                             for (String policyId : policyIdRef) {

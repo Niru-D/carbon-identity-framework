@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.policy.publisher;
 
@@ -43,19 +43,19 @@ import java.util.Set;
  */
 public class PolicyPublishExecutor {
 
-    private static Log log = LogFactory.getLog(PolicyPublishExecutor.class);
+    private static final Log log = LogFactory.getLog(PolicyPublishExecutor.class);
     private String[] policyIds;
     private String[] subscriberIds;
-    private PolicyPublisher publisher;
+    private final PolicyPublisher publisher;
     private String version;
     private String action;
-    private String verificationCode;
-    private boolean toPDP;
+    private final String verificationCode;
+    private final boolean toPDP;
     private String tenantDomain;
     private int tenantId;
     private String userName;
     private int order;
-    private boolean enabled;
+    private final boolean enabled;
 
     public PolicyPublishExecutor(String[] policyIds, String version, String action, boolean enabled, int order,
                                  String[] subscriberIds, PolicyPublisher publisher,
@@ -63,7 +63,7 @@ public class PolicyPublishExecutor {
 
         this.policyIds = policyIds;
         if (toPDP) {
-            this.subscriberIds = new String[]{"PDPSubscriber"};
+            this.subscriberIds = new String[] {"PDPSubscriber"};
         }
         this.subscriberIds = subscriberIds;
         this.action = action;
@@ -98,7 +98,7 @@ public class PolicyPublishExecutor {
         }
 
         String newVerificationCode = null;
-        ArrayList<String> notPublishedSubscribers = new ArrayList<String>();
+        ArrayList<String> notPublishedSubscribers = new ArrayList<>();
 
 
         PolicyPublisherModule policyPublisherModule = null;
@@ -113,8 +113,8 @@ public class PolicyPublishExecutor {
         for (String subscriberId : subscriberIds) {
 
             // there is only one known subscriber, if policies are publishing to PDP
-            List<StatusHolder> subscriberHolders = new ArrayList<StatusHolder>();
-            List<StatusHolder> policyHolders = new ArrayList<StatusHolder>();
+            List<StatusHolder> subscriberHolders = new ArrayList<>();
+            List<StatusHolder> policyHolders = new ArrayList<>();
             if (toPDP) {
                 policyPublisherModule = new CarbonPDPPublisher();
                 holder = new PublisherDataHolder(policyPublisherModule.getModuleName());
@@ -214,7 +214,7 @@ public class PolicyPublishExecutor {
                 for (PAPStatusDataHandlerModule module : papStatusDataHandler) {
                     try {
                         module.handle(EntitlementConstants.Status.ABOUT_POLICY, policyId, policyHolders);
-                        policyHolders = new ArrayList<StatusHolder>();
+                        policyHolders = new ArrayList<>();
                     } catch (EntitlementException e) {
                         // ignore
                         log.error("Error while calling post publishers", e);
@@ -225,7 +225,7 @@ public class PolicyPublishExecutor {
             for (PAPStatusDataHandlerModule module : papStatusDataHandler) {
                 try {
                     module.handle(EntitlementConstants.Status.ABOUT_SUBSCRIBER, subscriberId, subscriberHolders);
-                    subscriberHolders = new ArrayList<StatusHolder>();
+                    subscriberHolders = new ArrayList<>();
                 } catch (EntitlementException e) {
                     // ignore
                     log.error("Error while calling post publishers", e);
@@ -235,7 +235,7 @@ public class PolicyPublishExecutor {
 
         if (newVerificationCode != null) {
             persistVerificationCode(newVerificationCode,
-                    notPublishedSubscribers.toArray(new String[notPublishedSubscribers.size()]));
+                    notPublishedSubscribers.toArray(new String[0]));
         }
     }
 
@@ -250,6 +250,7 @@ public class PolicyPublishExecutor {
         Registry registry = EntitlementServiceComponent.
                 getGovernanceRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
         try {
+            assert registry != null;
             org.wso2.carbon.registry.api.Resource resource = registry.newResource();
             resource.setProperty("subscriberIds", Arrays.asList(subscriberIds));
             resource.setProperty("policyIds", Arrays.asList(policyIds));
@@ -274,15 +275,16 @@ public class PolicyPublishExecutor {
         Registry registry = EntitlementServiceComponent.
                 getGovernanceRegistry(CarbonContext.getThreadLocalCarbonContext().getTenantId());
         try {
+            assert registry != null;
             org.wso2.carbon.registry.api.Resource resource = registry.
                     get(PDPConstants.ENTITLEMENT_POLICY_PUBLISHER_VERIFICATION + verificationCode);
             List<String> list = resource.getPropertyValues("subscriberIds");
             if (list != null) {
-                subscriberIds = list.toArray(new String[list.size()]);
+                subscriberIds = list.toArray(new String[0]);
             }
             list = resource.getPropertyValues("policyIds");
             if (list != null) {
-                policyIds = list.toArray(new String[list.size()]);
+                policyIds = list.toArray(new String[0]);
             }
             String version = resource.getProperty("version");
             if (version != null) {

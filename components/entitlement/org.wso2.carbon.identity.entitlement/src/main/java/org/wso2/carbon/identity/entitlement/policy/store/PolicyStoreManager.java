@@ -1,36 +1,31 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.policy.store;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.*;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
-import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Properties;
 
 /**
  * This manages the storing and reading of policies and policy metadata that is related
@@ -40,11 +35,9 @@ import java.util.Properties;
  */
 public class PolicyStoreManager {
 
-    private PDPPolicyStoreModule policyStore = null;
+    private final PDPPolicyStoreModule policyStore;
 
-    private PolicyDataStoreModule policyDataStore = null;
-
-    private static Log log = LogFactory.getLog(PolicyStoreManager.class);
+    private final PolicyDataStoreModule policyDataStore;
 
     public PolicyStoreManager(PolicyDataStoreModule policyDataStore) {
 
@@ -172,7 +165,7 @@ public class PolicyStoreManager {
 
         if (!policyStore.isPolicyExist(policyDTO.getPolicyId())) {
             throw new EntitlementException("Policy does not exist in the Policy Store : PolicyId " +
-                                           policyDTO.getPolicyId());
+                    policyDTO.getPolicyId());
         }
         policyStore.deletePolicy(policyDTO.getPolicyId());
 
@@ -204,7 +197,7 @@ public class PolicyStoreManager {
 
     public PolicyDTO[] getLightPolicies() {
 
-        List<PolicyDTO> policyDTOs = new ArrayList<PolicyDTO>();
+        List<PolicyDTO> policyDTOs = new ArrayList<>();
         String[] policies = policyStore.getOrderedPolicyIdentifiers();
         if (policies != null) {
             for (String policy : policies) {
@@ -219,7 +212,7 @@ public class PolicyStoreManager {
                 policyDTOs.add(policyDTO);
             }
         }
-        return policyDTOs.toArray(new PolicyDTO[policyDTOs.size()]);
+        return policyDTOs.toArray(new PolicyDTO[0]);
     }
 
     public PolicyStoreDTO[] getAllPolicyData() {

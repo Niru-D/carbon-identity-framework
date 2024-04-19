@@ -139,8 +139,8 @@ public class EntitlementExtensionBuilder {
                         inStream = url.openStream();
                     } else {
                         warningMessage = "Bundle context could not find resource "
-                                         + ENTITLEMENT_CONFIG
-                                         + " or user does not have sufficient permission to access the resource.";
+                                + ENTITLEMENT_CONFIG
+                                + " or user does not have sufficient permission to access the resource.";
                     }
 
                 } else {
@@ -149,8 +149,8 @@ public class EntitlementExtensionBuilder {
                         inStream = url.openStream();
                     } else {
                         warningMessage = "PIP Config Builder could not find resource "
-                                         + ENTITLEMENT_CONFIG
-                                         + " or user does not have sufficient permission to access the resource.";
+                                + ENTITLEMENT_CONFIG
+                                + " or user does not have sufficient permission to access the resource.";
                     }
                 }
             }
@@ -444,7 +444,7 @@ public class EntitlementExtensionBuilder {
             while (properties.getProperty(className + "." + j) != null) {
                 String value = properties.getProperty(className + "." + j++);
                 metadataProps.put(value.substring(0, value.indexOf(",")),
-                                  value.substring(value.indexOf(",") + 1));
+                        value.substring(value.indexOf(",") + 1));
             }
 
             metadata.init(metadataProps);

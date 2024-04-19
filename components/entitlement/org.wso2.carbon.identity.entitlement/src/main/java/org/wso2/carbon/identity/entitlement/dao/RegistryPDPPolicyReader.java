@@ -1,20 +1,20 @@
 /*
-*  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
-*
-*  WSO2 Inc. licenses this file to you under the Apache License,
-*  Version 2.0 (the "License"); you may not use this file except
-*  in compliance with the License.
-*  You may obtain a copy of the License at
-*
-*    http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing,
-* software distributed under the License is distributed on an
-* "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-* KIND, either express or implied.  See the License for the
-* specific language governing permissions and limitations
-* under the License.
-*/
+ *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ *
+ *  WSO2 Inc. licenses this file to you under the Apache License,
+ *  Version 2.0 (the "License"); you may not use this file except
+ *  in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
 
 package org.wso2.carbon.identity.entitlement.dao;
 
@@ -32,7 +32,7 @@ import org.wso2.carbon.registry.core.RegistryConstants;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,15 +45,15 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
     /**
      * logger
      */
-    private static Log log = LogFactory.getLog(RegistryPDPPolicyReader.class);
+    private static final Log log = LogFactory.getLog(RegistryPDPPolicyReader.class);
     /**
      * Governance registry instance of current tenant
      */
-    private Registry registry;
+    private final Registry registry;
     /**
      * policy store path of the registry
      */
-    private String policyStorePath;
+    private final String policyStorePath;
 
     /**
      * constructor
@@ -76,7 +76,7 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
     @Override
     public PolicyDTO readPolicy(String policyId) throws EntitlementException {
 
-        Resource resource = null;
+        Resource resource;
 
         resource = getPolicyResource(policyId);
 
@@ -98,13 +98,13 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
     @Override
     public PolicyDTO[] readAllPolicies(boolean active, boolean order) throws EntitlementException {
 
-        Resource[] resources = null;
+        Resource[] resources;
         resources = getAllPolicyResource();
 
         if (resources == null) {
             return new PolicyDTO[0];
         }
-        List<PolicyDTO> policyDTOList = new ArrayList<PolicyDTO>();
+        List<PolicyDTO> policyDTOList = new ArrayList<>();
         for (Resource resource : resources) {
             PolicyDTO policyDTO = readPolicy(resource);
             if (active) {
@@ -116,7 +116,7 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
             }
         }
 
-        PolicyDTO[] policyDTOs = policyDTOList.toArray(new PolicyDTO[policyDTOList.size()]);
+        PolicyDTO[] policyDTOs = policyDTOList.toArray(new PolicyDTO[0]);
 
         if (order) {
             Arrays.sort(policyDTOs, new PolicyOrderComparator());
@@ -135,10 +135,10 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
     @Override
     public String[] getAllPolicyIds() throws EntitlementException {
 
-        String path = null;
-        Collection collection = null;
-        String[] children = null;
-        List<String> resources = new ArrayList<String>();
+        String path;
+        Collection collection;
+        String[] children;
+        List<String> resources = new ArrayList<>();
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving all entitlement policies");
@@ -165,7 +165,7 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
             throw new EntitlementException("Error while retrieving entitlement policy resources", e);
         }
 
-        return resources.toArray(new String[resources.size()]);
+        return resources.toArray(new String[0]);
     }
 
     /**
@@ -177,15 +177,15 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
      */
     private PolicyDTO readPolicy(Resource resource) throws EntitlementException {
 
-        String policy = null;
-        AbstractPolicy absPolicy = null;
-        PolicyDTO dto = null;
+        String policy;
+        AbstractPolicy absPolicy;
+        PolicyDTO dto;
 
         try {
             if (resource.getContent() == null) {
                 throw new EntitlementException("Error while loading entitlement policy. Policy content is null");
             }
-            policy = new String((byte[]) resource.getContent(), Charset.forName("UTF-8"));
+            policy = new String((byte[]) resource.getContent(), StandardCharsets.UTF_8);
             absPolicy = PAPPolicyReader.getInstance(null).getPolicy(policy);
             dto = new PolicyDTO();
             dto.setPolicyId(absPolicy.getId().toASCIIString());
@@ -241,7 +241,7 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
      * @throws EntitlementException throws, if fails
      */
     private Resource getPolicyResource(String policyId) throws EntitlementException {
-        String path = null;
+        String path;
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving entitlement policy");
@@ -271,10 +271,10 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
      */
     private Resource[] getAllPolicyResource() throws EntitlementException {
 
-        String path = null;
-        Collection collection = null;
-        List<Resource> resources = new ArrayList<Resource>();
-        String[] children = null;
+        String path;
+        Collection collection;
+        List<Resource> resources = new ArrayList<>();
+        String[] children;
 
         if (log.isDebugEnabled()) {
             log.debug("Retrieving all entitlement policies");
@@ -301,7 +301,7 @@ public class RegistryPDPPolicyReader implements PDPPolicyReaderModule {
             throw new EntitlementException("Error while retrieving entitlement policies", e);
         }
 
-        return resources.toArray(new Resource[resources.size()]);
+        return resources.toArray(new Resource[0]);
     }
 
 }
