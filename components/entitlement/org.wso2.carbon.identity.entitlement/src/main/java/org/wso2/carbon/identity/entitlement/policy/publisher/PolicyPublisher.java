@@ -24,7 +24,6 @@ import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
 import org.wso2.carbon.identity.entitlement.dao.RegistrySubscriberManager;
 import org.wso2.carbon.identity.entitlement.dao.SubscriberManagerModule;
-import org.wso2.carbon.identity.entitlement.dao.SubscriberManager;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
@@ -87,7 +86,6 @@ public class PolicyPublisher {
         holder.setPropertyDTOs(new PublisherPropertyDTO[] {dto});
         try {
             PublisherDataHolder pdpDataHolder = null;
-            //TODO - Configuration to choose between registry and new data structure
             SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
             try {
 

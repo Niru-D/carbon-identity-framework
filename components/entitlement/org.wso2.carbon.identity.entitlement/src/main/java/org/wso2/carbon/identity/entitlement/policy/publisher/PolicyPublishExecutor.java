@@ -118,7 +118,6 @@ public class PolicyPublishExecutor {
                 holder = new PublisherDataHolder(policyPublisherModule.getModuleName());
             } else {
                 try {
-                    //TODO - Configuration to choose between registry and new data structure
                     SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
                     holder = subscriberManager.retrieveSubscriber(subscriberId, true);
                 } catch (EntitlementException e) {

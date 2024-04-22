@@ -50,7 +50,6 @@ public class PolicyStoreManager {
         if (policyCollections != null && !policyCollections.isEmpty()) {
             policyStore = policyCollections.entrySet().iterator().next().getKey();
         } else {
-            //TODO - Configuration to choose between registry and new data structure
             policyStore = new RegistryPDPPolicyStore();
         }
         this.policyDataStore = policyDataStore;

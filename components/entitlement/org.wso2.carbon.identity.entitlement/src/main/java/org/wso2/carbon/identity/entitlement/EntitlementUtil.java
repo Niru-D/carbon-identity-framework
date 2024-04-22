@@ -64,7 +64,6 @@ import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
 import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.utils.CarbonUtils;
@@ -403,8 +402,7 @@ public class EntitlementUtil {
      * @throws EntitlementException
      */
     public static boolean isPolicyExists(String policyId) throws EntitlementException {
-        PAPPolicyStoreReader policyReader = null;
-        //TODO - Configuration to choose between registry and new data structure
+        PAPPolicyStoreReader policyReader;
         PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
         policyReader = new PAPPolicyStoreReader(store);
         return policyReader.isExistPolicy(policyId);
@@ -503,8 +501,7 @@ public class EntitlementUtil {
      * @throws org.wso2.carbon.identity.entitlement.EntitlementException
      */
     public static PolicyDTO getPolicy(String policyId, Registry registry) throws EntitlementException {
-        PAPPolicyStoreReader policyReader = null;
-        //TODO - Configuration to choose between registry and new data structure
+        PAPPolicyStoreReader policyReader;
         PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
         policyReader = new PAPPolicyStoreReader(store);
         return policyReader.readPolicyDTO(policyId);

@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.entitlement;
 
 import org.apache.commons.logging.Log;
@@ -64,7 +65,7 @@ public class EntitlementPolicyAdminService {
 
 
     /**
-     * Add a new XACML policy in to the system.
+     * Adds a new XACML policy in to the system.
      *
      * @param policyDTO policy object
      * @throws EntitlementException throws
@@ -91,8 +92,9 @@ public class EntitlementPolicyAdminService {
         }
     }
 
+
     /**
-     * This method finds the policy file from given registry path and adds the policy
+     * Finds the policy file from given registry path and adds the policy
      *
      * @param policyRegistryPath given registry path
      * @throws org.wso2.carbon.identity.entitlement.EntitlementException throws when fails or registry error
@@ -153,6 +155,7 @@ public class EntitlementPolicyAdminService {
         }
     }
 
+
     /**
      * Updates given policy
      *
@@ -165,7 +168,7 @@ public class EntitlementPolicyAdminService {
 
 
     /**
-     * This method paginates policies
+     * Paginates policies
      *
      * @param policyTypeFilter   policy type to filter
      * @param policySearchString policy search String
@@ -234,6 +237,7 @@ public class EntitlementPolicyAdminService {
         return doPaging(pageNumber, policyDTOList.toArray(new PolicyDTO[0]));
     }
 
+
     /**
      * Gets policy for given policy id
      *
@@ -263,6 +267,7 @@ public class EntitlementPolicyAdminService {
         return policyDTO;
     }
 
+
     /**
      * Gets policy for given policy id and version
      *
@@ -290,6 +295,7 @@ public class EntitlementPolicyAdminService {
         return policyDTO;
     }
 
+
     /**
      * Gets lightweight policy DTO for given policy id
      *
@@ -300,6 +306,7 @@ public class EntitlementPolicyAdminService {
     public PolicyDTO getLightPolicy(String policyId) throws EntitlementException {
         return EntitlementAdminEngine.getInstance().getPapPolicyStoreManager().getLightPolicy(policyId);
     }
+
 
     /**
      * Removes policy for given policy object
@@ -363,8 +370,9 @@ public class EntitlementPolicyAdminService {
         }
     }
 
+
     /**
-     * This method returns the list of policy id available in PDP
+     * Returns the list of policy id available in PDP
      *
      * @param searchString search String
      * @return array of ids
@@ -409,11 +417,11 @@ public class EntitlementPolicyAdminService {
      */
     public PublisherDataHolder getSubscriber(String subscribeId) throws EntitlementException {
 
-        //TODO - Configuration to choose between registry and new data structure
         SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         return subscriberManager.retrieveSubscriber(subscribeId, false);
 
     }
+
 
     /**
      * Gets all subscribers ids that is registered,
@@ -424,7 +432,6 @@ public class EntitlementPolicyAdminService {
      */
     public String[] getSubscriberIds(String searchString) throws EntitlementException {
 
-        //TODO - Configuration to choose between registry and new data structure
         SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         String[] ids = subscriberManager.retrieveSubscriberIds(searchString);
 
@@ -435,46 +442,47 @@ public class EntitlementPolicyAdminService {
         }
     }
 
+
     /**
-     * Add subscriber details
+     * Adds subscriber details
      *
      * @param holder subscriber data as PublisherDataHolder object
      * @throws EntitlementException throws, if fails
      */
     public void addSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
-        //TODO - Configuration to choose between registry and new data structure
         SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         subscriberManager.persistSubscriber(holder, false);
 
     }
 
+
     /**
-     * Update subscriber details
+     * Updates subscriber details
      *
      * @param holder subscriber data as PublisherDataHolder object
      * @throws EntitlementException throws, if fails
      */
     public void updateSubscriber(PublisherDataHolder holder) throws EntitlementException {
 
-        //TODO - Configuration to choose between registry and new data structure
         SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         subscriberManager.persistSubscriber(holder, true);
 
     }
 
+
     /**
-     * delete subscriber details
+     * Deletes subscriber details
      *
      * @param subscriberId subscriber id
      * @throws EntitlementException throws, if fails
      */
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
 
-        //TODO - Configuration to choose between registry and new data structure
         SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
         subscriberManager.deleteSubscriber(subscriberId);
     }
+
 
     /**
      * Publishes given set of policies to all subscribers
@@ -495,7 +503,6 @@ public class EntitlementPolicyAdminService {
             policyIds = EntitlementAdminEngine.getInstance().getPapPolicyStoreManager().getPolicyIds();
         }
         if (subscriberIds == null || subscriberIds.length < 1) {
-            //TODO - Configuration to choose between registry and new data structure
             SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
             subscriberIds = subscriberManager.retrieveSubscriberIds("*");
         }
@@ -511,6 +518,7 @@ public class EntitlementPolicyAdminService {
         publisher.publishPolicy(policyIds, version, action, enabled, order, subscriberIds, null);
     }
 
+
     /**
      * Publishes given set of policies to all subscribers
      *
@@ -525,7 +533,10 @@ public class EntitlementPolicyAdminService {
 
     }
 
+
     /**
+     * Publishes given set of policies to PDP
+     *
      * @param policyIds policyIds array
      */
     private void publishToPDP(String[] policyIds, String action) {
@@ -535,7 +546,10 @@ public class EntitlementPolicyAdminService {
         publisher.publishPolicy(policyIds, null, action, false, 0, subscribers, null);
     }
 
+
     /**
+     * Publishes given set of policies to PDP
+     *
      * @param policyIds policyIds
      */
     public void publishToPDP(String[] policyIds, String action, String version, boolean enabled, int order) {
@@ -545,7 +559,10 @@ public class EntitlementPolicyAdminService {
         publisher.publishPolicy(policyIds, version, action, enabled, order, subscribers, null);
     }
 
+
     /**
+     * Rollbacks policy
+     *
      * @param policyId policyId
      * @param version  version
      */
@@ -557,7 +574,10 @@ public class EntitlementPolicyAdminService {
 
     }
 
+
     /**
+     * Returns status data
+     *
      * @param type status type
      * @param key  id
      * @return PaginatedStatusHolder
@@ -568,7 +588,6 @@ public class EntitlementPolicyAdminService {
         PAPStatusDataHandlerModule dataRetrievingHandler = null;
         Set<PAPStatusDataHandlerModule> handlers = EntitlementAdminEngine.getInstance().getPapStatusDataHandlers();
         for (PAPStatusDataHandlerModule handler : handlers) {
-            //TODO - Configuration to choose between registry and new data structure
             if (handler instanceof RegistryPAPStatusDataHandler) {
                 dataRetrievingHandler = handler;
                 break;
@@ -601,6 +620,8 @@ public class EntitlementPolicyAdminService {
 
 
     /**
+     * Gets entitlement data
+     *
      * @param dataModule data module
      * @param category   category
      * @param regexp     regexp
@@ -615,7 +636,10 @@ public class EntitlementPolicyAdminService {
         return dataFinder.getEntitlementData(dataModule, category, regexp, dataLevel, limit);
     }
 
+
     /**
+     * Returns entitlement data modules
+     *
      * @return array of EntitlementFinderDataHolders
      */
     public EntitlementFinderDataHolder[] getEntitlementDataModules() {
@@ -624,7 +648,10 @@ public class EntitlementPolicyAdminService {
         return dataFinder.getEntitlementDataModules();
     }
 
+
     /**
+     * Returns policy versions
+     *
      * @param policyId policyId
      * @return array of policy versions
      * @throws EntitlementException throws, if fails
@@ -640,12 +667,26 @@ public class EntitlementPolicyAdminService {
         return versions;
     }
 
+
+    /**
+     * Changes policy order
+     *
+     * @param policyId policyId
+     * @param newOrder new order
+     */
     public void orderPolicy(String policyId, int newOrder) {
 
         publishToPDP(new String[] {policyId}, EntitlementConstants.PolicyPublish.ACTION_ORDER, null,
                 false, newOrder);
     }
 
+
+    /**
+     * Enables or disables the policy
+     *
+     * @param policyId policyId
+     * @param enable enable or disable
+     */
     public void enableDisablePolicy(String policyId, boolean enable) {
 
         if (enable) {
@@ -655,15 +696,19 @@ public class EntitlementPolicyAdminService {
         }
     }
 
+
     /**
+     * De-promotes the policy
+     *
      * @param policyId policyId
      */
     public void dePromotePolicy(String policyId) {
         publishToPDP(new String[] {policyId}, EntitlementConstants.PolicyPublish.ACTION_DELETE);
     }
 
+
     /**
-     * This method persists a XACML policy
+     * Persists a XACML policy
      *
      * @param policyDTO PolicyDTO object
      * @param isAdd     whether this is policy adding or updating
@@ -760,7 +805,7 @@ public class EntitlementPolicyAdminService {
 
 
     /**
-     * This method is used internally to do the pagination purposes.
+     * Does internal pagination
      *
      * @param pageNumber page Number
      * @param policySet  set of policies
@@ -803,7 +848,7 @@ public class EntitlementPolicyAdminService {
 
 
     /**
-     * This method is used internally to do the pagination purposes.
+     * Does internal pagination
      *
      * @param pageNumber    page Number
      * @param statusHolders <code>StatusHolder</code>
@@ -846,7 +891,7 @@ public class EntitlementPolicyAdminService {
 
 
     /**
-     * This method is used internally to do the pagination purposes.
+     * Does internal pagination
      *
      * @param pageNumber page Number
      * @param ids        <code>String</code>
@@ -889,6 +934,14 @@ public class EntitlementPolicyAdminService {
     }
 
 
+    /**
+     * Handles status
+     *
+     * @param action action
+     * @param policyDTO policy
+     * @param success success
+     * @param message message.
+     */
     private void handleStatus(String action, PolicyDTO policyDTO, boolean success, String message) {
 
         Set<PAPStatusDataHandlerModule> handlers = EntitlementServiceComponent.getEntitlementConfig().

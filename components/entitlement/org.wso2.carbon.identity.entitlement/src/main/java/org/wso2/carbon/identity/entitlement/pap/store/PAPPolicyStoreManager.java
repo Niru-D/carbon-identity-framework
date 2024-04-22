@@ -18,7 +18,6 @@
 package org.wso2.carbon.identity.entitlement.pap.store;
 
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
@@ -32,7 +31,6 @@ public class PAPPolicyStoreManager {
 
 
     public PAPPolicyStoreManager() {
-        //TODO - Configuration to choose between registry and new data structure
         store = new RegistryPAPPolicyStore();
         storeReader = new PAPPolicyStoreReader(store);
     }

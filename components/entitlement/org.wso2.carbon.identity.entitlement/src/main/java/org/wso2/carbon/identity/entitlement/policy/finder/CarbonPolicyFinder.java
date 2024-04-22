@@ -37,7 +37,6 @@ import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.PolicyOrderComparator;
 import org.wso2.carbon.identity.entitlement.cache.PolicyStatus;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
-import org.wso2.carbon.identity.entitlement.dao.PolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dao.PolicyDataStoreModule;
 import org.wso2.carbon.identity.entitlement.dao.RegistryPolicyDataStore;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
@@ -152,7 +151,6 @@ public class CarbonPolicyFinder extends org.wso2.balana.finder.PolicyFinderModul
             if (dataStoreModules != null && dataStoreModules.size() > 0) {
                 policyDataStore = dataStoreModules.entrySet().iterator().next().getKey();
             } else {
-                //TODO - Configuration to choose between registry and new data structure
                 policyDataStore = new RegistryPolicyDataStore();
             }
             policyCombiningAlgorithm = policyDataStore.getGlobalPolicyAlgorithm();

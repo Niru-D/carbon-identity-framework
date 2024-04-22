@@ -60,7 +60,6 @@ public class EntitlementAdminEngine {
             this.versionManager = versionManagers.entrySet().iterator().next().getKey();
         } else {
             //init without init()
-            //TODO - Configuration to choose between registry and new data structure
             this.versionManager = new RegistryPolicyVersionManager();
         }
         Map<PolicyDataStoreModule, Properties> dataStoreModules = EntitlementServiceComponent.
@@ -69,7 +68,6 @@ public class EntitlementAdminEngine {
             this.policyDataStore = dataStoreModules.entrySet().iterator().next().getKey();
         } else {
             //init without init()
-            //TODO - Configuration to choose between registry and new data structure
             this.policyDataStore = new RegistryPolicyDataStore();
         }
 
