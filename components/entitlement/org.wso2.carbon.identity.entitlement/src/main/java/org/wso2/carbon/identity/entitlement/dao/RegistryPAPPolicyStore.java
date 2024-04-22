@@ -469,8 +469,7 @@ public class RegistryPAPPolicyStore implements PAPPolicyStoreModule {
                 }
             }
 
-            //before writing basic policy editor metadata as properties,
-            //delete any properties related to them
+            //before writing basic policy editor metadata as properties, delete any properties related to them
             String policyEditor = resource.getProperty(PDPConstants.POLICY_EDITOR_TYPE);
             if (newPolicy && policyEditor != null) {
                 resource.removeProperty(PDPConstants.POLICY_EDITOR_TYPE);

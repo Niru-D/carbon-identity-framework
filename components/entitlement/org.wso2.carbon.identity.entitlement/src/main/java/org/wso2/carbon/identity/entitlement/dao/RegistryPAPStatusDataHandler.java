@@ -67,7 +67,7 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
         String path;
         if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
             path = ENTITLEMENT_POLICY_STATUS + key;
-            // policy would be deleted.
+            // policy gets deleted.
             for (StatusHolder holder : statusHolder) {
                 if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
                     deletedPersistedData(path);
@@ -76,7 +76,7 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
             }
         } else {
             path = ENTITLEMENT_PUBLISHER_STATUS + key;
-            // subscriber would be deleted.
+            // subscriber gets deleted.
             for (StatusHolder holder : statusHolder) {
                 if (EntitlementConstants.StatusTypes.DELETE_POLICY.equals(holder.getType())) {
                     deletedPersistedData(path);
