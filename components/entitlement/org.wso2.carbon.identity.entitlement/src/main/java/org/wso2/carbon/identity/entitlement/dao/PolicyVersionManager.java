@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
@@ -39,7 +40,7 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- *
+ * This manages policy versions
  */
 public class PolicyVersionManager implements PolicyVersionManagerModule {
 
@@ -48,6 +49,12 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
 
     private int maxVersions;
 
+
+    /**
+     * init policy version handler
+     *
+     * @param properties properties
+     */
     @Override
     public void init(Properties properties) {
         try {
@@ -60,6 +67,15 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
         }
     }
 
+
+    /**
+     * Returns requested policy version
+     *
+     * @param policyId policyId
+     * @param version  policy version
+     * @return policyDTO
+     * @throws EntitlementException throws, if fails
+     */
     @Override
     public PolicyDTO getPolicy(String policyId, String version) throws EntitlementException {
 
@@ -92,7 +108,7 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
 
         PAPPolicyStore policyStore = new PAPPolicyStore();
         PolicyDTO dto;
-        dto = policyStore.getPolicyByVersion(policyId, version);
+        dto = policyStore.getPolicy(policyId, version);
 
         if (dto == null) {
             throw new EntitlementException("No policy with the given policyID and version");
@@ -101,31 +117,13 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
 
     }
 
-    @Override
-    public String createVersion(PolicyDTO policyDTO) throws EntitlementException {
 
-        PAPPolicyStoreManager manager = new PAPPolicyStoreManager();
-        String version = "0";
-
-        if (manager.isExistPolicy(policyDTO.getPolicyId())) {
-            PolicyDTO dto = manager.getLightPolicy(policyDTO.getPolicyId());
-            version = dto.getVersion();
-        }
-
-        int versionInt = Integer.parseInt(version);
-
-        // check whether this is larger than max version
-        if (versionInt > maxVersions) {
-            // delete the older version
-            int olderVersion = versionInt - maxVersions;
-            manager.removePolicyByVersion(policyDTO.getPolicyId(), olderVersion);
-        }
-
-        //new version
-        version = Integer.toString(versionInt + 1);
-        return version;
-    }
-
+    /**
+     * Returns versions of the given policy
+     *
+     * @param policyId policyId
+     * @return String[] of policy versions
+     */
     @Override
     public String[] getVersions(String policyId) {
 
@@ -152,4 +150,50 @@ public class PolicyVersionManager implements PolicyVersionManagerModule {
         }
         return versions.toArray(new String[0]);
     }
+
+
+    /**
+     * Creates policy versions
+     *
+     * @param policyDTO policyDTO
+     * @return version
+     * @throws EntitlementException throws, if fails
+     */
+    @Override
+    public String createVersion(PolicyDTO policyDTO) throws EntitlementException {
+
+        PAPPolicyStoreManager manager = new PAPPolicyStoreManager();
+        String version = "0";
+
+        if (manager.isExistPolicy(policyDTO.getPolicyId())) {
+            PolicyDTO dto = manager.getLightPolicy(policyDTO.getPolicyId());
+            version = dto.getVersion();
+        }
+
+        int versionInt = Integer.parseInt(version);
+
+        // check whether this is larger than max version
+        if (versionInt > maxVersions) {
+            // delete the older version
+            int olderVersion = versionInt - maxVersions;
+            manager.removePolicyByVersion(policyDTO.getPolicyId(), olderVersion);
+        }
+
+        //new version
+        version = Integer.toString(versionInt + 1);
+        return version;
+    }
+
+
+    /**
+     * Removes policy versions
+     *
+     * @param policyId policy id
+     * @throws EntitlementException throws, if fails
+     */
+    @Override
+    public void deletePolicy(String policyId) throws EntitlementException {
+
+    }
+
 }

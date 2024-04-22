@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -33,38 +33,30 @@ public interface PDPPolicyStoreModule extends PolicyFinderModule {
 
     /**
      * init policy store module
-     *
-     * @param properties properties
      */
     void init(Properties properties);
 
+
     /**
-     * add policy in to the store
-     *
-     * @param policy policy
+     * Adds the policy into the store
      */
     void addPolicy(PolicyStoreDTO policy) throws EntitlementException;
 
 
     /**
-     * update policy in to the store
-     *
-     * @param policy policy
+     * Updates the policy in the store
      */
     void updatePolicy(PolicyStoreDTO policy) throws EntitlementException;
 
+
     /**
-     * delete policy from the store
-     *
-     * @param policyIdentifier policyID
+     * Deletes the policy from the store
      */
     void deletePolicy(String policyIdentifier) throws EntitlementException;
 
+
     /**
-     * Check whether policy exists or not
-     *
-     * @param policyId policy id as <code>String</code>
-     * @return whether true or false
+     * Checks whether policy exists or not
      */
     boolean isPolicyExist(String policyId);
 

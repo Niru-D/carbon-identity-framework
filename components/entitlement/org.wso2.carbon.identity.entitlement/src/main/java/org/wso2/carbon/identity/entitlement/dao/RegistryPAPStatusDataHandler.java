@@ -1,12 +1,12 @@
 /*
- *  Copyright (c) WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -25,7 +25,6 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.StatusHolderComparator;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
-import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.registry.core.Registry;
@@ -38,7 +37,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * TODO
+ * This implementation handles the status data
  */
 public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule {
 
@@ -63,8 +62,7 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
     }
 
     @Override
-    public void handle(String about, String key, List<StatusHolder> statusHolder)
-            throws EntitlementException {
+    public void handle(String about, String key, List<StatusHolder> statusHolder) throws EntitlementException {
 
         String path;
         if (EntitlementConstants.Status.ABOUT_POLICY.equals(about)) {
@@ -106,20 +104,18 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
             String path = ENTITLEMENT_POLICY_STATUS + key;
             List<StatusHolder> holders = readStatus(path, EntitlementConstants.Status.ABOUT_POLICY);
             List<StatusHolder> filteredHolders = new ArrayList<>();
-            if (holders != null) {
-                searchString = searchString.replace("*", ".*");
-                Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
-                for (StatusHolder holder : holders) {
-                    String id = holder.getUser();
-                    Matcher matcher = pattern.matcher(id);
-                    if (!matcher.matches()) {
-                        continue;
-                    }
-                    if (type != null && type.equals(holder.getType())) {
-                        filteredHolders.add(holder);
-                    } else if (type == null) {
-                        filteredHolders.add(holder);
-                    }
+            searchString = searchString.replace("*", ".*");
+            Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
+            for (StatusHolder holder : holders) {
+                String id = holder.getUser();
+                Matcher matcher = pattern.matcher(id);
+                if (!matcher.matches()) {
+                    continue;
+                }
+                if (type != null && type.equals(holder.getType())) {
+                    filteredHolders.add(holder);
+                } else if (type == null) {
+                    filteredHolders.add(holder);
                 }
             }
             return filteredHolders.toArray(new StatusHolder[0]);
@@ -127,17 +123,15 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
             List<StatusHolder> filteredHolders = new ArrayList<>();
             String path = ENTITLEMENT_PUBLISHER_STATUS + key;
             List<StatusHolder> holders = readStatus(path, EntitlementConstants.Status.ABOUT_SUBSCRIBER);
-            if (holders != null) {
-                searchString = searchString.replace("*", ".*");
-                Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
-                for (StatusHolder holder : holders) {
-                    String id = holder.getTarget();
-                    Matcher matcher = pattern.matcher(id);
-                    if (!matcher.matches()) {
-                        continue;
-                    }
-                    filteredHolders.add(holder);
+            searchString = searchString.replace("*", ".*");
+            Pattern pattern = Pattern.compile(searchString, Pattern.CASE_INSENSITIVE);
+            for (StatusHolder holder : holders) {
+                String id = holder.getTarget();
+                Matcher matcher = pattern.matcher(id);
+                if (!matcher.matches()) {
+                    continue;
                 }
+                filteredHolders.add(holder);
             }
             return filteredHolders.toArray(new StatusHolder[0]);
         }
@@ -148,8 +142,7 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
         Registry registry;
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         try {
-            registry = EntitlementServiceComponent.getRegistryService().
-                    getGovernanceSystemRegistry(tenantId);
+            registry = EntitlementServiceComponent.getRegistryService().getGovernanceSystemRegistry(tenantId);
             if (registry.resourceExists(path)) {
                 registry.delete(path);
             }
@@ -167,10 +160,9 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
 
         try {
-            registry = EntitlementServiceComponent.getRegistryService().
-                    getGovernanceSystemRegistry(tenantId);
-            boolean useLastStatusOnly = Boolean.parseBoolean(
-                    IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
+            registry = EntitlementServiceComponent.getRegistryService().getGovernanceSystemRegistry(tenantId);
+            boolean useLastStatusOnly =
+                    Boolean.parseBoolean(IdentityUtil.getProperty(EntitlementConstants.PROP_USE_LAST_STATUS_ONLY));
             if (registry.resourceExists(path) && !isNew && !useLastStatusOnly) {
                 resource = registry.get(path);
                 String[] versions = registry.getVersions(path);
@@ -213,8 +205,7 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
         Registry registry;
         int tenantId = CarbonContext.getThreadLocalCarbonContext().getTenantId();
         try {
-            registry = EntitlementServiceComponent.getRegistryService().
-                    getGovernanceSystemRegistry(tenantId);
+            registry = EntitlementServiceComponent.getRegistryService().getGovernanceSystemRegistry(tenantId);
             if (registry.resourceExists(path)) {
                 resource = registry.get(path);
             }
@@ -227,8 +218,6 @@ public class RegistryPAPStatusDataHandler implements PAPStatusDataHandlerModule 
         if (resource != null && resource.getProperties() != null) {
             Properties properties = resource.getProperties();
             for (Map.Entry<Object, Object> entry : properties.entrySet()) {
-                PublisherPropertyDTO dto = new PublisherPropertyDTO();
-                dto.setId((String) entry.getKey());
                 Object value = entry.getValue();
                 if (value instanceof ArrayList) {
                     List list = (ArrayList) entry.getValue();

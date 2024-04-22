@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -50,10 +50,12 @@ public class RegistryPolicyDataStore implements PolicyDataStoreModule {
     private static final Log log = LogFactory.getLog(RegistryPolicyDataStore.class);
     private final String policyDataCollection = PDPConstants.ENTITLEMENT_POLICY_DATA;
 
+
     @Override
     public void init(Properties properties) throws EntitlementException {
 
     }
+
 
     @Override
     public PolicyCombiningAlgorithm getGlobalPolicyAlgorithm() {
@@ -98,6 +100,7 @@ public class RegistryPolicyDataStore implements PolicyDataStoreModule {
         return new DenyOverridesPolicyAlg();
     }
 
+
     @Override
     public void setGlobalPolicyAlgorithm(String policyCombiningAlgorithm) throws EntitlementException {
 
@@ -121,6 +124,7 @@ public class RegistryPolicyDataStore implements PolicyDataStoreModule {
             throw new EntitlementException("Error while updating combing algorithm in policy store");
         }
     }
+
 
     @Override
     public String getGlobalPolicyAlgorithmName() {
@@ -149,12 +153,14 @@ public class RegistryPolicyDataStore implements PolicyDataStoreModule {
         return algorithm;
     }
 
+
     @Override
     public String[] getAllGlobalPolicyAlgorithmNames() {
 
         return new String[] {"deny-overrides", "permit-overrides", "first-applicable",
                 "ordered-deny-overrides", "ordered-permit-overrides", "only-one-applicable"};
     }
+
 
     @Override
     public PolicyStoreDTO getPolicyData(String policyId) {
@@ -220,6 +226,7 @@ public class RegistryPolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    @Override
     public void setPolicyData(String policyId, PolicyStoreDTO policyDataDTO) throws EntitlementException {
 
         Registry registry = getGovernanceRegistry();
@@ -249,6 +256,7 @@ public class RegistryPolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    @Override
     public void removePolicyData(String policyId) throws EntitlementException {
 
         Registry registry = getGovernanceRegistry();

@@ -1,12 +1,12 @@
 /*
- *  Copyright (c) WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -31,36 +31,26 @@ public interface PAPStatusDataHandlerModule {
 
     /**
      * init entitlement status data handler module
-     *
-     * @param properties properties
      */
     void init(Properties properties);
 
+
     /**
      * Handles
-     *
-     * @param about        indicates what is related with this admin status action
-     * @param key          key value of the status
-     * @param statusHolder <code>StatusHolder</code>
-     * @throws EntitlementException throws, if fails to handle
      */
     void handle(String about, String key, List<StatusHolder> statusHolder) throws EntitlementException;
 
+
     /**
-     * @param about        indicates what is related with this admin status action
-     * @param statusHolder <code>StatusHolder</code>
-     * @throws EntitlementException if fails to handle
+     * Handles
      */
     void handle(String about, StatusHolder statusHolder) throws EntitlementException;
 
+
     /**
-     * @param about        indicates what is related with this admin status action
-     * @param key          key value of the status
-     * @param type         admin action type
-     * @param searchString search string for <code>StatusHolder</code>
-     * @return An array of <code>StatusHolder</code>
-     * @throws EntitlementException if fails
+     * Returns status data
      */
-    StatusHolder[] getStatusData(String about, String key, String type,
-                                 String searchString) throws EntitlementException;
+    StatusHolder[] getStatusData(String about, String key, String type, String searchString)
+            throws EntitlementException;
+
 }

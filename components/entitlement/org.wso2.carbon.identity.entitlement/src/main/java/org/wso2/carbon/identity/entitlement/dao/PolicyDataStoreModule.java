@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -33,56 +33,55 @@ public interface PolicyDataStoreModule {
 
     /**
      * initializes the PolicyDataStoreModule
-     *
-     * @param properties properties, that need to initialize the module.
-     * @throws EntitlementException throws when initialization is failed
      */
     void init(Properties properties) throws EntitlementException;
 
+
     /**
      * Gets the policy combining algorithm of the PDP
-     *
-     * @return policy combining algorithm as <code>PolicyCombiningAlgorithm</code>
      */
     PolicyCombiningAlgorithm getGlobalPolicyAlgorithm();
 
+
     /**
-     * Persist the policy combining algorithm in to data store
-     *
-     * @param policyCombiningAlgorithm policy combining algorithm name to persist
-     * @throws EntitlementException throws if fails
+     * Persists the policy combining algorithm into the data store
      */
     void setGlobalPolicyAlgorithm(String policyCombiningAlgorithm) throws EntitlementException;
 
+
     /**
      * Gets the policy combining algorithm name of the PDP
-     *
-     * @return policy combining algorithm name as <code>String</code>
      */
     String getGlobalPolicyAlgorithmName();
 
+
     /**
      * Gets all supported policy combining algorithm name of the PDP
-     *
-     * @return policy combining algorithm names as <code>Array</code> of <code>String</code>
      */
     String[] getAllGlobalPolicyAlgorithmNames();
 
+
     /**
      * Gets policy data for given policy id
-     *
-     * @param policyId policy id as <code>String</code>
-     * @return policy data such as order and so on <code>PolicyStoreDTO</code>
      */
     PolicyStoreDTO getPolicyData(String policyId);
 
 
     /**
      * Gets all policy data
-     *
-     * @return <code>Array</code> of <code>PolicyStoreDTO</code>
      */
     PolicyStoreDTO[] getPolicyData();
 
+
+    /**
+     * Sets policy data for give policy id
+     */
+    void setPolicyData(String policyId, PolicyStoreDTO policyDataDTO) throws EntitlementException;
+
+
+    /**
+     * Removes policy data for given policy id
+     */
+    void removePolicyData(String policyId) throws EntitlementException;
 
 }

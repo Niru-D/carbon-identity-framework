@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Properties;
 
 /**
- * This is default implementation
+ * This is default implementation of the policy data store
  */
 public class PolicyDataStore implements PolicyDataStoreModule {
 
@@ -57,11 +58,23 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     private static final Log log = LogFactory.getLog(PolicyDataStore.class);
 
 
+    /**
+     * initializes the PolicyDataStoreModule
+     *
+     * @param properties properties, that need to initialize the module.
+     * @throws EntitlementException throws when initialization is failed
+     */
     @Override
     public void init(Properties properties) throws EntitlementException {
 
     }
 
+
+    /**
+     * Gets the policy combining algorithm of the PDP
+     *
+     * @return policy combining algorithm
+     */
     @Override
     public PolicyCombiningAlgorithm getGlobalPolicyAlgorithm() {
 
@@ -115,6 +128,12 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    /**
+     * Persists the policy combining algorithm into the data store
+     *
+     * @param policyCombiningAlgorithm policy combining algorithm name to persist
+     * @throws EntitlementException throws if fails
+     */
     @Override
     public void setGlobalPolicyAlgorithm(String policyCombiningAlgorithm) throws EntitlementException {
 
@@ -159,6 +178,11 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    /**
+     * Gets the policy combining algorithm name of the PDP
+     *
+     * @return policy combining algorithm name
+     */
     @Override
     public String getGlobalPolicyAlgorithmName() {
 
@@ -196,6 +220,11 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    /**
+     * Gets all supported policy combining algorithm name of the PDP
+     *
+     * @return policy combining algorithm names
+     */
     @Override
     public String[] getAllGlobalPolicyAlgorithmNames() {
 
@@ -204,6 +233,12 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    /**
+     * Gets policy data for given policy id
+     *
+     * @param policyId policy id as <code>String</code>
+     * @return policy data such as order and so on <code>PolicyStoreDTO</code>
+     */
     @Override
     public PolicyStoreDTO getPolicyData(String policyId) {
 
@@ -240,6 +275,11 @@ public class PolicyDataStore implements PolicyDataStoreModule {
     }
 
 
+    /**
+     * Gets all policy data
+     *
+     * @return array of PolicyStoreDTO
+     */
     @Override
     public PolicyStoreDTO[] getPolicyData() {
 
@@ -279,5 +319,27 @@ public class PolicyDataStore implements PolicyDataStoreModule {
         }
     }
 
+
+    /**
+     * Sets policy data for give policy id
+     *
+     * @param policyId      policy id as string
+     * @param policyDataDTO policy data
+     */
+    @Override
+    public void setPolicyData(String policyId, PolicyStoreDTO policyDataDTO) {
+
+    }
+
+
+    /**
+     * Removes policy data for give policy id
+     *
+     * @param policyId policy id as string
+     */
+    @Override
+    public void removePolicyData(String policyId) {
+
+    }
 
 }

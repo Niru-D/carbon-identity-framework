@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -65,6 +65,10 @@ public class SubscriberManager implements SubscriberManagerModule {
 
     /**
      * Adds a subscriber
+     *
+     * @param holder publisher data holder
+     * @param update whether the operation indicates update or create
+     * @throws EntitlementException throws, if fails
      */
     @Override
     public void persistSubscriber(PublisherDataHolder holder, boolean update) throws EntitlementException {
@@ -211,6 +215,9 @@ public class SubscriberManager implements SubscriberManagerModule {
 
     /**
      * Deletes a subscriber
+     *
+     * @param subscriberId subscriber id
+     * @throws EntitlementException throws, if fails
      */
     @Override
     public void deleteSubscriber(String subscriberId) throws EntitlementException {
@@ -249,6 +256,11 @@ public class SubscriberManager implements SubscriberManagerModule {
 
     /**
      * Retrieves a subscriber
+     *
+     * @param id subscriber id
+     * @param returnSecrets whether the function should return secrets or not
+     * @return PublisherDataHolder
+     * @throws EntitlementException throws, if fails
      */
     @Override
     public PublisherDataHolder retrieveSubscriber(String id, boolean returnSecrets) throws EntitlementException {
@@ -280,6 +292,10 @@ public class SubscriberManager implements SubscriberManagerModule {
 
     /**
      * Retrieves subscriber ids
+     *
+     * @param searchString search string for subscribers
+     * @return string array of subscriber ids
+     * @throws EntitlementException throws, if fails
      */
     @Override
     public String[] retrieveSubscriberIds(String searchString) throws EntitlementException {

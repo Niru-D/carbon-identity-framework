@@ -42,21 +42,20 @@ public class PolicyStoreManager {
 
     private final PolicyDataStoreModule policyDataStore;
 
-    public PolicyStoreManager(PolicyDataStoreModule policyDataStore) {
 
-        //TODO - Configuration to choose between registry and new data structure
-//        policyStore = new PDPPolicyStore();
+    public PolicyStoreManager(PolicyDataStoreModule policyDataStore) {
 
         Map<PDPPolicyStoreModule, Properties> policyCollections = EntitlementServiceComponent.
                 getEntitlementConfig().getPolicyStore();
-        if (policyCollections != null && policyCollections.size() > 0) {
+        if (policyCollections != null && !policyCollections.isEmpty()) {
             policyStore = policyCollections.entrySet().iterator().next().getKey();
         } else {
+            //TODO - Configuration to choose between registry and new data structure
             policyStore = new RegistryPDPPolicyStore();
         }
-
         this.policyDataStore = policyDataStore;
     }
+
 
     public void addPolicy(PolicyDTO policyDTO) throws EntitlementException {
 
@@ -77,12 +76,11 @@ public class PolicyStoreManager {
         }
 
         policyStore.addPolicy(dto);
-        if (policyDataStore instanceof RegistryPolicyDataStore) {
-            ((RegistryPolicyDataStore) policyDataStore).setPolicyData(policyDTO.getPolicyId(), dto);
-        }
+        policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
         RegistryPDPPolicyStore
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_UPDATE);
     }
+
 
     public void updatePolicy(PolicyDTO policyDTO) throws EntitlementException {
 
@@ -106,6 +104,7 @@ public class PolicyStoreManager {
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_UPDATE);
     }
 
+
     public void enableDisablePolicy(PolicyDTO policyDTO) throws EntitlementException {
 
         if (!policyStore.isPolicyExist(policyDTO.getPolicyId())) {
@@ -124,9 +123,7 @@ public class PolicyStoreManager {
             policyStore.updatePolicy(dto);
         }
 
-        if (policyDataStore instanceof RegistryPolicyDataStore) {
-            ((RegistryPolicyDataStore) policyDataStore).setPolicyData(policyDTO.getPolicyId(), dto);
-        }
+        policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
 
         if (policyDTO.isActive()) {
             RegistryPDPPolicyStore
@@ -136,6 +133,7 @@ public class PolicyStoreManager {
                     .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_DISABLE);
         }
     }
+
 
     public void orderPolicy(PolicyDTO policyDTO) throws EntitlementException {
 
@@ -155,9 +153,7 @@ public class PolicyStoreManager {
             policyStore.updatePolicy(dto);
         }
 
-        if (policyDataStore instanceof RegistryPolicyDataStore) {
-            ((RegistryPolicyDataStore) policyDataStore).setPolicyData(policyDTO.getPolicyId(), dto);
-        }
+        policyDataStore.setPolicyData(policyDTO.getPolicyId(), dto);
 
         RegistryPDPPolicyStore
                 .invalidateCache(dto.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_ORDER);
@@ -171,14 +167,11 @@ public class PolicyStoreManager {
                     policyDTO.getPolicyId());
         }
         policyStore.deletePolicy(policyDTO.getPolicyId());
-
-        if (policyDataStore instanceof RegistryPolicyDataStore) {
-            ((RegistryPolicyDataStore) policyDataStore).removePolicyData(policyDTO.getPolicyId());
-        }
-
+        policyDataStore.removePolicyData(policyDTO.getPolicyId());
         RegistryPDPPolicyStore
                 .invalidateCache(policyDTO.getPolicyId(), EntitlementConstants.PolicyPublish.ACTION_DELETE);
     }
+
 
     public PolicyDTO getPolicy(String policyId) {
 
@@ -194,9 +187,11 @@ public class PolicyStoreManager {
         return policyDTO;
     }
 
+
     public String[] getPolicyIds() {
         return policyStore.getOrderedPolicyIdentifiers();
     }
+
 
     public PolicyDTO[] getLightPolicies() {
 
@@ -218,7 +213,9 @@ public class PolicyStoreManager {
         return policyDTOs.toArray(new PolicyDTO[0]);
     }
 
+
     public PolicyStoreDTO[] getAllPolicyData() {
         return policyDataStore.getPolicyData();
     }
+
 }

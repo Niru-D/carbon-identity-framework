@@ -1,12 +1,12 @@
 /*
- *  Copyright (c) WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -15,6 +15,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+
 package org.wso2.carbon.identity.entitlement.dao;
 
 import org.apache.commons.logging.Log;
@@ -50,13 +51,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * TODO
+ * This implementation handles the status data
  */
 public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
 
     private static final Log log = LogFactory.getLog(PAPStatusDataHandler.class);
     private int maxRecords;
 
+
+    /**
+     * init entitlement status data handler module
+     *
+     * @param properties properties
+     */
     @Override
     public void init(Properties properties) {
         String maxRecodesString = (String) properties.get("maxRecodesToPersist");
@@ -72,9 +79,17 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
         }
     }
 
+
+    /**
+     * Handles
+     *
+     * @param about        indicates what is related with this admin status action
+     * @param key          key value of the status
+     * @param statusHolder <code>StatusHolder</code>
+     * @throws EntitlementException throws, if fails to handle
+     */
     @Override
-    public void handle(String about, String key, List<StatusHolder> statusHolder)
-            throws EntitlementException {
+    public void handle(String about, String key, List<StatusHolder> statusHolder) throws EntitlementException {
 
         //If the action is DELETE_POLICY, delete the policy or the subscriber status
         for (StatusHolder holder : statusHolder) {
@@ -87,6 +102,13 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
     }
 
 
+    /**
+     * Handles
+     *
+     * @param about        indicates what is related with this admin status action
+     * @param statusHolder <code>StatusHolder</code>
+     * @throws EntitlementException if fails to handle
+     */
     @Override
     public void handle(String about, StatusHolder statusHolder) throws EntitlementException {
         List<StatusHolder> list = new ArrayList<>();
@@ -95,6 +117,16 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
     }
 
 
+    /**
+     * Returns status data
+     *
+     * @param about        indicates what is related with this admin status action
+     * @param key          key value of the status
+     * @param type         admin action type
+     * @param searchString search string for <code>StatusHolder</code>
+     * @return An array of <code>StatusHolder</code>
+     * @throws EntitlementException if fails
+     */
     @Override
     public StatusHolder[] getStatusData(String about, String key, String type, String searchString)
             throws EntitlementException {
@@ -294,6 +326,7 @@ public class PAPStatusDataHandler implements PAPStatusDataHandlerModule {
         }
 
     }
+
 
     private synchronized List<StatusHolder> readStatus(String key, String about) throws EntitlementException {
 

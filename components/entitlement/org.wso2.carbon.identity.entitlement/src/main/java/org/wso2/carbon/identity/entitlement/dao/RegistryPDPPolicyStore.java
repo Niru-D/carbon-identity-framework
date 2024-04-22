@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -66,6 +66,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
             policyStorePath = DEFAULT_POLICY_STORE_PATH;
         }
     }
+
 
     @Override
     public void addPolicy(PolicyStoreDTO policy) throws EntitlementException {
@@ -128,6 +129,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         }
     }
 
+
     @Override
     public boolean isPolicyExist(String policyId) {
 
@@ -150,6 +152,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
             return false;
         }
     }
+
 
     @Override
     public void updatePolicy(PolicyStoreDTO policy) throws EntitlementException {
@@ -185,6 +188,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         return MODULE_NAME;
     }
 
+
     @Override
     public String getPolicy(String policyId) {
         PolicyDTO dto;
@@ -198,6 +202,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         return null;
     }
 
+
     @Override
     public int getPolicyOrder(String policyId) {
         PolicyDTO dto;
@@ -210,6 +215,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         }
         return -1;
     }
+
 
     @Override
     public String[] getActivePolicies() {
@@ -259,6 +265,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
 
     }
 
+
     @Override
     public String[] getPolicyIdentifiers() {
         String[] policyIds = null;
@@ -269,6 +276,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         }
         return policyIds;
     }
+
 
     @Override
     public String getReferencedPolicy(String policyId) {
@@ -286,6 +294,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
 
         return null;
     }
+
 
     @Override
     public Map<String, Set<AttributeDTO>> getSearchAttributes(String identifier, Set<AttributeDTO> givenAttribute) {
@@ -336,10 +345,6 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         return PolicyFinderModule.COMBINATIONS_BY_CATEGORY_AND_PARAMETER;
     }
 
-    @Override
-    public boolean isDefaultCategoriesSupported() {
-        return true;
-    }
 
     /**
      * creates policy reader instance
@@ -358,6 +363,7 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         }
         return new RegistryPDPPolicyReader(registry, policyStorePath);
     }
+
 
     /**
      * This helper method creates properties object which contains the policy metadata.
@@ -380,13 +386,16 @@ public class RegistryPDPPolicyStore extends AbstractPolicyFinderModule
         }
     }
 
+
     @Override
     public boolean isPolicyOrderingSupport() {
         return true;
     }
 
+
     @Override
     public boolean isPolicyDeActivationSupport() {
         return true;
     }
+
 }

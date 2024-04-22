@@ -44,18 +44,18 @@ import java.util.Set;
 public class PolicyPublishExecutor {
 
     private static final Log log = LogFactory.getLog(PolicyPublishExecutor.class);
-    private String[] policyIds;
-    private String[] subscriberIds;
     private final PolicyPublisher publisher;
-    private String version;
-    private String action;
     private final String verificationCode;
     private final boolean toPDP;
+    private final boolean enabled;
+    private String[] policyIds;
+    private String[] subscriberIds;
+    private String version;
+    private String action;
     private String tenantDomain;
     private int tenantId;
     private String userName;
     private int order;
-    private final boolean enabled;
 
     public PolicyPublishExecutor(String[] policyIds, String version, String action, boolean enabled, int order,
                                  String[] subscriberIds, PolicyPublisher publisher,
@@ -92,14 +92,12 @@ public class PolicyPublishExecutor {
 
     public void publish() {
 
-
         if ((policyIds == null || policyIds.length > 0) && verificationCode != null) {
             loadVerificationCode(verificationCode);
         }
 
         String newVerificationCode = null;
         ArrayList<String> notPublishedSubscribers = new ArrayList<>();
-
 
         PolicyPublisherModule policyPublisherModule = null;
         Set<PolicyPublisherModule> publisherModules = publisher.getPublisherModules();

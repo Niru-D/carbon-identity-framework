@@ -1,12 +1,12 @@
 /*
- *  Copyright (c)  WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.com).
  *
- *  WSO2 Inc. licenses this file to you under the Apache License,
- *  Version 2.0 (the "License"); you may not use this file except
- *  in compliance with the License.
- *  You may obtain a copy of the License at
+ * WSO2 LLC. licenses this file to you under the Apache License,
+ * Version 2.0 (the "License"); you may not use this file except
+ * in compliance with the License.
+ * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing,
  * software distributed under the License is distributed on an
@@ -54,12 +54,14 @@ public class PDPPolicyReader implements PDPPolicyReaderModule {
      */
     private static final Log log = LogFactory.getLog(PDPPolicyReader.class);
 
+
     /**
      * constructor
      */
     public PDPPolicyReader() {
 
     }
+
 
     /**
      * Reads given policyId as PolicyDTO
@@ -121,7 +123,7 @@ public class PDPPolicyReader implements PDPPolicyReaderModule {
 
 
     /**
-     * This returns all policy ids as a String list.
+     * Returns all policy ids as a String list.
      *
      * @return policy ids as String[]
      * @throws EntitlementException throws if fails
@@ -147,7 +149,7 @@ public class PDPPolicyReader implements PDPPolicyReaderModule {
 
 
     /**
-     * This reads the policy combining algorithm
+     * Reads the policy combining algorithm
      *
      * @return policy combining algorithm as String
      * @throws EntitlementException throws
@@ -182,7 +184,7 @@ public class PDPPolicyReader implements PDPPolicyReaderModule {
 
 
     /**
-     * This returns given policy as a policy DTO
+     * Returns given policy as a policy DTO
      *
      * @param policyId policy id
      * @return policyDTO
@@ -271,7 +273,7 @@ public class PDPPolicyReader implements PDPPolicyReaderModule {
 
 
     /**
-     * This returns all the policies as PolicyDTOs.
+     * Returns all the policies as PolicyDTOs.
      *
      * @return policies as PolicyDTO[]
      * @throws EntitlementException throws if fails
