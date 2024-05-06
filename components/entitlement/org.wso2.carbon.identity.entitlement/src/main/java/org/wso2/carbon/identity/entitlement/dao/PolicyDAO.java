@@ -21,6 +21,7 @@ package org.wso2.carbon.identity.entitlement.dao;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyStoreDTO;
+import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
 
 import java.util.List;
 
@@ -28,7 +29,7 @@ import java.util.List;
 /**
  * This interface supports the management of XACML policies.
  */
-public interface PolicyDAO {
+public interface PolicyDAO extends PolicyFinderModule {
 
 
     /**
@@ -80,7 +81,7 @@ public interface PolicyDAO {
 
 
     /**
-     * Gets all published policy IDs
+     * Lists all published policy IDs
      */
     List<String> listPublishedPolicyIds() throws EntitlementException;
 

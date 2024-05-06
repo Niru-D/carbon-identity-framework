@@ -295,10 +295,18 @@ public class PDPConstants {
 
     public static final String GLOBAL_POLICY_COMBINING_ALGORITHM = "globalPolicyCombiningAlgorithm";
 
+    public static final String MAX_NO_OF_STATUS_RECORDS = "maxRecodesToPersist";
+
     public static final int DEFAULT_MAX_NO_OF_STATUS_RECORDS = 50;
 
-    public static final int DEFAULT_MAX_POLICY_VERSION = 5;
+    public static final String MAX_NO_OF_POLICY_VERSIONS = "maxVersions";
+
+    public static final int DEFAULT_MAX_NO_OF_POLICY_VERSIONS = 5;
 
     public static final int DEFAULT_MAX_NO_OF_IN_MEMORY_POLICIES = 5;
+
+    public static final String POLICY_STORE_PATH = "policyStorePath";
+
+    public static final String DEFAULT_POLICY_STORE_PATH = "/repository/identity/entitlement/policy/pdp/";
 
 }

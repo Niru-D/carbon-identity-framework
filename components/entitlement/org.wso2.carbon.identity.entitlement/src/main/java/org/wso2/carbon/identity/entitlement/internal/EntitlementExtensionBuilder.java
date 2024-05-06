@@ -22,9 +22,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.osgi.framework.BundleContext;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
-import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
-import org.wso2.carbon.identity.entitlement.dao.PolicyDataStoreModule;
+import org.wso2.carbon.identity.entitlement.dao.StatusDataDAO;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDAO;
 import org.wso2.carbon.identity.entitlement.pap.EntitlementDataFinderModule;
 import org.wso2.carbon.identity.entitlement.pip.PIPAttributeFinder;
 import org.wso2.carbon.identity.entitlement.pip.PIPExtension;
@@ -34,8 +34,6 @@ import org.wso2.carbon.identity.entitlement.policy.finder.PolicyFinderModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PolicyPublisherModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PostPublisherModule;
 import org.wso2.carbon.identity.entitlement.policy.publisher.PublisherVerificationModule;
-import org.wso2.carbon.identity.entitlement.dao.PDPPolicyStoreModule;
-import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -109,8 +107,6 @@ public class EntitlementExtensionBuilder {
             populatePolicyFinders(properties, holder);
             populatePolicyCollection(properties, holder);
             populatePolicyStoreModule(properties, holder);
-            populatePolicyDataStore(properties, holder);
-            populatePolicyVersionModule(properties, holder);
             populatePolicyPostPublishers(properties, holder);
             populateAdminNotificationHandlers(properties, holder);
             populatePublisherVerificationHandler(properties, holder);
@@ -335,8 +331,8 @@ public class EntitlementExtensionBuilder {
             }
 
             finderModule.init(finderModuleProps);
-            if (finderModule instanceof PDPPolicyStoreModule) {
-                holder.addPolicyStore((PDPPolicyStoreModule) finderModule, finderModuleProps);
+            if (finderModule instanceof PolicyDAO) {
+                holder.addPolicyStore((PolicyDAO) finderModule, finderModuleProps);
             }
             holder.addPolicyFinderModule(finderModule, finderModuleProps);
         }
@@ -378,12 +374,12 @@ public class EntitlementExtensionBuilder {
     private void populatePolicyStoreModule(Properties properties, EntitlementConfigHolder holder)
             throws Exception {
 
-        PDPPolicyStoreModule policyStoreStore = null;
+        PolicyDAO policyStoreStore = null;
 
         if (properties.getProperty("PDP.Policy.Store.Module") != null) {
             String className = properties.getProperty("PDP.Policy.Store.Module");
             Class clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
-            policyStoreStore = (PDPPolicyStoreModule) clazz.newInstance();
+            policyStoreStore = (PolicyDAO) clazz.newInstance();
 
             int j = 1;
             Properties storeProps = new Properties();
@@ -392,37 +388,10 @@ public class EntitlementExtensionBuilder {
                 storeProps.put(props[0], props[1]);
             }
 
-            policyStoreStore.init(storeProps);
             holder.addPolicyStore(policyStoreStore, storeProps);
         }
     }
 
-    /**
-     * @param properties
-     * @param holder
-     * @throws Exception
-     */
-    private void populatePolicyDataStore(Properties properties, EntitlementConfigHolder holder)
-            throws Exception {
-
-        PolicyDataStoreModule policyDataStore = null;
-
-        if (properties.getProperty("PDP.Policy.Data.Store.Module") != null) {
-            String className = properties.getProperty("PDP.Policy.Data.Store.Module");
-            Class clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
-            policyDataStore = (PolicyDataStoreModule) clazz.newInstance();
-
-            int j = 1;
-            Properties storeProps = new Properties();
-            while (properties.getProperty(className + "." + j) != null) {
-                String[] props = properties.getProperty(className + "." + j++).split(",");
-                storeProps.put(props[0], props[1]);
-            }
-
-            policyDataStore.init(storeProps);
-            holder.addPolicyDataStore(policyDataStore, storeProps);
-        }
-    }
 
     /**
      * @param properties
@@ -479,34 +448,6 @@ public class EntitlementExtensionBuilder {
             publisher.init(publisherProps);
             holder.addPolicyPublisherModule(publisher, publisherProps);
         }
-    }
-
-    /**
-     * @param properties
-     * @param holder
-     * @throws Exception
-     */
-    private void populatePolicyVersionModule(Properties properties, EntitlementConfigHolder holder)
-            throws Exception {
-
-        PolicyVersionManagerModule versionManager = null;
-
-        if (properties.getProperty("PAP.Policy.Version.Module") != null) {
-            String className = properties.getProperty("PAP.Policy.Version.Module");
-            Class clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
-            versionManager = (PolicyVersionManagerModule) clazz.newInstance();
-
-            int j = 1;
-            Properties storeProps = new Properties();
-            while (properties.getProperty(className + "." + j) != null) {
-                String[] props = properties.getProperty(className + "." + j++).split(",");
-                storeProps.put(props[0], props[1]);
-            }
-
-            versionManager.init(storeProps);
-            holder.addPolicyVersionModule(versionManager, storeProps);
-        }
-
     }
 
     /**
@@ -573,12 +514,12 @@ public class EntitlementExtensionBuilder {
             throws Exception {
 
         int i = 1;
-        PAPStatusDataHandlerModule handler = null;
+        StatusDataDAO handler = null;
 
         while (properties.getProperty("PAP.Status.Data.Handler." + i) != null) {
             String className = properties.getProperty("PAP.Status.Data.Handler." + i++);
             Class clazz = Thread.currentThread().getContextClassLoader().loadClass(className);
-            handler = (PAPStatusDataHandlerModule) clazz.newInstance();
+            handler = (StatusDataDAO) clazz.newInstance();
 
             int j = 1;
             Properties publisherProps = new Properties();

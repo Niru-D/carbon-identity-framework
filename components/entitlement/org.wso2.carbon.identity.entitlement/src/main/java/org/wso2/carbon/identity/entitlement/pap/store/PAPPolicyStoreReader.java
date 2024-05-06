@@ -23,28 +23,29 @@ import org.wso2.balana.AbstractPolicy;
 import org.wso2.balana.finder.PolicyFinder;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDAO;
 import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.pap.PAPPolicyReader;
-
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 import org.wso2.carbon.identity.entitlement.policy.PolicyAttributeBuilder;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.registry.core.exceptions.RegistryException;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PAPPolicyStoreReader {
 
     // the optional logger used for error reporting
     private static final Log log = LogFactory.getLog(PAPPolicyStoreReader.class);
 
-    private final PAPPolicyStoreModule store;
+    private final PolicyDAO store;
 
     /**
      * @param store PAPPolicyStore
      */
-    public PAPPolicyStoreReader(PAPPolicyStoreModule store) {
+    public PAPPolicyStoreReader(PolicyDAO store) {
         this.store = store;
     }
 
@@ -73,7 +74,17 @@ public class PAPPolicyStoreReader {
      * @throws EntitlementException throws, if fails
      */
     public PolicyDTO[] readAllLightPolicyDTOs() throws EntitlementException {
-        return store.getAllPolicies();
+
+        String[] resources;
+        resources = store.listPolicyIds().toArray(new String[0]);
+
+        List<PolicyDTO> policyDTOList = new ArrayList<PolicyDTO>();
+
+        for (String resource : resources) {
+            PolicyDTO policyDTO = readLightPolicyDTO(resource);
+            policyDTOList.add(policyDTO);
+        }
+        return policyDTOList.toArray(new PolicyDTO[0]);
     }
 
 

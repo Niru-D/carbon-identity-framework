@@ -47,8 +47,7 @@ import org.wso2.carbon.identity.entitlement.PDPConstants;
 import org.wso2.carbon.identity.entitlement.cache.DecisionCache;
 import org.wso2.carbon.identity.entitlement.cache.PolicyCache;
 import org.wso2.carbon.identity.entitlement.cache.SimpleDecisionCache;
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
-import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDAO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyFinder;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
@@ -246,7 +245,7 @@ public class EntitlementEngine {
             // Test PDP with all finders but policy finder is different
             PolicyFinder policyFinder = new PolicyFinder();
             Set<PolicyFinderModule> policyModules = new HashSet<PolicyFinderModule>();
-            PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
+            PolicyDAO store = new RegistryPolicyDAOImpl();
             PAPPolicyFinder papPolicyFinder = new PAPPolicyFinder(new PAPPolicyStoreReader(store));
             policyModules.add(papPolicyFinder);
             policyFinder.setModules(policyModules);

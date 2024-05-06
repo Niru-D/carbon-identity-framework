@@ -54,8 +54,7 @@ import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.entitlement.cache.EntitlementBaseCache;
 import org.wso2.carbon.identity.entitlement.cache.IdentityCacheEntry;
 import org.wso2.carbon.identity.entitlement.cache.IdentityCacheKey;
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
-import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDAO;
 import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementExtensionBuilder;
@@ -63,7 +62,6 @@ import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent
 import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreManager;
 import org.wso2.carbon.identity.entitlement.pap.store.PAPPolicyStoreReader;
-import org.wso2.carbon.identity.entitlement.dao.PolicyVersionManagerModule;
 import org.wso2.carbon.registry.core.Registry;
 import org.wso2.carbon.registry.core.Resource;
 import org.wso2.carbon.utils.CarbonUtils;
@@ -335,6 +333,73 @@ public class EntitlementUtil {
     }
 
     /**
+     * Gets all supported policy combining algorithm names
+     *
+     * @return array of policy combining algorithm names
+     */
+    public static String[] getAllGlobalPolicyAlgorithmNames() {
+        return new String[] {"deny-overrides", "permit-overrides", "first-applicable", "ordered-deny-overrides",
+                "ordered-permit-overrides", "only-one-applicable"};
+    }
+
+    /**
+     * Gets the maximum no of status records to persist
+     *
+     * @return maximum no of status records
+     */
+    public static int getMaxNoOfStatusRecords(){
+        int maxRecords = 0;
+        String maxRecordsString = EntitlementServiceComponent.getEntitlementConfig().getEngineProperties().
+                getProperty(PDPConstants.MAX_NO_OF_STATUS_RECORDS);
+        if (maxRecordsString != null) {
+            try {
+                maxRecords = Integer.parseInt(maxRecordsString);
+            } catch (Exception e) {
+                //ignore
+            }
+        }
+        if (maxRecords == 0) {
+            maxRecords = PDPConstants.DEFAULT_MAX_NO_OF_STATUS_RECORDS;
+        }
+        return maxRecords;
+    }
+
+    /**
+     * Gets the maximum no of policy versions allowed
+     *
+     * @return maximum no of policy versions
+     */
+    public static int getMaxNoOfPolicyVersions(){
+        int maxVersions = 0;
+        String maxVersionsString = EntitlementServiceComponent.getEntitlementConfig().getEngineProperties().
+                getProperty(PDPConstants.MAX_NO_OF_POLICY_VERSIONS);
+        try {
+            maxVersions = Integer.parseInt(maxVersionsString);
+        } catch (Exception e) {
+            // ignore
+        }
+        if (maxVersions == 0) {
+            maxVersions = PDPConstants.DEFAULT_MAX_NO_OF_POLICY_VERSIONS;
+        }
+        return maxVersions;
+    }
+
+    /**
+     * Gets the policy store path
+     *
+     * @return policy store path
+     */
+    public static String getPolicyStorePath(){
+        String policyStorePath;
+        policyStorePath = EntitlementServiceComponent.getEntitlementConfig().getEngineProperties().
+                getProperty(PDPConstants.POLICY_STORE_PATH);
+        if (policyStorePath == null) {
+            policyStorePath = PDPConstants.DEFAULT_POLICY_STORE_PATH;
+        }
+        return policyStorePath;
+    }
+
+    /**
      * Creates Simple XACML request using given attribute value.Here category, attribute ids and datatypes are
      * taken as default values.
      *
@@ -403,7 +468,7 @@ public class EntitlementUtil {
      */
     public static boolean isPolicyExists(String policyId) throws EntitlementException {
         PAPPolicyStoreReader policyReader;
-        PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
+        PolicyDAO store = new RegistryPolicyDAOImpl();
         policyReader = new PAPPolicyStoreReader(store);
         return policyReader.isExistPolicy(policyId);
     }
@@ -438,14 +503,6 @@ public class EntitlementUtil {
             }
 
             policyDTO.setPromote(promote);
-            PolicyVersionManagerModule versionManager = EntitlementAdminEngine.getInstance().getVersionManager();
-            try {
-                String version = versionManager.createVersion(policyDTO);
-                policyDTO.setVersion(version);
-            } catch (EntitlementException e) {
-                log.error("Policy versioning is not supported", e);
-            }
-
             policyAdmin.addOrUpdatePolicy(policyDTO);
 
             if (promote) {
@@ -502,7 +559,7 @@ public class EntitlementUtil {
      */
     public static PolicyDTO getPolicy(String policyId, Registry registry) throws EntitlementException {
         PAPPolicyStoreReader policyReader;
-        PAPPolicyStoreModule store = new RegistryPAPPolicyStore();
+        PolicyDAO store = new RegistryPolicyDAOImpl();
         policyReader = new PAPPolicyStoreReader(store);
         return policyReader.readPolicyDTO(policyId);
     }

@@ -18,26 +18,25 @@
 package org.wso2.carbon.identity.entitlement.pap.store;
 
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDAO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 import org.wso2.carbon.registry.core.Resource;
 
 public class PAPPolicyStoreManager {
 
-    private final PAPPolicyStoreModule store;
+    private final PolicyDAO store;
 
     private final PAPPolicyStoreReader storeReader;
 
 
     public PAPPolicyStoreManager() {
-        store = new RegistryPAPPolicyStore();
+        store = new RegistryPolicyDAOImpl();
         storeReader = new PAPPolicyStoreReader(store);
     }
 
 
     public void addOrUpdatePolicy(PolicyDTO policy) throws EntitlementException {
-        store.addOrUpdatePolicy(policy, true);
+        store.addOrUpdatePolicy(policy);
     }
 
 
@@ -46,13 +45,8 @@ public class PAPPolicyStoreManager {
     }
 
 
-    public void removePolicyByVersion(String policyId, int version) throws EntitlementException {
-        store.removePolicy(policyId, version);
-    }
-
-
     public String[] getPolicyIds() throws EntitlementException {
-        return store.getAllPolicyIds();
+        return store.listPolicyIds().toArray(new String[0]);
     }
 
 

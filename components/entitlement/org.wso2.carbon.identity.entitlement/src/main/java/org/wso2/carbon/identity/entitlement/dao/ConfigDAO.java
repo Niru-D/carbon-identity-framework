@@ -23,7 +23,7 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 
 
 /**
- * This interface supports the management of Global PolicyDAO Combining Algorithm.
+ * This interface supports the management of policy configuration data.
  */
 public interface ConfigDAO {
 

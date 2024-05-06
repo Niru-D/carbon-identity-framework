@@ -22,41 +22,55 @@ import org.wso2.carbon.identity.entitlement.EntitlementException;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
 
 import java.util.List;
+import java.util.Properties;
 
 
 /**
- * This interface supports the management of status data (audit logs).
+ * This listener gets triggered after an admin action is done
  */
 public interface StatusDataDAO {
 
 
     /**
-     * Handles policy status data
+     * Initializes the entitlement status data handler
+     *
+     * @param properties properties
      */
-    void handlePolicyStatusData(String policyId, List<StatusHolder> statusHolders) throws EntitlementException;
+    void init(Properties properties);
 
 
     /**
-     * Handles subscriber status data
+     * Handles the status data
+     *
+     * @param about indicates whether the action is related to a policy or a subscriber
+     * @param key id
+     * @param statusHolder StatusHolder
+     * @throws EntitlementException throws, if fails
      */
-    void handleSubscriberStatusData(String subscriberId, List<StatusHolder> statusHolders) throws EntitlementException;
+    void handle(String about, String key, List<StatusHolder> statusHolder) throws EntitlementException;
 
 
     /**
-     * Gets the requested policy status data
+     * Handles the status data
+     *
+     * @param about indicates whether the action is related to a policy or a subscriber
+     * @param statusHolder StatusHolder
+     * @throws EntitlementException throws, if fails
      */
-    StatusHolder[] getPolicyStatusData(String policyId, String type, String filter) throws EntitlementException;
+    void handle(String about, StatusHolder statusHolder) throws EntitlementException;
 
 
     /**
-     * Gets the requested subscriber status data
+     * Returns status data
+     *
+     * @param about indicates whether the action is related to a policy or a subscriber
+     * @param key id
+     * @param type admin action type
+     * @param searchString search string for StatusHolder
+     * @return An array of StatusHolders
+     * @throws EntitlementException throws, if fails
      */
-    StatusHolder[] getSubscriberStatusData(String subscriberId, String type, String filter) throws EntitlementException;
-
-
-    /**
-     * Removes status data
-     */
-    void removeStatusData(String path) throws EntitlementException;
+    StatusHolder[] getStatusData(String about, String key, String type,
+                                        String searchString) throws EntitlementException;
 
 }

@@ -30,7 +30,6 @@ import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.StatusHolder;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
-import org.wso2.carbon.identity.entitlement.pap.EntitlementAdminEngine;
 import org.wso2.carbon.registry.api.Registry;
 
 import java.util.ArrayList;
@@ -107,7 +106,7 @@ public class PolicyPublishExecutor {
         }
 
         PublisherDataHolder holder = null;
-        Set<PAPStatusDataHandlerModule> papStatusDataHandler = publisher.getPapStatusDataHandlers();
+        Set<StatusDataDAO> papStatusDataHandler = publisher.getPapStatusDataHandlers();
         for (String subscriberId : subscriberIds) {
 
             // there is only one known subscriber, if policies are publishing to PDP
@@ -118,8 +117,8 @@ public class PolicyPublishExecutor {
                 holder = new PublisherDataHolder(policyPublisherModule.getModuleName());
             } else {
                 try {
-                    SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
-                    holder = subscriberManager.retrieveSubscriber(subscriberId, true);
+                    SubscriberDAO subscriberManager = new RegistrySubscriberDAOImpl();
+                    holder = subscriberManager.getSubscriber(subscriberId, true);
                 } catch (EntitlementException e) {
                     log.error("Subscriber details can not be retrieved. So skip publishing policies " +
                             "for subscriber : " + subscriberId);
@@ -171,9 +170,9 @@ public class PolicyPublishExecutor {
 
                 if (EntitlementConstants.PolicyPublish.ACTION_CREATE.equalsIgnoreCase(action) ||
                         EntitlementConstants.PolicyPublish.ACTION_UPDATE.equalsIgnoreCase(action)) {
-                    PolicyVersionManagerModule manager = EntitlementAdminEngine.getInstance().getVersionManager();
+                    PolicyDAO policyStore = new RegistryPolicyDAOImpl();
                     try {
-                        policyDTO = manager.getPolicy(policyId, version);
+                        policyDTO = policyStore.getPolicy(policyId, version);
                     } catch (EntitlementException e) {
                         //  ignore
                     }
@@ -208,7 +207,7 @@ public class PolicyPublishExecutor {
                             policyId, policyDTO.getVersion(), subscriberId, action, false, e.getMessage()));
                 }
 
-                for (PAPStatusDataHandlerModule module : papStatusDataHandler) {
+                for (StatusDataDAO module : papStatusDataHandler) {
                     try {
                         module.handle(EntitlementConstants.Status.ABOUT_POLICY, policyId, policyHolders);
                         policyHolders = new ArrayList<>();
@@ -219,7 +218,7 @@ public class PolicyPublishExecutor {
                 }
             }
 
-            for (PAPStatusDataHandlerModule module : papStatusDataHandler) {
+            for (StatusDataDAO module : papStatusDataHandler) {
                 try {
                     module.handle(EntitlementConstants.Status.ABOUT_SUBSCRIBER, subscriberId, subscriberHolders);
                     subscriberHolders = new ArrayList<>();

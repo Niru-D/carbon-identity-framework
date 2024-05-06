@@ -40,10 +40,9 @@ import org.wso2.carbon.identity.core.util.IdentityCoreInitializedEvent;
 import org.wso2.carbon.identity.core.util.IdentityUtil;
 import org.wso2.carbon.identity.entitlement.EntitlementUtil;
 import org.wso2.carbon.identity.entitlement.PDPConstants;
-import org.wso2.carbon.identity.entitlement.dao.RegistryPAPPolicyStore;
+import org.wso2.carbon.identity.entitlement.dao.PolicyDAO;
 import org.wso2.carbon.identity.entitlement.dto.PolicyDTO;
 import org.wso2.carbon.identity.entitlement.listener.CacheClearingUserOperationListener;
-import org.wso2.carbon.identity.entitlement.dao.PAPPolicyStoreModule;
 import org.wso2.carbon.identity.entitlement.thrift.EntitlementService;
 import org.wso2.carbon.identity.entitlement.thrift.ThriftConfigConstants;
 import org.wso2.carbon.identity.entitlement.thrift.ThriftEntitlementServiceImpl;
@@ -211,15 +210,16 @@ public class EntitlementServiceComponent {
             new Thread(new SchemaBuilder(EntitlementConfigHolder.getInstance())).start();
 
             // Read XACML policy files from a pre-defined location in the filesystem
-            PAPPolicyStoreModule papPolicyStore = new RegistryPAPPolicyStore();
+            PolicyDAO papPolicyStore = new RegistryPolicyDAOImpl();
 
             String startUpPolicyAdding = EntitlementConfigHolder.getInstance().getEngineProperties().getProperty(
                     PDPConstants.START_UP_POLICY_ADDING);
 
             List<String> policyIdList = new ArrayList<>();
 
-            if (papPolicyStore != null && ArrayUtils.isNotEmpty(papPolicyStore.getAllPolicyIds())) {
-                String[] allPolicyIds = papPolicyStore.getAllPolicyIds();
+            if (papPolicyStore != null &&
+                    ArrayUtils.isNotEmpty(papPolicyStore.listPolicyIds().toArray(new String[0]))) {
+                String[] allPolicyIds = papPolicyStore.listPolicyIds().toArray(new String[0]);
                 policyIdList = Arrays.asList(allPolicyIds);
             }
 

@@ -20,10 +20,9 @@ package org.wso2.carbon.identity.entitlement.policy.publisher;
 
 import org.wso2.carbon.context.CarbonContext;
 import org.wso2.carbon.identity.entitlement.EntitlementException;
-import org.wso2.carbon.identity.entitlement.dao.PAPStatusDataHandlerModule;
 import org.wso2.carbon.identity.entitlement.common.EntitlementConstants;
-import org.wso2.carbon.identity.entitlement.dao.RegistrySubscriberManager;
-import org.wso2.carbon.identity.entitlement.dao.SubscriberManagerModule;
+import org.wso2.carbon.identity.entitlement.dao.StatusDataDAO;
+import org.wso2.carbon.identity.entitlement.dao.SubscriberDAO;
 import org.wso2.carbon.identity.entitlement.dto.PublisherDataHolder;
 import org.wso2.carbon.identity.entitlement.dto.PublisherPropertyDTO;
 import org.wso2.carbon.identity.entitlement.internal.EntitlementServiceComponent;
@@ -49,7 +48,7 @@ public class PolicyPublisher {
     /**
      * set of post publisher modules
      */
-    Set<PAPStatusDataHandlerModule> papStatusDataHandlers = new HashSet<>();
+    Set<StatusDataDAO> papStatusDataHandlers = new HashSet<>();
 
     /**
      * Verification publisher modules
@@ -86,15 +85,15 @@ public class PolicyPublisher {
         holder.setPropertyDTOs(new PublisherPropertyDTO[] {dto});
         try {
             PublisherDataHolder pdpDataHolder = null;
-            SubscriberManagerModule subscriberManager = new RegistrySubscriberManager();
+            SubscriberDAO subscriberManager = new RegistrySubscriberDAOImpl();
             try {
 
-                pdpDataHolder = subscriberManager.retrieveSubscriber(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
+                pdpDataHolder = subscriberManager.getSubscriber(EntitlementConstants.PDP_SUBSCRIBER_ID, false);
             } catch (Exception e) {
                 // ignore
             }
             if (pdpDataHolder == null) {
-                subscriberManager.persistSubscriber(holder, false);
+                subscriberManager.addSubscriber(holder);
             }
         } catch (EntitlementException e) {
             // ignore
@@ -131,11 +130,11 @@ public class PolicyPublisher {
         return publisherModules;
     }
 
-    public Set<PAPStatusDataHandlerModule> getPapStatusDataHandlers() {
+    public Set<StatusDataDAO> getPapStatusDataHandlers() {
         return papStatusDataHandlers;
     }
 
-    public void setPapStatusDataHandlers(Set<PAPStatusDataHandlerModule> papStatusDataHandlers) {
+    public void setPapStatusDataHandlers(Set<StatusDataDAO> papStatusDataHandlers) {
         this.papStatusDataHandlers = papStatusDataHandlers;
     }
 
