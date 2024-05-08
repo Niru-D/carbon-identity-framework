@@ -150,7 +150,7 @@ public class PolicyStoreManager {
 
         PolicyDTO policyDTO = new PolicyDTO();
         policyDTO.setPolicyId(policyId);
-        PolicyDTO dto = policyStore.getPolicy(policyId);
+        PolicyDTO dto = policyStore.getPublishedPolicy(policyId);
         if (dto != null && dto.getPolicy() != null) {
             policyDTO.setPolicy(dto.getPolicy());
             policyDTO.setActive(dto.isActive());
@@ -174,7 +174,7 @@ public class PolicyStoreManager {
                 PolicyDTO policyDTO = new PolicyDTO();
                 policyDTO.setPolicyId(policy);
 
-                PolicyDTO dto = policyStore.getPolicy(policy);
+                PolicyDTO dto = policyStore.getPublishedPolicy(policy);
 
                 if (dto != null) {
                     policyDTO.setActive(dto.isActive());

@@ -81,6 +81,12 @@ public interface PolicyDAO extends PolicyFinderModule {
 
 
     /**
+     * Gets the requested published policy
+     */
+    PolicyDTO getPublishedPolicy(String policyId) throws EntitlementException;
+
+
+    /**
      * Lists all published policy IDs
      */
     List<String> listPublishedPolicyIds() throws EntitlementException;
