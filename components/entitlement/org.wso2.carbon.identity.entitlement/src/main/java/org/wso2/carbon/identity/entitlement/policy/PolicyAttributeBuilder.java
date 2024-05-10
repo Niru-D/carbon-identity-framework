@@ -28,10 +28,7 @@ import org.wso2.carbon.identity.entitlement.dto.AttributeDTO;
 
 import javax.xml.namespace.QName;
 import javax.xml.stream.XMLStreamException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 
 
 /**
@@ -124,6 +121,29 @@ public class PolicyAttributeBuilder {
         }
 
         return attributeDTOs.toArray(new AttributeDTO[attributeDTOs.size()]);
+    }
+
+    public AttributeDTO[] getPolicyMetaData(Properties properties) {
+
+        List<AttributeDTO> attributeDTOs = new ArrayList<AttributeDTO>();
+        if (properties != null && !properties.isEmpty()) {
+            for (int attributeElementNo = 0; attributeElementNo < properties.size(); ) {
+
+                String[] attributeData = Collections.singletonList(properties.get(PDPConstants.POLICY_META_DATA +
+                        attributeElementNo)).toString().split(PDPConstants.ATTRIBUTE_SEPARATOR);
+                if (attributeData.length == PDPConstants.POLICY_META_DATA_ARRAY_LENGTH) {
+                    AttributeDTO attributeDTO = new AttributeDTO();
+                    attributeDTO.setCategory(attributeData[0]);
+                    attributeDTO.setAttributeValue(attributeData[1]);
+                    attributeDTO.setAttributeId(attributeData[2]);
+                    attributeDTO.setAttributeDataType(attributeData[3]);
+                    attributeDTOs.add(attributeDTO);
+                }
+                attributeElementNo++;
+            }
+        }
+
+        return attributeDTOs.toArray(new AttributeDTO[0]);
     }
 
     /**
